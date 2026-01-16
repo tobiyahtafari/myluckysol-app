@@ -11,8 +11,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { useSolPrice, SolToUsd } from "@/lib/price-context";
+
 export function Header() {
   const { connected, shortAddress, balance, wagaBalance, connect, disconnect } = useWallet();
+  const { solPrice } = useSolPrice();
   const [location] = useLocation();
 
   const navItems = [
@@ -59,7 +62,7 @@ export function Header() {
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                     <span className="text-sm font-medium text-gradient-gold">
-                      {balance.toFixed(2)} SOL
+                      {balance.toFixed(2)} SOL <SolToUsd sol={balance} className="text-[10px] opacity-70 ml-1" />
                     </span>
                   </div>
                   <div className="w-px h-4 bg-border" />

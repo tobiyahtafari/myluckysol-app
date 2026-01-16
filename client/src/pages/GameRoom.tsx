@@ -12,6 +12,8 @@ import { GAME_MODES, type Game } from "@shared/schema";
 import { ArrowLeft, Users, Loader2, Clock, Trophy, Coins } from "lucide-react";
 import { Link } from "wouter";
 
+import { useSolPrice, SolToUsd } from "@/lib/price-context";
+
 export default function GameRoom() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
@@ -119,14 +121,14 @@ export default function GameRoom() {
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total Pool</p>
                 <p className="text-4xl font-bold text-gradient-gold">
-                  {game.poolAmount.toFixed(2)} SOL
+                  {game.poolAmount.toFixed(2)} SOL <SolToUsd sol={game.poolAmount} className="text-sm font-normal block opacity-70" />
                 </p>
               </div>
               <div className="w-px h-12 bg-border hidden md:block" />
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Winner Takes</p>
                 <p className="text-3xl font-bold text-accent">
-                  {(game.poolAmount * 0.9).toFixed(2)} SOL
+                  {(game.poolAmount * 0.9).toFixed(2)} SOL <SolToUsd sol={game.poolAmount * 0.9} className="text-xs font-normal block opacity-70" />
                 </p>
               </div>
             </div>

@@ -6,6 +6,8 @@ import { useWallet } from "@/lib/wallet-context";
 import type { LeaderboardEntry } from "@shared/schema";
 import { Trophy, TrendingUp, Coins, Flame, Crown, Medal, Award } from "lucide-react";
 
+import { useSolPrice, SolToUsd } from "@/lib/price-context";
+
 export default function Leaderboard() {
   const { address } = useWallet();
 
@@ -208,6 +210,7 @@ function LeaderboardRow({
           <div className="text-right">
             <p className="text-xl font-bold text-gradient-gold">
               {valueFormatter(entry[valueKey] as number)}
+              {valueLabel === "SOL" && <SolToUsd sol={entry[valueKey] as number} className="text-[10px] font-normal block opacity-70" />}
             </p>
             <p className="text-xs text-muted-foreground">{valueLabel}</p>
           </div>

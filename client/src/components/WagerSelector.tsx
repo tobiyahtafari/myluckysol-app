@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { WAGER_TIERS, WAGA_ENTRY_MULTIPLIER, type WagerTier } from "@shared/schema";
 import { useWallet } from "@/lib/wallet-context";
 
+import { useSolPrice, SolToUsd } from "@/lib/price-context";
+
 interface WagerSelectorProps {
   selectedWager: WagerTier | null;
   onSelect: (wager: WagerTier) => void;
@@ -40,6 +42,7 @@ export function WagerSelector({ selectedWager, onSelect }: WagerSelectorProps) {
                 <div className="flex items-center gap-1">
                   <span className="text-2xl font-bold text-gradient-gold">{wager}</span>
                   <span className="text-sm text-muted-foreground">SOL</span>
+                  <SolToUsd sol={wager} className="text-[10px] text-muted-foreground ml-1" />
                 </div>
                 <div className="text-xs text-secondary">
                   Receive +{wagaReward} WAGA Reward

@@ -17,6 +17,8 @@ import {
   Flame,
 } from "lucide-react";
 
+import { useSolPrice, SolToUsd } from "@/lib/price-context";
+
 export default function Profile() {
   const { connected, connect, address, shortAddress, balance, wagaBalance } = useWallet();
 
@@ -106,7 +108,9 @@ export default function Profile() {
               <div className="flex gap-4">
                 <div className="text-center px-4 py-2 rounded-lg bg-primary/10 border border-primary/30">
                   <p className="text-sm text-muted-foreground">Balance</p>
-                  <p className="text-xl font-bold text-gradient-gold">{balance.toFixed(2)} SOL</p>
+                  <p className="text-xl font-bold text-gradient-gold">
+                    {balance.toFixed(2)} SOL <SolToUsd sol={balance} className="text-[10px] block opacity-70" />
+                  </p>
                 </div>
                 <div className="text-center px-4 py-2 rounded-lg bg-secondary/10 border border-secondary/30">
                   <p className="text-sm text-muted-foreground">WAGA</p>
@@ -146,11 +150,17 @@ export default function Profile() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
                   <span className="text-muted-foreground">Total Wagered</span>
-                  <span className="font-bold">{mockProfile.totalWagered.toFixed(2)} SOL</span>
+                  <span className="font-bold flex flex-col items-end">
+                    <span>{mockProfile.totalWagered.toFixed(2)} SOL</span>
+                    <SolToUsd sol={mockProfile.totalWagered} className="text-[10px] font-normal opacity-70" />
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-lg bg-accent/10 border border-accent/30">
                   <span className="text-muted-foreground">Total Won</span>
-                  <span className="font-bold text-accent">{mockProfile.totalWon.toFixed(2)} SOL</span>
+                  <span className="font-bold text-accent flex flex-col items-end">
+                    <span>{mockProfile.totalWon.toFixed(2)} SOL</span>
+                    <SolToUsd sol={mockProfile.totalWon} className="text-[10px] font-normal opacity-70" />
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/10 border border-secondary/30">
                   <span className="text-muted-foreground">WAGA Earned</span>
@@ -227,8 +237,9 @@ export default function Profile() {
                     </div>
 
                     <div className="text-right">
-                      <p className={`font-bold ${game.result === "won" ? "text-accent" : "text-muted-foreground"}`}>
-                        {game.result === "won" ? `+${game.payout?.toFixed(2)}` : `-${game.wager}`} SOL
+                      <p className={`font-bold ${game.result === "won" ? "text-accent" : "text-muted-foreground"} flex flex-col items-end`}>
+                        <span>{game.result === "won" ? `+${game.payout?.toFixed(2)}` : `-${game.wager}`} SOL</span>
+                        <SolToUsd sol={game.result === "won" ? (game.payout || 0) : game.wager} className="text-[10px] font-normal opacity-70" />
                       </p>
                       <p className="text-xs text-secondary">+{game.wagaEarned} WAGA</p>
                     </div>

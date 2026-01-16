@@ -25,20 +25,24 @@ function Router() {
   );
 }
 
+import { PriceProvider } from "./lib/price-context";
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WalletProvider>
-          <div className="min-h-screen bg-background">
-            <Header />
-            <main>
-              <Router />
-            </main>
-          </div>
-          <Toaster />
-        </WalletProvider>
-      </TooltipProvider>
+      <PriceProvider>
+        <TooltipProvider>
+          <WalletProvider>
+            <div className="min-h-screen bg-background">
+              <Header />
+              <main>
+                <Router />
+              </main>
+            </div>
+            <Toaster />
+          </WalletProvider>
+        </TooltipProvider>
+      </PriceProvider>
     </QueryClientProvider>
   );
 }
