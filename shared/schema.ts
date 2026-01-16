@@ -1,18 +1,126 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const WAGER_TIERS = [0.01, 0.1, 1, 10] as const;
+export type WagerTier = typeof WAGER_TIERS[number];
+
+export const GAME_MODES = {
+  "1v1": { players: 2, rounds: 1, timer: 120, name: "1v1 Mode" },
+  "2-round": { players: 4, rounds: 2, timer: 150, name: "2-Round Mode" },
+  "3-round": { players: 8, rounds: 3, timer: 150, name: "3-Round Mode" },
+  "4-round": { players: 16, rounds: 4, timer: 150, name: "4-Round Mode" },
+} as const;
+
+export type GameModeKey = keyof typeof GAME_MODES;
+
+export const FOUNDATION_FEE = 0.1;
+export const WINNER_SHARE = 0.9;
+export const WAGA_ENTRY_MULTIPLIER = 10;
+export const WAGA_WIN_MULTIPLIER = 100;
+
+export type GameStatus = "waiting" | "countdown" | "in_progress" | "resolving" | "completed";
+
+export const playerSchema = z.object({
+  id: z.string(),
+  walletAddress: z.string(),
+  displayName: z.string().optional(),
+  joinedAt: z.number(),
+  isEliminated: z.boolean().default(false),
+  eliminatedRound: z.number().optional(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export type Player = z.infer<typeof playerSchema>;
+
+export const roundSchema = z.object({
+  roundNumber: z.number(),
+  players: z.array(z.string()),
+  winnerId: z.string().optional(),
+  vrfSeed: z.string().optional(),
+  resolvedAt: z.number().optional(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type Round = z.infer<typeof roundSchema>;
+
+export const gameSchema = z.object({
+  id: z.string(),
+  mode: z.enum(["1v1", "2-round", "3-round", "4-round"]),
+  wager: z.number(),
+  status: z.enum(["waiting", "countdown", "in_progress", "resolving", "completed"]),
+  players: z.array(playerSchema),
+  rounds: z.array(roundSchema),
+  currentRound: z.number(),
+  poolAmount: z.number(),
+  winnerId: z.string().optional(),
+  winnerPayout: z.number().optional(),
+  wagaRewards: z.number().optional(),
+  startedAt: z.number().optional(),
+  completedAt: z.number().optional(),
+  countdownEndsAt: z.number().optional(),
+  createdAt: z.number(),
+});
+
+export type Game = z.infer<typeof gameSchema>;
+
+export const insertGameSchema = z.object({
+  mode: z.enum(["1v1", "2-round", "3-round", "4-round"]),
+  wager: z.number(),
+});
+
+export type InsertGame = z.infer<typeof insertGameSchema>;
+
+export const playerProfileSchema = z.object({
+  walletAddress: z.string(),
+  displayName: z.string().optional(),
+  gamesPlayed: z.number().default(0),
+  gamesWon: z.number().default(0),
+  totalWagered: z.number().default(0),
+  totalWon: z.number().default(0),
+  wagaEarned: z.number().default(0),
+  currentStreak: z.number().default(0),
+  bestStreak: z.number().default(0),
+  luckScore: z.number().default(50),
+  createdAt: z.number(),
+  lastPlayedAt: z.number().optional(),
+});
+
+export type PlayerProfile = z.infer<typeof playerProfileSchema>;
+
+export const insertPlayerProfileSchema = playerProfileSchema.pick({
+  walletAddress: true,
+  displayName: true,
+});
+
+export type InsertPlayerProfile = z.infer<typeof insertPlayerProfileSchema>;
+
+export const leaderboardEntrySchema = z.object({
+  rank: z.number(),
+  walletAddress: z.string(),
+  displayName: z.string().optional(),
+  totalWon: z.number(),
+  gamesWon: z.number(),
+  winRate: z.number(),
+  luckScore: z.number(),
+  bestStreak: z.number(),
+});
+
+export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
+
+export const gameHistorySchema = z.object({
+  gameId: z.string(),
+  mode: z.enum(["1v1", "2-round", "3-round", "4-round"]),
+  wager: z.number(),
+  result: z.enum(["won", "lost"]),
+  payout: z.number().optional(),
+  wagaEarned: z.number(),
+  playedAt: z.number(),
+});
+
+export type GameHistory = z.infer<typeof gameHistorySchema>;
+
+export const users = {
+  id: "",
+  username: "",
+  password: "",
+};
+
+export type InsertUser = { username: string; password: string };
+export type User = { id: string; username: string; password: string };
