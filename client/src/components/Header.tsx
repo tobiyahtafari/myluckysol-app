@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet-context";
 import { Wallet, LogOut, User, Trophy, Gamepad2 } from "lucide-react";
-import headerLogo from "@assets/myluckysol-header-logo_1768583838093.png";
+import headerLogo from "@assets/myluckysol-header-logo_1768586127704.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
