@@ -17,6 +17,11 @@ export interface IStorage {
   addChatMessage(data: ChatMessage): Promise<ChatMessage>;
   getGameHistory(walletAddress: string, limit: number): Promise<GameHistory[]>;
   addGameHistory(walletAddress: string, history: GameHistory): Promise<void>;
+  // Game methods
+  getGame(id: string): Promise<Game | undefined>;
+  getLiveGames(): Promise<Game[]>;
+  createGame(game: InsertGame): Promise<Game>;
+  updateGame(id: string, updates: Partial<Game>): Promise<Game | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -110,6 +115,35 @@ export class MemStorage implements IStorage {
     existing.unshift(history);
     if (existing.length > 100) existing.pop();
     this.gameHistory.set(walletAddress, existing);
+  }
+
+  // Game methods
+  async getGame(id: string): Promise<Game | undefined> {
+    return this.games.get(id);
+  }
+
+  async getLiveGames(): Promise<Game[]> {
+    return Array.from(this.games.values()).filter(g => g.status === "waiting" || g.status === "active");
+  }
+
+  async createGame(game: InsertGame): Promise<Game> {
+    const newGame: Game = {
+      ...game,
+      players: game.players || [],
+      status: game.status || "waiting",
+      currentRound: game.currentRound || 1,
+      createdAt: Date.now(),
+    };
+    this.games.set(newGame.id, newGame);
+    return newGame;
+  }
+
+  async updateGame(id: string, updates: Partial<Game>): Promise<Game | undefined> {
+    const game = this.games.get(id);
+    if (!game) return undefined;
+    const updated = { ...game, ...updates };
+    this.games.set(id, updated);
+    return updated;
   }
 }
 
