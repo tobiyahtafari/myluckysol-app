@@ -31,40 +31,54 @@ export function CountdownTimer({ targetTime, onComplete, size = "md" }: Countdow
   const seconds = timeLeft % 60;
 
   const sizeClasses = {
-    sm: "text-2xl w-16 h-16",
-    md: "text-4xl w-24 h-24",
-    lg: "text-6xl w-36 h-36",
+    sm: { container: "w-16 h-16", text: "text-xl", ring: "p-[3px]" },
+    md: { container: "w-24 h-24", text: "text-3xl", ring: "p-[4px]" },
+    lg: { container: "w-36 h-36", text: "text-5xl", ring: "p-[5px]" },
   };
 
-  const urgencyColor = timeLeft <= 10 
-    ? "text-destructive" 
-    : timeLeft <= 30 
-    ? "text-amber-500" 
-    : "text-primary";
+  const isUrgent = timeLeft <= 10;
+  const isWarning = timeLeft <= 30 && !isUrgent;
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3">
       <AnimatePresence mode="wait">
         <motion.div
-          key={timeLeft}
-          initial={{ scale: 1.1, opacity: 0 }}
+          key={Math.floor(timeLeft / 10)}
+          initial={{ scale: 1.05, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className={`${sizeClasses[size]} rounded-full border-4 ${
-            timeLeft <= 10 ? "border-destructive" : "border-primary"
-          } flex items-center justify-center bg-card ${
-            timeLeft <= 10 ? "animate-countdown" : ""
+          transition={{ duration: 0.3 }}
+          className={`${sizeClasses[size].ring} rounded-full ${
+            isUrgent 
+              ? "bg-gradient-to-br from-red-500 via-orange-500 to-red-600 timer-urgent-glow animate-countdown" 
+              : "timer-ring-gradient timer-glow"
           }`}
         >
-          <span className={`font-mono font-bold ${urgencyColor}`}>
-            {minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, "0")}` : seconds}
-          </span>
+          <div 
+            className={`${sizeClasses[size].container} rounded-full bg-background flex items-center justify-center relative overflow-hidden`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-500/10" />
+            <motion.span 
+              key={timeLeft}
+              initial={{ y: -10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className={`font-mono font-bold relative z-10 ${sizeClasses[size].text} ${
+                isUrgent 
+                  ? "text-red-400" 
+                  : isWarning 
+                  ? "text-amber-400" 
+                  : "text-gradient-solana"
+              }`}
+            >
+              {minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, "0")}` : seconds}
+            </motion.span>
+          </div>
         </motion.div>
       </AnimatePresence>
 
-      <p className="text-sm text-muted-foreground">
-        {timeLeft <= 10 ? "Hurry!" : timeLeft <= 30 ? "Time running out..." : "Time remaining"}
+      <p className={`text-sm font-medium ${
+        isUrgent ? "text-red-400 animate-pulse" : isWarning ? "text-amber-400" : "text-muted-foreground"
+      }`}>
+        {isUrgent ? "Final seconds!" : isWarning ? "Time running out..." : "Time remaining"}
       </p>
     </div>
   );

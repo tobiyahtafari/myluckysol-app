@@ -90,8 +90,9 @@ export default function GameRoom() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <div className="min-h-screen py-8 px-4 game-room-bg relative">
+      <div className="game-room-animated-bg" />
+      <div className="container mx-auto max-w-4xl relative z-10">
         <div className="flex items-center justify-between mb-8">
           <Link href="/play">
             <Button variant="ghost" className="gap-2" data-testid="button-back-lobby">
