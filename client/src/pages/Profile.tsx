@@ -6,7 +6,7 @@ import { LuckBar } from "@/components/LuckBar";
 import { useWallet } from "@/lib/wallet-context";
 import { Link } from "wouter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
-import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2 } from "lucide-react";
+import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Camera, Copy, Check } from "lucide-react";
 
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 
@@ -22,6 +22,17 @@ export default function Profile() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [newUsername, setNewUsername] = useState("");
+  const [referrerAddress, setReferrerAddress] = useState("");
+  const [copied, setCopy] = useState(false);
+
+  const referralLink = `${window.location.origin}/play?ref=${address}`;
+
+  const copyReferral = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopy(true);
+    setTimeout(() => setCopy(false), 2000);
+    toast({ title: "Referral link copied!" });
+  };
 
   const { data: profile } = useQuery<PlayerProfile>({
     queryKey: ["/api/profile", address],
@@ -51,6 +62,44 @@ export default function Profile() {
     },
   });
 
+  const handleUpdateAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // In a real app, upload to storage. Here we'll use base64 for demo
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateUsernameMutation.mutateAsync(reader.result as string, {
+          // hacky reuse of mutation for simplicity in quick edit
+        });
+        // Let's actually define a proper avatar mutation
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (avatarUrl: string) => {
+      await apiRequest("PATCH", `/api/profile/${address}`, { avatarUrl });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      toast({ title: "Avatar updated" });
+    },
+  });
+
+  const referralMutation = useMutation({
+    mutationFn: async (referrer: string) => {
+      await apiRequest("PATCH", `/api/profile/${address}`, { referredBy: referrer });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      setReferrerAddress("");
+      toast({ title: "Referral code applied! You earned 100 WAGA" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Referral failed", description: err.message, variant: "destructive" });
+    },
+  });
   const handleUpdateUsername = (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -131,8 +180,25 @@ export default function Profile() {
         >
           <Card className="p-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-4xl font-bold text-white">
-                {(address || "W").charAt(0).toUpperCase()}
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-4xl font-bold text-white overflow-hidden border-2 border-primary/20">
+                  {mockProfile.avatarUrl ? (
+                    <img src={mockProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    (address || "W").charAt(0).toUpperCase()
+                  )}
+                </div>
+                <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
+                  <Camera className="w-6 h-6 text-white" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => updateAvatarMutation.mutate(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }
+                  }} />
+                </label>
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h1 className="text-2xl font-bold mb-1">{mockProfile.username || shortAddress}</h1>
@@ -148,6 +214,11 @@ export default function Profile() {
                     {updateUsernameMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update"}
                   </Button>
                 </form>
+                {mockProfile.usernameUpdatedAt && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Last changed: {new Date(mockProfile.usernameUpdatedAt).toLocaleDateString()}
+                  </p>
+                )}
               </div>
               <div className="flex gap-4">
                 <div className="text-center px-4 py-2 rounded-lg bg-primary/10 border border-primary/30">
@@ -160,6 +231,48 @@ export default function Profile() {
                   <p className="text-sm text-muted-foreground">WAGA</p>
                   <p className="text-xl font-bold text-secondary">{wagaBalance.toLocaleString()}</p>
                 </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <LinkIcon className="w-5 h-5 text-accent" />
+              Referral Program
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Share your link to earn 100 WAGA for every friend who joins.</p>
+                <div className="flex gap-2">
+                  <Input readOnly value={referralLink} className="h-9 text-xs" />
+                  <Button size="sm" onClick={copyReferral} variant="outline" className="h-9">
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-accent">Total Referrals: {mockProfile.referralCount || 0}</p>
+              </div>
+              
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Were you referred? Enter their wallet address to receive 100 WAGA.</p>
+                <form 
+                  onSubmit={(e) => { e.preventDefault(); referralMutation.mutate(referrerAddress); }} 
+                  className="flex gap-2"
+                >
+                  <Input 
+                    placeholder="Referrer's Wallet" 
+                    value={referrerAddress}
+                    onChange={(e) => setReferrerAddress(e.target.value)}
+                    className="h-9 text-xs"
+                    disabled={!!mockProfile.referredBy}
+                  />
+                  <Button 
+                    size="sm" 
+                    type="submit" 
+                    disabled={referralMutation.isPending || !!mockProfile.referredBy || !referrerAddress}
+                  >
+                    {mockProfile.referredBy ? "Applied" : "Claim"}
+                  </Button>
+                </form>
               </div>
             </div>
           </Card>

@@ -285,6 +285,7 @@ export class MemStorage implements IStorage {
     const profile: PlayerProfile = {
       walletAddress: data.walletAddress,
       displayName: data.displayName,
+      referralCount: 0,
       gamesPlayed: 0,
       gamesWon: 0,
       totalWagered: 0,
@@ -303,6 +304,20 @@ export class MemStorage implements IStorage {
     const profile = this.profiles.get(walletAddress);
     if (!profile) return undefined;
     
+    // Referral logic: if referredBy is being set for the first time
+    if (updates.referredBy && !profile.referredBy && updates.referredBy !== walletAddress) {
+      const referrer = this.profiles.get(updates.referredBy);
+      if (referrer) {
+        // Reward referrer
+        referrer.wagaEarned += 100;
+        referrer.referralCount = (referrer.referralCount || 0) + 1;
+        this.profiles.set(updates.referredBy, referrer);
+        
+        // Reward current user
+        updates.wagaEarned = (profile.wagaEarned || 0) + 100;
+      }
+    }
+
     const updated = { ...profile, ...updates };
     this.profiles.set(walletAddress, updated);
     return updated;

@@ -121,16 +121,33 @@ export async function registerRoutes(
     }
   });
 
-  // Update profile (including username)
+  // Update profile (including username and referral)
   app.patch("/api/profile/:walletAddress", async (req, res) => {
     try {
-      const { username } = req.body;
+      const { username, avatarUrl, referredBy } = req.body;
+      const profile = await storage.getProfile(req.params.walletAddress);
+      
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
       if (username) {
+        // Rule: username once per 72 hours
+        const lastUpdate = profile.usernameUpdatedAt || 0;
+        const now = Date.now();
+        const seventyTwoHours = 72 * 60 * 60 * 1000;
+        
+        if (now - lastUpdate < seventyTwoHours && profile.username) {
+          return res.status(400).json({ error: "Username can only be changed once every 72 hours" });
+        }
+
         const isUnique = await storage.checkUsernameUnique(username);
-        if (!isUnique) {
+        if (!isUnique && username !== profile.username) {
           return res.status(400).json({ error: "Username already taken" });
         }
+        req.body.usernameUpdatedAt = now;
       }
+
       const updated = await storage.updateProfile(req.params.walletAddress, req.body);
       res.json(updated);
     } catch (error) {
