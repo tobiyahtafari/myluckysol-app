@@ -29,7 +29,7 @@ export function Header() {
             <img
               src={headerLogo}
               alt="MyLuckySol"
-              className="h-10 w-auto"
+              className="h-14 w-auto"
               data-testid="img-header-logo"
             />
           </Link>

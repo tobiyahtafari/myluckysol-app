@@ -42,7 +42,7 @@ export function WagerSelector({ selectedWager, onSelect }: WagerSelectorProps) {
                   <span className="text-sm text-muted-foreground">SOL</span>
                 </div>
                 <div className="text-xs text-secondary">
-                  +{wagaReward} WAGA
+                  Receive +{wagaReward} WAGA Reward
                 </div>
               </div>
 
