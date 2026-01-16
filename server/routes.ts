@@ -73,6 +73,17 @@ export async function registerRoutes(
     }
   });
 
+  // Get live games (must come before /api/games/:id)
+  app.get("/api/games/live", async (req, res) => {
+    try {
+      const games = await storage.getLiveGames();
+      res.json(games);
+    } catch (error) {
+      console.error("Error getting live games:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Get game by ID
   app.get("/api/games/:id", async (req, res) => {
     try {
@@ -106,17 +117,6 @@ export async function registerRoutes(
       res.json(history);
     } catch (error) {
       console.error("Error getting history:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // Get live games
-  app.get("/api/games/live", async (req, res) => {
-    try {
-      const games = await storage.getLiveGames();
-      res.json(games);
-    } catch (error) {
-      console.error("Error getting live games:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
