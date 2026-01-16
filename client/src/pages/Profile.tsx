@@ -7,9 +7,7 @@ import { useWallet } from "@/lib/wallet-context";
 import { Link } from "wouter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
 import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Camera, Copy, Check } from "lucide-react";
-
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -62,21 +60,6 @@ export default function Profile() {
     },
   });
 
-  const handleUpdateAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // In a real app, upload to storage. Here we'll use base64 for demo
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateUsernameMutation.mutateAsync(reader.result as string, {
-          // hacky reuse of mutation for simplicity in quick edit
-        });
-        // Let's actually define a proper avatar mutation
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const updateAvatarMutation = useMutation({
     mutationFn: async (avatarUrl: string) => {
       await apiRequest("PATCH", `/api/profile/${address}`, { avatarUrl });
@@ -100,6 +83,7 @@ export default function Profile() {
       toast({ title: "Referral failed", description: err.message, variant: "destructive" });
     },
   });
+
   const handleUpdateUsername = (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -138,36 +122,17 @@ export default function Profile() {
     );
   }
 
-  const mockProfile: PlayerProfile = profile || {
-    walletAddress: address || "",
-    gamesPlayed: 42,
-    gamesWon: 18,
-    totalWagered: 12.5,
-    totalWon: 28.7,
-    wagaEarned: 4250,
-    currentStreak: 3,
-    bestStreak: 7,
-    luckScore: 72,
-    createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
-  };
+  const mockHistory: GameHistory[] = history || [];
 
-  const mockHistory: GameHistory[] = history || [
-    { gameId: "1", mode: "1v1", wager: 0.1, result: "won", payout: 0.18, wagaEarned: 19, playedAt: Date.now() - 3600000 },
-    { gameId: "2", mode: "2-round", wager: 1, result: "lost", wagaEarned: 10, playedAt: Date.now() - 7200000 },
-    { gameId: "3", mode: "1v1", wager: 0.1, result: "won", payout: 0.18, wagaEarned: 19, playedAt: Date.now() - 10800000 },
-    { gameId: "4", mode: "3-round", wager: 0.01, result: "lost", wagaEarned: 0.1, playedAt: Date.now() - 14400000 },
-    { gameId: "5", mode: "1v1", wager: 10, result: "won", payout: 18, wagaEarned: 1900, playedAt: Date.now() - 86400000 },
-  ];
-
-  const winRate = mockProfile.gamesPlayed > 0 
-    ? ((mockProfile.gamesWon / mockProfile.gamesPlayed) * 100).toFixed(1) 
+  const winRate = (profile?.gamesPlayed || 0) > 0 
+    ? (((profile?.gamesWon || 0) / (profile?.gamesPlayed || 1)) * 100).toFixed(1) 
     : "0";
 
   const stats = [
-    { icon: Gamepad2, label: "Games Played", value: mockProfile.gamesPlayed, color: "text-blue-400" },
-    { icon: Trophy, label: "Games Won", value: mockProfile.gamesWon, color: "text-amber-400" },
+    { icon: Gamepad2, label: "Games Played", value: profile?.gamesPlayed || 0, color: "text-blue-400" },
+    { icon: Trophy, label: "Games Won", value: profile?.gamesWon || 0, color: "text-amber-400" },
     { icon: TrendingUp, label: "Win Rate", value: `${winRate}%`, color: "text-green-400" },
-    { icon: Flame, label: "Current Streak", value: mockProfile.currentStreak, color: "text-orange-400" },
+    { icon: Flame, label: "Current Streak", value: profile?.currentStreak || 0, color: "text-orange-400" },
   ];
 
   return (
@@ -182,8 +147,8 @@ export default function Profile() {
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="relative group">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-4xl font-bold text-white overflow-hidden border-2 border-primary/20">
-                  {mockProfile.avatarUrl ? (
-                    <img src={mockProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     (address || "W").charAt(0).toUpperCase()
                   )}
@@ -201,7 +166,7 @@ export default function Profile() {
                 </label>
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-2xl font-bold mb-1">{mockProfile.username || shortAddress}</h1>
+                <h1 className="text-2xl font-bold mb-1">{profile?.username || shortAddress}</h1>
                 <p className="text-muted-foreground text-sm break-all">{address}</p>
                 <form onSubmit={handleUpdateUsername} className="mt-4 flex gap-2 max-w-sm mx-auto md:mx-0">
                   <Input
@@ -214,9 +179,9 @@ export default function Profile() {
                     {updateUsernameMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update"}
                   </Button>
                 </form>
-                {mockProfile.usernameUpdatedAt && (
+                {profile?.usernameUpdatedAt && (
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Last changed: {new Date(mockProfile.usernameUpdatedAt).toLocaleDateString()}
+                    Last changed: {new Date(profile.usernameUpdatedAt).toLocaleDateString()}
                   </p>
                 )}
               </div>
@@ -249,7 +214,7 @@ export default function Profile() {
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
-                <p className="text-xs text-accent">Total Referrals: {mockProfile.referralCount || 0}</p>
+                <p className="text-xs text-accent">Total Referrals: {profile?.referralCount || 0}</p>
               </div>
               
               <div className="space-y-3">
@@ -263,14 +228,14 @@ export default function Profile() {
                     value={referrerAddress}
                     onChange={(e) => setReferrerAddress(e.target.value)}
                     className="h-9 text-xs"
-                    disabled={!!mockProfile.referredBy}
+                    disabled={!!profile?.referredBy}
                   />
                   <Button 
                     size="sm" 
                     type="submit" 
-                    disabled={referralMutation.isPending || !!mockProfile.referredBy || !referrerAddress}
+                    disabled={referralMutation.isPending || !!profile?.referredBy || !referrerAddress}
                   >
-                    {mockProfile.referredBy ? "Applied" : "Claim"}
+                    {profile?.referredBy ? "Applied" : "Claim"}
                   </Button>
                 </form>
               </div>
@@ -278,7 +243,7 @@ export default function Profile() {
           </Card>
 
           <Card className="p-6">
-            <LuckBar score={mockProfile.luckScore} size="lg" />
+            <LuckBar score={profile?.luckScore || 50} size="lg" />
           </Card>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -308,20 +273,20 @@ export default function Profile() {
                 <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
                   <span className="text-muted-foreground">Total Wagered</span>
                   <span className="font-bold flex flex-col items-end">
-                    <span>{mockProfile.totalWagered.toFixed(2)} SOL</span>
-                    <SolToUsd sol={mockProfile.totalWagered} className="text-[10px] font-normal opacity-70" />
+                    <span>{(profile?.totalWagered || 0).toFixed(2)} SOL</span>
+                    <SolToUsd sol={profile?.totalWagered || 0} className="text-[10px] font-normal opacity-70" />
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-lg bg-accent/10 border border-accent/30">
                   <span className="text-muted-foreground">Total Won</span>
                   <span className="font-bold text-accent flex flex-col items-end">
-                    <span>{mockProfile.totalWon.toFixed(2)} SOL</span>
-                    <SolToUsd sol={mockProfile.totalWon} className="text-[10px] font-normal opacity-70" />
+                    <span>{(profile?.totalWon || 0).toFixed(2)} SOL</span>
+                    <SolToUsd sol={profile?.totalWon || 0} className="text-[10px] font-normal opacity-70" />
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/10 border border-secondary/30">
                   <span className="text-muted-foreground">WAGA Earned</span>
-                  <span className="font-bold text-secondary">{mockProfile.wagaEarned.toLocaleString()}</span>
+                  <span className="font-bold text-secondary">{(profile?.wagaEarned || 0).toLocaleString()}</span>
                 </div>
               </div>
             </Card>
@@ -334,11 +299,11 @@ export default function Profile() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
                   <span className="text-muted-foreground">Current Streak</span>
-                  <span className="font-bold text-orange-400">{mockProfile.currentStreak} wins</span>
+                  <span className="font-bold text-orange-400">{profile?.currentStreak || 0} wins</span>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-lg bg-primary/10 border border-primary/30">
                   <span className="text-muted-foreground">Best Streak</span>
-                  <span className="font-bold text-primary">{mockProfile.bestStreak} wins</span>
+                  <span className="font-bold text-primary">{profile?.bestStreak || 0} wins</span>
                 </div>
               </div>
             </Card>
@@ -403,6 +368,12 @@ export default function Profile() {
                   </motion.div>
                 );
               })}
+              {mockHistory.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Gamepad2 className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                  <p>No games played yet</p>
+                </div>
+              )}
             </div>
           </Card>
         </motion.div>
