@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { PlayerProfile } from "@shared/schema";
 
 interface WalletState {
   connected: boolean;
@@ -11,6 +13,7 @@ interface WalletContextType extends WalletState {
   connect: () => Promise<void>;
   disconnect: () => void;
   shortAddress: string | null;
+  profile: PlayerProfile | undefined;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
@@ -30,6 +33,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     address: null,
     balance: 0,
     wagaBalance: 0,
+  });
+
+  const { data: profile } = useQuery<PlayerProfile>({
+    queryKey: ["/api/profile", state.address],
+    enabled: state.connected && !!state.address,
   });
 
   const connect = useCallback(async () => {
@@ -57,7 +65,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     : null;
 
   return (
-    <WalletContext.Provider value={{ ...state, connect, disconnect, shortAddress }}>
+    <WalletContext.Provider value={{ ...state, connect, disconnect, shortAddress, profile }}>
       {children}
     </WalletContext.Provider>
   );

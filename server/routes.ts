@@ -110,15 +110,56 @@ export async function registerRoutes(
     }
   });
 
-  // Get leaderboard
-  app.get("/api/leaderboard", async (req, res) => {
+  // Get live games
+  app.get("/api/games/live", async (req, res) => {
     try {
-      const sortBy = (req.query.sortBy as "totalWon" | "luckScore" | "bestStreak") || "totalWon";
-      const limit = parseInt(req.query.limit as string) || 10;
-      const leaderboard = await storage.getLeaderboard(sortBy, limit);
-      res.json(leaderboard);
+      const games = await storage.getLiveGames();
+      res.json(games);
     } catch (error) {
-      console.error("Error getting leaderboard:", error);
+      console.error("Error getting live games:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Update profile (including username)
+  app.patch("/api/profile/:walletAddress", async (req, res) => {
+    try {
+      const { username } = req.body;
+      if (username) {
+        const isUnique = await storage.checkUsernameUnique(username);
+        if (!isUnique) {
+          return res.status(400).json({ error: "Username already taken" });
+        }
+      }
+      const updated = await storage.updateProfile(req.params.walletAddress, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Get chat messages
+  app.get("/api/games/:id/chat", async (req, res) => {
+    try {
+      const messages = await storage.getChatMessages(req.params.id);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error getting chat messages:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Post chat message
+  app.post("/api/games/:id/chat", async (req, res) => {
+    try {
+      const message = await storage.addChatMessage({
+        ...req.body,
+        gameId: req.params.id,
+      });
+      res.json(message);
+    } catch (error) {
+      console.error("Error adding chat message:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

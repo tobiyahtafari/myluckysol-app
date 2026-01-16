@@ -14,6 +14,8 @@ import { Link } from "wouter";
 
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 
+import { GameChat } from "@/components/GameChat";
+
 export default function GameRoom() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
@@ -111,155 +113,161 @@ export default function GameRoom() {
           </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
-        >
-          <Card className="p-6 text-center">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Total Pool</p>
-                <p className="text-4xl font-bold text-gradient-gold">
-                  {game.poolAmount.toFixed(2)} SOL <SolToUsd sol={game.poolAmount} className="text-sm font-normal block opacity-70" />
-                </p>
+        <div className="grid lg:grid-cols-3 gap-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-2 space-y-8"
+          >
+            <Card className="p-6 text-center">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Total Pool</p>
+                  <p className="text-4xl font-bold text-gradient-gold">
+                    {game.poolAmount.toFixed(2)} SOL <SolToUsd sol={game.poolAmount} className="text-sm font-normal block opacity-70" />
+                  </p>
+                </div>
+                <div className="w-px h-12 bg-border hidden md:block" />
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Winner Takes</p>
+                  <p className="text-3xl font-bold text-accent">
+                    {(game.poolAmount * 0.9).toFixed(2)} SOL <SolToUsd sol={game.poolAmount * 0.9} className="text-xs font-normal block opacity-70" />
+                  </p>
+                </div>
               </div>
-              <div className="w-px h-12 bg-border hidden md:block" />
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Winner Takes</p>
-                <p className="text-3xl font-bold text-accent">
-                  {(game.poolAmount * 0.9).toFixed(2)} SOL <SolToUsd sol={game.poolAmount * 0.9} className="text-xs font-normal block opacity-70" />
-                </p>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <div className="text-center">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={game.status}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                {game.status === "countdown" && game.countdownEndsAt ? (
-                  <CountdownTimer
-                    targetTime={game.countdownEndsAt}
-                    size="lg"
-                  />
-                ) : game.status === "resolving" ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-full border-4 border-primary animate-spin" style={{ borderTopColor: "transparent" }} />
-                      <Trophy className="w-10 h-10 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="text-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={game.status}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  {game.status === "countdown" && game.countdownEndsAt ? (
+                    <CountdownTimer
+                      targetTime={game.countdownEndsAt}
+                      size="lg"
+                    />
+                  ) : game.status === "resolving" ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="relative">
+                        <div className="w-24 h-24 rounded-full border-4 border-primary animate-spin" style={{ borderTopColor: "transparent" }} />
+                        <Trophy className="w-10 h-10 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                      </div>
+                      <p className="text-lg font-medium animate-pulse">Determining winner...</p>
                     </div>
-                    <p className="text-lg font-medium animate-pulse">Determining winner...</p>
-                  </div>
-                ) : game.status === "completed" && winner ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-20 h-20 rounded-full gradient-gold flex items-center justify-center glow-gold animate-winner">
-                      <Trophy className="w-10 h-10 text-black" />
+                  ) : game.status === "completed" && winner ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-20 h-20 rounded-full gradient-gold flex items-center justify-center glow-gold animate-winner">
+                        <Trophy className="w-10 h-10 text-black" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Winner</p>
+                        <p className="text-xl font-bold">
+                          {winner.displayName || `${winner.walletAddress.slice(0, 4)}...${winner.walletAddress.slice(-4)}`}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 text-lg">
+                      {game.status === "waiting" && (
+                        <Clock className="w-5 h-5 text-muted-foreground animate-pulse" />
+                      )}
+                      <span className="text-muted-foreground">{getStatusMessage()}</span>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Players ({playersJoined}/{slotsNeeded})
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
+                {game.players.map((player, i) => (
+                  <PlayerSlot
+                    key={player.id}
+                    player={player}
+                    index={i}
+                    isCurrentUser={player.walletAddress === address}
+                    isWinner={player.id === game.winnerId}
+                    isEliminated={player.isEliminated}
+                  />
+                ))}
+                {Array.from({ length: emptySlots }).map((_, i) => (
+                  <PlayerSlot
+                    key={`empty-${i}`}
+                    player={null}
+                    index={playersJoined + i}
+                  />
+                ))}
+              </div>
+            </Card>
+
+            {config.rounds > 1 && (
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Round Progress</h3>
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: config.rounds }).map((_, i) => {
+                    const roundNum = i + 1;
+                    const isComplete = game.rounds.some((r) => r.roundNumber === roundNum && r.winnerId);
+                    const isCurrent = game.currentRound === roundNum && game.status === "in_progress";
+
+                    return (
+                      <div key={i} className="flex items-center gap-2 flex-1">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                            isComplete
+                              ? "gradient-gold text-black"
+                              : isCurrent
+                              ? "bg-primary/20 border-2 border-primary text-primary animate-pulse"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {roundNum}
+                        </div>
+                        {i < config.rounds - 1 && (
+                          <div className={`flex-1 h-1 rounded ${isComplete ? "gradient-gold" : "bg-muted"}`} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
+
+            {game.status === "completed" && (
+              <Card className="p-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Coins className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Winner</p>
-                      <p className="text-xl font-bold">
-                        {winner.displayName || `${winner.walletAddress.slice(0, 4)}...${winner.walletAddress.slice(-4)}`}
+                      <p className="text-sm text-muted-foreground">WAGA Earned This Game</p>
+                      <p className="text-xl font-bold text-secondary">
+                        +{game.wagaRewards?.toLocaleString() || 0} WAGA
                       </p>
                     </div>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2 text-lg">
-                    {game.status === "waiting" && (
-                      <Clock className="w-5 h-5 text-muted-foreground animate-pulse" />
-                    )}
-                    <span className="text-muted-foreground">{getStatusMessage()}</span>
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Players ({playersJoined}/{slotsNeeded})
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
-              {game.players.map((player, i) => (
-                <PlayerSlot
-                  key={player.id}
-                  player={player}
-                  index={i}
-                  isCurrentUser={player.walletAddress === address}
-                  isWinner={player.id === game.winnerId}
-                  isEliminated={player.isEliminated}
-                />
-              ))}
-              {Array.from({ length: emptySlots }).map((_, i) => (
-                <PlayerSlot
-                  key={`empty-${i}`}
-                  player={null}
-                  index={playersJoined + i}
-                />
-              ))}
-            </div>
-          </Card>
-
-          {config.rounds > 1 && (
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Round Progress</h3>
-              <div className="flex items-center gap-2">
-                {Array.from({ length: config.rounds }).map((_, i) => {
-                  const roundNum = i + 1;
-                  const isComplete = game.rounds.some((r) => r.roundNumber === roundNum && r.winnerId);
-                  const isCurrent = game.currentRound === roundNum && game.status === "in_progress";
-
-                  return (
-                    <div key={i} className="flex items-center gap-2 flex-1">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-                          isComplete
-                            ? "gradient-gold text-black"
-                            : isCurrent
-                            ? "bg-primary/20 border-2 border-primary text-primary animate-pulse"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {roundNum}
-                      </div>
-                      {i < config.rounds - 1 && (
-                        <div className={`flex-1 h-1 rounded ${isComplete ? "gradient-gold" : "bg-muted"}`} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-          )}
-
-          {game.status === "completed" && (
-            <Card className="p-6">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Coins className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">WAGA Earned This Game</p>
-                    <p className="text-xl font-bold text-secondary">
-                      +{game.wagaRewards?.toLocaleString() || 0} WAGA
-                    </p>
-                  </div>
+                  <Link href="/play">
+                    <Button className="gap-2" data-testid="button-play-again">
+                      Play Again
+                    </Button>
+                  </Link>
                 </div>
-                <Link href="/play">
-                  <Button className="gap-2" data-testid="button-play-again">
-                    Play Again
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          )}
-        </motion.div>
+              </Card>
+            )}
+          </motion.div>
+
+          <div className="space-y-8">
+            <GameChat gameId={game.id} />
+          </div>
+        </div>
       </div>
 
       {showWinner && winner && (

@@ -3,13 +3,15 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GameModeCard } from "@/components/GameModeCard";
 import { WagerSelector } from "@/components/WagerSelector";
 import { useWallet } from "@/lib/wallet-context";
 import { useGameStore } from "@/lib/game-store";
-import { GAME_MODES, type GameModeKey, type WagerTier } from "@shared/schema";
-import { Wallet, ArrowRight, Loader2, Info } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { GAME_MODES, type GameModeKey, type WagerTier, type Game } from "@shared/schema";
+import { Wallet, ArrowRight, Loader2, Info, Users, Play as PlayIcon } from "lucide-react";
+import { Link } from "wouter";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +21,14 @@ export default function Play() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: liveGames, isLoading: isLoadingLive } = useQuery<Game[]>({
+    queryKey: ["/api/games/live"],
+    refetchInterval: 5000,
+  });
+
+  const activeGames = liveGames?.filter(g => g.players.some(p => p.walletAddress === address)) || [];
+  const otherLiveGames = liveGames?.filter(g => !g.players.some(p => p.walletAddress === address)) || [];
 
   const joinGameMutation = useMutation({
     mutationFn: async (data: { mode: GameModeKey; wager: WagerTier; walletAddress: string }) => {
@@ -95,118 +105,192 @@ export default function Play() {
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="container mx-auto max-w-6xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold mb-4">
-            Choose Your <span className="text-gradient-gold">Game</span>
-          </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Select a game mode and wager amount, then join the pool. 
-            Winner takes 90% of the pot!
-          </p>
-        </motion.div>
+        <Tabs defaultValue="join" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+            <TabsTrigger value="join">Join Game</TabsTrigger>
+            <TabsTrigger value="live">Live Games</TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-12">
-          <section>
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center text-sm font-bold text-black">1</span>
-              Select Game Mode
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {gameModes.map((mode) => (
-                <GameModeCard
-                  key={mode}
-                  mode={mode}
-                  isSelected={selectedMode === mode}
-                  onSelect={setSelectedMode}
-                />
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center text-sm font-bold text-black">2</span>
-              Select Wager
-            </h2>
-            <Card className="p-6">
-              <WagerSelector
-                selectedWager={selectedWager}
-                onSelect={setSelectedWager}
-              />
-            </Card>
-          </section>
-
-          {selectedMode && selectedWager && (
-            <motion.section
+          <TabsContent value="join">
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-12"
             >
-              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center text-sm font-bold text-black">3</span>
-                Confirm & Play
-              </h2>
-              <Card className="p-6">
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <Info className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{selectedConfig?.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedConfig?.players} players, {selectedConfig?.rounds} round{(selectedConfig?.rounds || 0) > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    </div>
+              <h1 className="text-4xl font-bold mb-4">
+                Choose Your <span className="text-gradient-gold">Game</span>
+              </h1>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Select a game mode and wager amount, then join the pool. 
+                Winner takes 90% of the pot!
+              </p>
+            </motion.div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">Your Wager</p>
-                        <p className="text-lg font-bold text-gradient-gold">{selectedWager} SOL</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">Total Pool</p>
-                        <p className="text-lg font-bold">{(selectedWager * (selectedConfig?.players || 2)).toFixed(2)} SOL</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">Winner Gets</p>
-                        <p className="text-lg font-bold text-accent">{(selectedWager * (selectedConfig?.players || 2) * 0.9).toFixed(2)} SOL</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">WAGA Reward</p>
-                        <p className="text-lg font-bold text-secondary">+{selectedWager * 10}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    size="lg"
-                    onClick={handleJoinGame}
-                    disabled={joinGameMutation.isPending}
-                    className="gap-2 min-w-[200px]"
-                    data-testid="button-join-game"
-                  >
-                    {joinGameMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Joining...
-                      </>
-                    ) : (
-                      <>
-                        Join Game
-                        <ArrowRight className="w-5 h-5" />
-                      </>
-                    )}
-                  </Button>
+            <div className="space-y-12">
+              <section>
+                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center text-sm font-bold text-black">1</span>
+                  Select Game Mode
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {gameModes.map((mode) => (
+                    <GameModeCard
+                      key={mode}
+                      mode={mode}
+                      isSelected={selectedMode === mode}
+                      onSelect={setSelectedMode}
+                    />
+                  ))}
                 </div>
-              </Card>
-            </motion.section>
-          )}
-        </div>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center text-sm font-bold text-black">2</span>
+                  Select Wager
+                </h2>
+                <Card className="p-6">
+                  <WagerSelector
+                    selectedWager={selectedWager}
+                    onSelect={setSelectedWager}
+                  />
+                </Card>
+              </section>
+
+              {selectedMode && selectedWager && (
+                <motion.section
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center text-sm font-bold text-black">3</span>
+                    Confirm & Play
+                  </h2>
+                  <Card className="p-6">
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                          <Info className="w-5 h-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{selectedConfig?.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {selectedConfig?.players} players, {selectedConfig?.rounds} round{(selectedConfig?.rounds || 0) > 1 ? "s" : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                          <div className="p-3 rounded-lg bg-muted/50">
+                            <p className="text-xs text-muted-foreground">Your Wager</p>
+                            <p className="text-lg font-bold text-gradient-gold">{selectedWager} SOL</p>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50">
+                            <p className="text-xs text-muted-foreground">Total Pool</p>
+                            <p className="text-lg font-bold">{(selectedWager * (selectedConfig?.players || 2)).toFixed(2)} SOL</p>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50">
+                            <p className="text-xs text-muted-foreground">Winner Gets</p>
+                            <p className="text-lg font-bold text-accent">{(selectedWager * (selectedConfig?.players || 2) * 0.9).toFixed(2)} SOL</p>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50">
+                            <p className="text-xs text-muted-foreground">WAGA Reward</p>
+                            <p className="text-lg font-bold text-secondary">+{selectedWager * 10}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        size="lg"
+                        onClick={handleJoinGame}
+                        disabled={joinGameMutation.isPending}
+                        className="gap-2 min-w-[200px]"
+                        data-testid="button-join-game"
+                      >
+                        {joinGameMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Joining...
+                          </>
+                        ) : (
+                          <>
+                            Join Game
+                            <ArrowRight className="w-5 h-5" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </Card>
+                </motion.section>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="live">
+            <div className="space-y-8">
+              {activeGames.length > 0 && (
+                <section>
+                  <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-accent" />
+                    Your Active Games
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {activeGames.map(game => (
+                      <LiveGameCard key={game.id} game={game} isActive />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section>
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <PlayIcon className="w-5 h-5 text-primary" />
+                  Live Games
+                </h2>
+                {otherLiveGames.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {otherLiveGames.map(game => (
+                      <LiveGameCard key={game.id} game={game} />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-12 text-center">
+                    <p className="text-muted-foreground">No other live games currently.</p>
+                  </Card>
+                )}
+              </section>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
+  );
+}
+
+function LiveGameCard({ game, isActive }: { game: Game; isActive?: boolean }) {
+  const config = GAME_MODES[game.mode];
+  return (
+    <Card className={`p-4 border-2 transition-all hover:border-primary/50 ${isActive ? 'border-accent/50' : ''}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="font-bold">{config.name}</h3>
+          <p className="text-sm text-muted-foreground capitalize">{game.status.replace('_', ' ')}</p>
+        </div>
+        <div className="text-right">
+          <p className="font-bold text-gradient-gold">{game.wager} SOL</p>
+          <p className="text-xs text-muted-foreground">Pool: {game.poolAmount} SOL</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm">{game.players.length}/{config.players} Players</span>
+        </div>
+        <Link href={`/game/${game.id}`}>
+          <Button size="sm" variant={isActive ? "default" : "outline"}>
+            {isActive ? "Join Game" : "Spectate"}
+          </Button>
+        </Link>
+      </div>
+    </Card>
   );
 }

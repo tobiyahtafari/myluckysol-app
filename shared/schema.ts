@@ -70,6 +70,7 @@ export type InsertGame = z.infer<typeof insertGameSchema>;
 export const playerProfileSchema = z.object({
   walletAddress: z.string(),
   displayName: z.string().optional(),
+  username: z.string().optional(),
   gamesPlayed: z.number().default(0),
   gamesWon: z.number().default(0),
   totalWagered: z.number().default(0),
@@ -84,12 +85,24 @@ export const playerProfileSchema = z.object({
 
 export type PlayerProfile = z.infer<typeof playerProfileSchema>;
 
-export const insertPlayerProfileSchema = playerProfileSchema.pick({
-  walletAddress: true,
-  displayName: true,
+export const chatMessageSchema = z.object({
+  id: z.string(),
+  gameId: z.string(),
+  walletAddress: z.string(),
+  username: z.string().optional(),
+  message: z.string(),
+  timestamp: z.number(),
 });
 
-export type InsertPlayerProfile = z.infer<typeof insertPlayerProfileSchema>;
+export type ChatMessage = z.infer<typeof chatMessageSchema>;
+
+export const insertChatMessageSchema = chatMessageSchema.omit({ id: true, timestamp: true });
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+export const usernameSchema = z.string()
+  .min(3)
+  .max(20)
+  .regex(/^[a-zA-Z0-9._-]+$/, "Usernames can only contain letters, numbers, _, -, and .");
 
 export const leaderboardEntrySchema = z.object({
   rank: z.number(),

@@ -14,7 +14,7 @@ import {
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 
 export function Header() {
-  const { connected, shortAddress, balance, wagaBalance, connect, disconnect } = useWallet();
+  const { connected, shortAddress, balance, wagaBalance, connect, disconnect, profile } = useWallet();
   const { solPrice } = useSolPrice();
   const [location] = useLocation();
 
@@ -75,7 +75,7 @@ export function Header() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="gap-2" data-testid="button-wallet-dropdown">
                       <div className="w-2 h-2 rounded-full bg-accent" />
-                      {shortAddress}
+                      {profile?.username || shortAddress}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">

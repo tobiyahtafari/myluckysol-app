@@ -6,21 +6,22 @@ import { LuckBar } from "@/components/LuckBar";
 import { useWallet } from "@/lib/wallet-context";
 import { Link } from "wouter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
-import {
-  Wallet,
-  Trophy,
-  Gamepad2,
-  TrendingUp,
-  Coins,
-  Clock,
-  ArrowRight,
-  Flame,
-} from "lucide-react";
+import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2 } from "lucide-react";
 
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { usernameSchema } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
 export default function Profile() {
   const { connected, connect, address, shortAddress, balance, wagaBalance } = useWallet();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [newUsername, setNewUsername] = useState("");
 
   const { data: profile } = useQuery<PlayerProfile>({
     queryKey: ["/api/profile", address],
@@ -31,6 +32,38 @@ export default function Profile() {
     queryKey: ["/api/profile/history", address],
     enabled: connected && !!address,
   });
+
+  const updateUsernameMutation = useMutation({
+    mutationFn: async (username: string) => {
+      await apiRequest("PATCH", `/api/profile/${address}`, { username });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      setNewUsername("");
+      toast({ title: "Username updated" });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Update failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUpdateUsername = (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      usernameSchema.parse(newUsername);
+      updateUsernameMutation.mutate(newUsername);
+    } catch (err: any) {
+      toast({
+        title: "Invalid username",
+        description: err.errors?.[0]?.message || "Between 3-20 chars, letters, numbers, ._- only",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!connected) {
     return (
@@ -102,8 +135,19 @@ export default function Profile() {
                 {(address || "W").charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-2xl font-bold mb-1">{shortAddress}</h1>
+                <h1 className="text-2xl font-bold mb-1">{mockProfile.username || shortAddress}</h1>
                 <p className="text-muted-foreground text-sm break-all">{address}</p>
+                <form onSubmit={handleUpdateUsername} className="mt-4 flex gap-2 max-w-sm mx-auto md:mx-0">
+                  <Input
+                    placeholder="New username"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    className="h-9"
+                  />
+                  <Button size="sm" type="submit" disabled={updateUsernameMutation.isPending}>
+                    {updateUsernameMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update"}
+                  </Button>
+                </form>
               </div>
               <div className="flex gap-4">
                 <div className="text-center px-4 py-2 rounded-lg bg-primary/10 border border-primary/30">

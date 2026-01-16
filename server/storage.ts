@@ -9,6 +9,8 @@ import type {
   GameHistory,
   GameModeKey,
   WagerTier,
+  ChatMessage,
+  InsertChatMessage,
 } from "@shared/schema";
 import { GAME_MODES, WINNER_SHARE, WAGA_ENTRY_MULTIPLIER, WAGA_WIN_MULTIPLIER } from "@shared/schema";
 
@@ -19,12 +21,14 @@ export interface IStorage {
   updateGame(id: string, updates: Partial<Game>): Promise<Game | undefined>;
   findAvailableGame(mode: GameModeKey, wager: WagerTier): Promise<Game | undefined>;
   joinGame(gameId: string, walletAddress: string): Promise<Game | undefined>;
+  getLiveGames(): Promise<Game[]>;
   
   // Players
   getProfile(walletAddress: string): Promise<PlayerProfile | undefined>;
   createProfile(data: InsertPlayerProfile): Promise<PlayerProfile>;
   updateProfile(walletAddress: string, updates: Partial<PlayerProfile>): Promise<PlayerProfile | undefined>;
   getOrCreateProfile(walletAddress: string): Promise<PlayerProfile>;
+  checkUsernameUnique(username: string): Promise<boolean>;
   
   // Leaderboard
   getLeaderboard(sortBy: "totalWon" | "luckScore" | "bestStreak", limit: number): Promise<LeaderboardEntry[]>;
@@ -32,17 +36,23 @@ export interface IStorage {
   // Game History
   getGameHistory(walletAddress: string, limit: number): Promise<GameHistory[]>;
   addGameHistory(walletAddress: string, history: GameHistory): Promise<void>;
+
+  // Chat
+  getChatMessages(gameId: string): Promise<ChatMessage[]>;
+  addChatMessage(data: InsertChatMessage): Promise<ChatMessage>;
 }
 
 export class MemStorage implements IStorage {
   private games: Map<string, Game>;
   private profiles: Map<string, PlayerProfile>;
   private gameHistory: Map<string, GameHistory[]>;
+  private chatMessages: Map<string, ChatMessage[]>;
 
   constructor() {
     this.games = new Map();
     this.profiles = new Map();
     this.gameHistory = new Map();
+    this.chatMessages = new Map();
   }
 
   async createGame(data: InsertGame): Promise<Game> {
@@ -332,6 +342,37 @@ export class MemStorage implements IStorage {
       luckScore: p.luckScore,
       bestStreak: p.bestStreak,
     }));
+  }
+
+  async getLiveGames(): Promise<Game[]> {
+    return Array.from(this.games.values()).filter(g => g.status !== "completed");
+  }
+
+  async checkUsernameUnique(username: string): Promise<boolean> {
+    const lowercaseUsername = username.toLowerCase();
+    for (const profile of this.profiles.values()) {
+      if (profile.username?.toLowerCase() === lowercaseUsername) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  async getChatMessages(gameId: string): Promise<ChatMessage[]> {
+    return this.chatMessages.get(gameId) || [];
+  }
+
+  async addChatMessage(data: InsertChatMessage): Promise<ChatMessage> {
+    const message: ChatMessage = {
+      ...data,
+      id: randomUUID(),
+      timestamp: Date.now(),
+    };
+    const messages = this.chatMessages.get(data.gameId) || [];
+    messages.push(message);
+    if (messages.length > 100) messages.shift();
+    this.chatMessages.set(data.gameId, messages);
+    return message;
   }
 
   async getGameHistory(walletAddress: string, limit: number): Promise<GameHistory[]> {
