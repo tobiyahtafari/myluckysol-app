@@ -55,6 +55,7 @@ export const gameSchema = z.object({
   startedAt: z.number().optional(),
   completedAt: z.number().optional(),
   countdownEndsAt: z.number().optional(),
+  roundEndsAt: z.number().optional(),
   createdAt: z.number(),
 });
 

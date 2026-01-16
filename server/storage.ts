@@ -212,8 +212,12 @@ export class MemStorage implements IStorage {
     const game = this.games.get(gameId);
     if (!game || game.status !== "countdown") return;
 
+    const config = GAME_MODES[game.mode];
+    const roundDuration = config.timer * 1000;
+
     game.status = "in_progress";
     game.startedAt = Date.now();
+    game.roundEndsAt = Date.now() + roundDuration;
 
     const playerIds = game.players.map((p) => p.id);
     game.rounds = [
@@ -233,10 +237,11 @@ export class MemStorage implements IStorage {
     if (!game) return;
 
     const config = GAME_MODES[game.mode];
+    const roundDuration = config.timer * 1000;
     let remainingPlayers = [...game.players];
 
     for (let round = 1; round <= config.rounds; round++) {
-      await new Promise((r) => setTimeout(r, 3000 + Math.random() * 2000));
+      await new Promise((r) => setTimeout(r, roundDuration));
 
       const currentGame = this.games.get(gameId);
       if (!currentGame || currentGame.status === "completed") return;
@@ -273,6 +278,10 @@ export class MemStorage implements IStorage {
 
       currentGame.currentRound = round + 1;
       remainingPlayers = winners;
+
+      if (remainingPlayers.length > 1) {
+        currentGame.roundEndsAt = Date.now() + roundDuration;
+      }
 
       this.games.set(gameId, currentGame);
 

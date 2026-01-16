@@ -146,10 +146,21 @@ export default function GameRoom() {
                   exit={{ opacity: 0, y: -10 }}
                 >
                   {game.status === "countdown" && game.countdownEndsAt ? (
-                    <CountdownTimer
-                      targetTime={game.countdownEndsAt}
-                      size="lg"
-                    />
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-sm text-muted-foreground">Game starting in</p>
+                      <CountdownTimer
+                        targetTime={game.countdownEndsAt}
+                        size="lg"
+                      />
+                    </div>
+                  ) : game.status === "in_progress" && game.roundEndsAt ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-sm text-muted-foreground">Round {game.currentRound} of {config.rounds}</p>
+                      <CountdownTimer
+                        targetTime={game.roundEndsAt}
+                        size="lg"
+                      />
+                    </div>
                   ) : game.status === "resolving" ? (
                     <div className="flex flex-col items-center gap-4">
                       <div className="relative">

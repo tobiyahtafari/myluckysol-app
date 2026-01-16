@@ -136,8 +136,18 @@ export function WinnerReveal({
             className="w-full py-3 px-6 rounded-xl gradient-gold text-black font-semibold hover:opacity-90 transition-opacity"
             data-testid="button-close-winner"
           >
-            {isCurrentUserWinner ? "Claim Victory" : "Continue"}
+            {isCurrentUserWinner ? "Awesome!" : "Continue"}
           </motion.button>
+          {isCurrentUserWinner && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-xs text-muted-foreground mt-3"
+            >
+              Rewards sent to your wallet automatically
+            </motion.p>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
