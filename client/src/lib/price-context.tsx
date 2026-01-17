@@ -48,5 +48,5 @@ export function useSolPrice() {
 
 export function SolToUsd({ sol, className }: { sol: number; className?: string }) {
   const { convertSolToUsd } = useSolPrice();
-  return <span className={className}>({convertSolToUsd(sol)})</span>;
+  return <span className={`text-lime-400 ${className || ""}`}>({convertSolToUsd(sol)})</span>;
 }

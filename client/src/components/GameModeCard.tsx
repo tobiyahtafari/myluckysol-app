@@ -17,10 +17,24 @@ const modeIcons: Record<GameModeKey, string> = {
 };
 
 const modeColors: Record<GameModeKey, string> = {
-  "1v1": "from-amber-500 to-orange-600",
-  "2-round": "from-purple-500 to-violet-600",
-  "3-round": "from-cyan-400 to-blue-600",
-  "4-round": "from-emerald-400 to-green-600",
+  "1v1": "from-[#FFD700] via-[#FFA500] to-[#FF8C00]",
+  "2-round": "from-[#9945FF] via-[#DC1FFF] to-[#9945FF]",
+  "3-round": "from-[#03E1FF] via-[#00FFA3] to-[#03E1FF]",
+  "4-round": "from-[#00FFA3] via-[#03E1FF] to-[#9945FF]",
+};
+
+const modeBorderColors: Record<GameModeKey, string> = {
+  "1v1": "border-[#FFD700]/50 hover:border-[#FFD700]",
+  "2-round": "border-[#9945FF]/50 hover:border-[#9945FF]",
+  "3-round": "border-[#03E1FF]/50 hover:border-[#03E1FF]",
+  "4-round": "border-[#00FFA3]/50 hover:border-[#00FFA3]",
+};
+
+const modeGlows: Record<GameModeKey, string> = {
+  "1v1": "shadow-[0_0_20px_rgba(255,215,0,0.3)]",
+  "2-round": "shadow-[0_0_20px_rgba(153,69,255,0.3)]",
+  "3-round": "shadow-[0_0_20px_rgba(3,225,255,0.3)]",
+  "4-round": "shadow-[0_0_20px_rgba(0,255,163,0.3)]",
 };
 
 export function GameModeCard({ mode, isSelected, onSelect }: GameModeCardProps) {
@@ -34,10 +48,10 @@ export function GameModeCard({ mode, isSelected, onSelect }: GameModeCardProps) 
       onClick={() => onSelect(mode)}
     >
       <Card
-        className={`relative cursor-pointer overflow-visible transition-all duration-300 game-card-hover ${
+        className={`relative cursor-pointer overflow-visible transition-all duration-300 game-card-hover ${modeBorderColors[mode]} ${
           isSelected
-            ? "ring-2 ring-primary glow-gold"
-            : "hover:border-primary/50"
+            ? `ring-2 ring-primary ${modeGlows[mode]}`
+            : ""
         }`}
         data-testid={`card-mode-${mode}`}
       >
@@ -78,13 +92,6 @@ export function GameModeCard({ mode, isSelected, onSelect }: GameModeCardProps) 
             </div>
           </div>
 
-          {config.rounds > 1 && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground">
-                Winnings auto-roll forward each round
-              </p>
-            </div>
-          )}
         </div>
       </Card>
     </motion.div>
