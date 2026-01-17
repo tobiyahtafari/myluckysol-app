@@ -103,12 +103,12 @@ export default function Play() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 relative">
-      <div className="fixed inset-0 pointer-events-none -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#9945FF]/10 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#03E1FF]/10 rounded-full blur-[100px]" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-[#00FFA3]/8 rounded-full blur-[80px]" style={{ animationDelay: '2s' }} />
-      </div>
+    <div className="min-h-screen py-8 px-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#9945FF]/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#03E1FF]/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 right-0 w-80 h-80 bg-[#00FFA3]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#DC1FFF]/10 rounded-full blur-3xl" />
       <div className="container mx-auto max-w-6xl relative z-10">
         <Tabs defaultValue="join" className="space-y-8">
           <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">

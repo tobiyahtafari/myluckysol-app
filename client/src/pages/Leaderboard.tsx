@@ -57,8 +57,12 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <div className="min-h-screen py-8 px-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent" />
+      <div className="absolute top-1/4 left-0 w-96 h-96 bg-[#FFD700]/15 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute top-1/2 right-0 w-80 h-80 bg-[#9945FF]/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-[#03E1FF]/10 rounded-full blur-3xl" />
+      <div className="container mx-auto max-w-4xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
