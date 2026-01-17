@@ -29,7 +29,7 @@ export default function Profile() {
   });
 
   const referralLink = profile?.username 
-    ? `${window.location.origin}/play?ref=${address}&u=${encodeURIComponent(profile.username)}`
+    ? `${window.location.origin}/play?ref=${encodeURIComponent(profile.username)}`
     : `${window.location.origin}/play?ref=${address}`;
 
   const copyReferral = () => {

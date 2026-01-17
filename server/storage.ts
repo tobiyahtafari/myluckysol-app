@@ -12,6 +12,8 @@ import {
 
 export interface IStorage {
   getProfile(walletAddress: string): Promise<PlayerProfile | undefined>;
+  getProfileByUsername(username: string): Promise<PlayerProfile | undefined>;
+  getProfileByUsernameOrWallet(identifier: string): Promise<PlayerProfile | undefined>;
   createProfile(data: { walletAddress: string; displayName?: string }): Promise<PlayerProfile>;
   updateProfile(walletAddress: string, updates: Partial<PlayerProfile>): Promise<PlayerProfile | undefined>;
   getOrCreateProfile(walletAddress: string): Promise<PlayerProfile>;
@@ -45,6 +47,17 @@ export class MemStorage implements IStorage {
     return this.profiles.get(walletAddress);
   }
 
+  async getProfileByUsername(username: string): Promise<PlayerProfile | undefined> {
+    const profiles = Array.from(this.profiles.values());
+    return profiles.find(p => p.username?.toLowerCase() === username.toLowerCase());
+  }
+
+  async getProfileByUsernameOrWallet(identifier: string): Promise<PlayerProfile | undefined> {
+    const byWallet = this.profiles.get(identifier);
+    if (byWallet) return byWallet;
+    return this.getProfileByUsername(identifier);
+  }
+
   async createProfile(data: { walletAddress: string; displayName?: string }): Promise<PlayerProfile> {
     const profile: PlayerProfile = {
       walletAddress: data.walletAddress,
@@ -69,12 +82,15 @@ export class MemStorage implements IStorage {
     if (!profile) return undefined;
     
     if (updates.referredBy && !profile.referredBy && updates.referredBy !== walletAddress) {
-      const referrer = this.profiles.get(updates.referredBy);
-      if (referrer) {
+      const referrer = await this.getProfileByUsernameOrWallet(updates.referredBy);
+      if (referrer && referrer.walletAddress !== walletAddress) {
         referrer.wagaEarned += 100;
         referrer.referralCount = (referrer.referralCount || 0) + 1;
-        this.profiles.set(updates.referredBy, referrer);
+        this.profiles.set(referrer.walletAddress, referrer);
         updates.wagaEarned = (profile.wagaEarned || 0) + 100;
+        updates.referredBy = referrer.walletAddress;
+      } else if (!referrer) {
+        delete updates.referredBy;
       }
     }
 
