@@ -23,7 +23,14 @@ export default function Profile() {
   const [referrerAddress, setReferrerAddress] = useState("");
   const [copied, setCopy] = useState(false);
 
-  const referralLink = `${window.location.origin}/play?ref=${address}`;
+  const { data: profile } = useQuery<PlayerProfile>({
+    queryKey: ["/api/profile", address],
+    enabled: connected && !!address,
+  });
+
+  const referralLink = profile?.username 
+    ? `${window.location.origin}/play?ref=${address}&u=${encodeURIComponent(profile.username)}`
+    : `${window.location.origin}/play?ref=${address}`;
 
   const copyReferral = () => {
     navigator.clipboard.writeText(referralLink);
@@ -31,11 +38,6 @@ export default function Profile() {
     setTimeout(() => setCopy(false), 2000);
     toast({ title: "Referral link copied!" });
   };
-
-  const { data: profile } = useQuery<PlayerProfile>({
-    queryKey: ["/api/profile", address],
-    enabled: connected && !!address,
-  });
 
   const { data: history } = useQuery<GameHistory[]>({
     queryKey: ["/api/profile/history", address],
@@ -325,45 +327,81 @@ export default function Profile() {
             <div className="space-y-3">
               {mockHistory.map((game, i) => {
                 const timeAgo = formatTimeAgo(game.playedAt);
+                const modeConfig = { "1v1": 2, "2-round": 4, "3-round": 8, "4-round": 16 };
+                const totalPlayers = game.totalPlayers || modeConfig[game.mode] || 2;
+                const poolAmount = game.poolAmount || (game.wager * totalPlayers);
+                
                 return (
                   <motion.div
                     key={game.gameId}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
+                    className={`p-4 rounded-lg border ${
                       game.result === "won"
                         ? "bg-accent/5 border-accent/30"
                         : "bg-muted/30 border-border"
                     }`}
                     data-testid={`history-item-${game.gameId}`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          game.result === "won"
-                            ? "bg-accent/20 text-accent"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {game.result === "won" ? (
-                          <Trophy className="w-5 h-5" />
-                        ) : (
-                          <Gamepad2 className="w-5 h-5" />
-                        )}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            game.result === "won"
+                              ? "bg-accent/20 text-accent"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {game.result === "won" ? (
+                            <Trophy className="w-5 h-5" />
+                          ) : (
+                            <Gamepad2 className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium capitalize">{game.mode.replace("-", " ")} Mode</p>
+                          <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium capitalize">{game.mode.replace("-", " ")} Mode</p>
-                        <p className="text-sm text-muted-foreground">{timeAgo}</p>
+                      <div className="text-right">
+                        <p className={`font-bold ${game.result === "won" ? "text-accent" : "text-muted-foreground"}`}>
+                          {game.result === "won" ? `+${game.payout?.toFixed(2)}` : `-${game.wager}`} SOL
+                        </p>
+                        <SolToUsd sol={game.result === "won" ? (game.payout || 0) : game.wager} className="text-[10px] opacity-70" />
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className={`font-bold ${game.result === "won" ? "text-accent" : "text-muted-foreground"} flex flex-col items-end`}>
-                        <span>{game.result === "won" ? `+${game.payout?.toFixed(2)}` : `-${game.wager}`} SOL</span>
-                        <SolToUsd sol={game.result === "won" ? (game.payout || 0) : game.wager} className="text-[10px] font-normal opacity-70" />
-                      </p>
-                      <p className="text-xs text-secondary">+{game.wagaEarned} WAGA</p>
+                    <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                      <div className="bg-muted/30 p-2 rounded text-center">
+                        <p className="text-muted-foreground">Wager</p>
+                        <p className="font-semibold">{game.wager} SOL</p>
+                      </div>
+                      <div className="bg-muted/30 p-2 rounded text-center">
+                        <p className="text-muted-foreground">Pool</p>
+                        <p className="font-semibold">{poolAmount.toFixed(2)} SOL</p>
+                      </div>
+                      <div className="bg-muted/30 p-2 rounded text-center">
+                        <p className="text-muted-foreground">Players</p>
+                        <p className="font-semibold">{totalPlayers}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        {game.roundsSurvived !== undefined && (
+                          <span className="text-muted-foreground">
+                            Rounds survived: <span className="font-medium text-foreground">{game.roundsSurvived}</span>
+                          </span>
+                        )}
+                        {game.opponents && game.opponents.length > 0 && (
+                          <span className="text-muted-foreground">
+                            vs {game.opponents.slice(0, 2).map(o => o.displayName || o.walletAddress.slice(0, 6)).join(", ")}
+                            {game.opponents.length > 2 && ` +${game.opponents.length - 2} more`}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-secondary font-medium">+{game.wagaEarned} WAGA</span>
                     </div>
                   </motion.div>
                 );

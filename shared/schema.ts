@@ -130,6 +130,13 @@ export const gameHistorySchema = z.object({
   payout: z.number().optional(),
   wagaEarned: z.number(),
   playedAt: z.number(),
+  totalPlayers: z.number().optional(),
+  poolAmount: z.number().optional(),
+  roundsSurvived: z.number().optional(),
+  opponents: z.array(z.object({
+    walletAddress: z.string(),
+    displayName: z.string().optional(),
+  })).optional(),
 });
 
 export type GameHistory = z.infer<typeof gameHistorySchema>;

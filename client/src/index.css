@@ -428,4 +428,28 @@
   .chat-gradient-border {
     background: linear-gradient(180deg, rgba(153, 69, 255, 0.3) 0%, rgba(3, 225, 255, 0.1) 100%);
   }
+
+  .chat-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .chat-scrollbar::-webkit-scrollbar-track {
+    background: rgba(153, 69, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .chat-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #9945FF 0%, #03E1FF 50%, #00FFA3 100%);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+  }
+
+  .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #DC1FFF 0%, #9945FF 50%, #03E1FF 100%);
+  }
+
+  .chat-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #9945FF rgba(153, 69, 255, 0.1);
+  }
 }

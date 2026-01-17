@@ -40,6 +40,7 @@ export function GameChat({ gameId }: { gameId: string }) {
     onSuccess: () => {
       setMessage("");
       queryClient.invalidateQueries({ queryKey: ["/api/games", gameId, "chat"] });
+      setTimeout(() => scrollToBottom(), 100);
     },
   });
 
@@ -104,7 +105,7 @@ export function GameChat({ gameId }: { gameId: string }) {
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 p-4 overflow-y-auto scroll-smooth"
+          className="flex-1 p-4 overflow-y-auto scroll-smooth chat-scrollbar"
         >
           <div className="space-y-3">
             <AnimatePresence initial={false}>
