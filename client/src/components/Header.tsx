@@ -56,23 +56,6 @@ export function Header() {
           <div className="flex items-center gap-3">
             {connected ? (
               <>
-                <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-card border border-card-border">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                    <span className="text-xs font-medium font-mono text-gradient-gold">
-                      {balance.toFixed(2)}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">SOL</span>
-                  </div>
-                  <div className="w-px h-3 bg-border" />
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-medium font-mono text-secondary">
-                      {wagaBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">WAGA</span>
-                  </div>
-                </div>
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="gap-2" data-testid="button-wallet-dropdown">
@@ -80,7 +63,22 @@ export function Header() {
                       {profile?.username || shortAddress}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-3 py-2 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">SOL</span>
+                        <span className="text-sm font-medium font-mono text-gradient-gold">
+                          {balance.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">WAGA</span>
+                        <span className="text-sm font-medium font-mono text-secondary">
+                          {wagaBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
                         <User className="h-4 w-4" />
