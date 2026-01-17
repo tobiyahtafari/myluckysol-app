@@ -213,10 +213,9 @@ function LeaderboardRow({
 
           <div className="text-right">
             <p className="text-xl font-bold text-gradient-gold">
-              {valueFormatter(entry[valueKey] as number)}
-              {valueLabel === "SOL" && <SolToUsd sol={entry[valueKey] as number} className="text-[10px] font-normal block opacity-70" />}
+              {valueFormatter(entry[valueKey] as number)} {valueLabel}
             </p>
-            <p className="text-xs text-muted-foreground">{valueLabel}</p>
+            {valueLabel === "SOL" && <SolToUsd sol={entry[valueKey] as number} className="text-sm font-medium" />}
           </div>
         </div>
       </Card>

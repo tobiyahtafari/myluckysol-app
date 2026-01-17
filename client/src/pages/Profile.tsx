@@ -192,16 +192,15 @@ export default function Profile() {
                   </p>
                 )}
               </div>
-              <div className="flex gap-4">
-                <div className="text-center px-4 py-2 rounded-lg bg-primary/10 border border-primary/30">
-                  <p className="text-sm text-muted-foreground">Balance</p>
-                  <p className="text-xl font-bold text-gradient-gold">
-                    {balance.toFixed(2)} SOL <SolToUsd sol={balance} className="text-[10px] block opacity-70" />
-                  </p>
+              <div className="flex flex-col gap-3">
+                <div className="text-center px-6 py-3 rounded-lg bg-primary/10 border border-primary/30">
+                  <p className="text-sm text-muted-foreground">SOL Balance</p>
+                  <p className="text-2xl font-bold text-gradient-gold">{balance.toFixed(4)} SOL</p>
+                  <SolToUsd sol={balance} className="text-sm" />
                 </div>
-                <div className="text-center px-4 py-2 rounded-lg bg-secondary/10 border border-secondary/30">
-                  <p className="text-sm text-muted-foreground">WAGA</p>
-                  <p className="text-xl font-bold text-secondary">{wagaBalance.toLocaleString()}</p>
+                <div className="text-center px-6 py-3 rounded-lg bg-secondary/10 border border-secondary/30">
+                  <p className="text-sm text-muted-foreground">WAGA Tokens</p>
+                  <p className="text-2xl font-bold text-secondary font-mono tracking-tight">{wagaBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
               </div>
             </div>

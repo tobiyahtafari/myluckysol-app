@@ -14,6 +14,7 @@ import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { SolToUsd } from "@/lib/price-context";
 
 export default function Play() {
   const { connected, connect, balance, address } = useWallet();
@@ -188,14 +189,17 @@ export default function Play() {
                           <div className="p-3 rounded-lg bg-muted/50">
                             <p className="text-xs text-muted-foreground">Your Wager</p>
                             <p className="text-lg font-bold text-gradient-gold">{selectedWager} SOL</p>
+                            <SolToUsd sol={selectedWager} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
                             <p className="text-xs text-muted-foreground">Total Pool</p>
                             <p className="text-lg font-bold">{(selectedWager * (selectedConfig?.players || 2)).toFixed(2)} SOL</p>
+                            <SolToUsd sol={selectedWager * (selectedConfig?.players || 2)} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
                             <p className="text-xs text-muted-foreground">Winner Gets</p>
                             <p className="text-lg font-bold text-accent">{(selectedWager * (selectedConfig?.players || 2) * 0.9).toFixed(2)} SOL</p>
+                            <SolToUsd sol={selectedWager * (selectedConfig?.players || 2) * 0.9} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
                             <p className="text-xs text-muted-foreground">WAGA Reward</p>

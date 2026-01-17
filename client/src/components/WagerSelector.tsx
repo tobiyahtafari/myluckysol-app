@@ -39,10 +39,12 @@ export function WagerSelector({ selectedWager, onSelect }: WagerSelectorProps) {
               data-testid={`button-wager-${wager}`}
             >
               <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-2xl font-bold text-gradient-gold">{wager}</span>
-                  <span className="text-sm text-muted-foreground">SOL</span>
-                  <SolToUsd sol={wager} className="text-[10px] text-muted-foreground ml-1" />
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1">
+                    <span className="text-2xl font-bold text-gradient-gold">{wager}</span>
+                    <span className="text-sm text-muted-foreground">SOL</span>
+                  </div>
+                  <SolToUsd sol={wager} className="text-sm" />
                 </div>
                 <div className="text-xs text-secondary">
                   Receive +{wagaReward} WAGA Reward

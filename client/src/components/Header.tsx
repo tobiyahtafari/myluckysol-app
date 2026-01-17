@@ -11,11 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { useSolPrice, SolToUsd } from "@/lib/price-context";
 
 export function Header() {
-  const { connected, shortAddress, balance, wagaBalance, connect, disconnect, profile } = useWallet();
-  const { solPrice } = useSolPrice();
+  const { connected, shortAddress, connect, disconnect, profile } = useWallet();
   const [location] = useLocation();
 
   const navItems = [
@@ -58,19 +56,6 @@ export function Header() {
           <div className="flex items-center gap-3">
             {connected ? (
               <>
-                <div className="hidden sm:flex items-center gap-4 px-4 py-2 rounded-lg bg-card border border-card-border">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                    <span className="text-sm font-medium text-gradient-gold">
-                      {balance.toFixed(2)} SOL <SolToUsd sol={balance} className="text-[10px] opacity-70 ml-1" />
-                    </span>
-                  </div>
-                  <div className="w-px h-4 bg-border" />
-                  <span className="text-sm font-medium text-secondary">
-                    {wagaBalance.toLocaleString()} WAGA
-                  </span>
-                </div>
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="gap-2" data-testid="button-wallet-dropdown">
