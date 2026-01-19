@@ -5,19 +5,25 @@ import {
   TransactionInstruction,
   SystemProgram,
   LAMPORTS_PER_SOL,
-  Keypair,
 } from "@solana/web3.js";
 import {
   MYLUCKYSOL_PROGRAM_ID,
-  WAGA_TOKEN_PROGRAM_ID,
   GameMode,
-  GameStatus,
-  WAGER_TIERS,
   getGamePDA,
   getGamePoolPDA,
   getGameConfigPDA,
   type GameAccount,
 } from "./program-types";
+import {
+  INSTRUCTION_DISCRIMINATORS,
+  GameModeValue,
+  decodeGameConfig,
+  decodeGamePool,
+  encodeJoinGameData,
+  pubkeyFromBytes,
+  type DecodedGameConfig,
+  type DecodedGamePool,
+} from "./borsh-layouts";
 
 export const DEVNET_RPC = "https://api.devnet.solana.com";
 export const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
@@ -41,26 +47,26 @@ export class MyLuckySolClient {
     return this.isDevnet;
   }
 
-  async getGameConfig(): Promise<any> {
+  async getGameConfig(): Promise<DecodedGameConfig | null> {
     const [configPDA] = getGameConfigPDA(this.programId);
     const accountInfo = await this.connection.getAccountInfo(configPDA);
     
-    if (!accountInfo) {
+    if (!accountInfo || !accountInfo.data) {
       return null;
     }
 
-    return accountInfo;
+    return decodeGameConfig(Buffer.from(accountInfo.data));
   }
 
-  async getGame(gameId: bigint): Promise<GameAccount | null> {
-    const [gamePDA] = getGamePDA(gameId, this.programId);
-    const accountInfo = await this.connection.getAccountInfo(gamePDA);
+  async getGamePool(gameId: bigint): Promise<DecodedGamePool | null> {
+    const [gamePoolPDA] = getGamePoolPDA(gameId, this.programId);
+    const accountInfo = await this.connection.getAccountInfo(gamePoolPDA);
     
-    if (!accountInfo) {
+    if (!accountInfo || !accountInfo.data) {
       return null;
     }
 
-    return accountInfo as unknown as GameAccount;
+    return decodeGamePool(Buffer.from(accountInfo.data));
   }
 
   async getPlayerBalance(walletAddress: PublicKey): Promise<number> {
@@ -96,12 +102,12 @@ export class MyLuckySolClient {
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
 
-    const discriminator = Buffer.from([0x5d, 0x3d, 0x5f, 0x24, 0x38, 0x58, 0x7f, 0x45]);
+    const data = encodeJoinGameData();
 
     return new TransactionInstruction({
       keys,
       programId: this.programId,
-      data: discriminator,
+      data,
     });
   }
 
@@ -128,18 +134,18 @@ export class MyLuckySolClient {
     return [];
   }
 
-  static gameModeToEnum(mode: string): GameMode {
+  static gameModeToEnum(mode: string): GameModeValue {
     switch (mode) {
       case "1v1":
-        return GameMode.OneVsOne;
+        return GameModeValue.OneVsOne;
       case "2-round":
-        return GameMode.TwoRound;
+        return GameModeValue.TwoRound;
       case "3-round":
-        return GameMode.ThreeRound;
+        return GameModeValue.ThreeRound;
       case "4-round":
-        return GameMode.FourRound;
+        return GameModeValue.FourRound;
       default:
-        return GameMode.OneVsOne;
+        return GameModeValue.OneVsOne;
     }
   }
 

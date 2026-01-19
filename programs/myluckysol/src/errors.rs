@@ -55,4 +55,10 @@ pub enum GameError {
 
     #[msg("Overflow error")]
     Overflow,
+
+    #[msg("House fee has not been paid yet")]
+    HouseFeeNotPaid,
+
+    #[msg("VRF account not verified")]
+    VrfNotVerified,
 }

@@ -55,6 +55,9 @@ pub fn create_game(
     game.created_at = clock.unix_timestamp;
     game.started_at = None;
     game.ended_at = None;
+    game.vrf_account = None;
+    game.house_fee_paid = false;
+    game.winnings_claimed = false;
     game.bump = ctx.bumps.game;
 
     game_pool.game_id = game_id;
@@ -123,7 +126,6 @@ pub fn join_game(ctx: Context<JoinGame>) -> Result<()> {
 
 pub fn start_round(ctx: Context<StartRound>) -> Result<()> {
     let game = &mut ctx.accounts.game;
-    let clock = Clock::get()?;
 
     require!(
         game.status == GameStatus::InProgress || game.status == GameStatus::RoundComplete,
@@ -144,7 +146,7 @@ pub fn start_round(ctx: Context<StartRound>) -> Result<()> {
 
 pub fn resolve_round(
     ctx: Context<ResolveRound>,
-    vrf_result: [u8; 32],
+    _vrf_result: [u8; 32],
 ) -> Result<()> {
     let game = &mut ctx.accounts.game;
     let clock = Clock::get()?;
@@ -152,6 +154,14 @@ pub fn resolve_round(
     require!(
         game.status == GameStatus::RoundInProgress,
         GameError::InvalidGameState
+    );
+
+    let vrf = ctx.accounts.vrf.load()?;
+    let vrf_result = vrf.get_result()?;
+    
+    require!(
+        vrf_result != [0u8; 32],
+        GameError::InvalidVrfResult
     );
 
     let active_count = game.active_players.len();
@@ -171,8 +181,8 @@ pub fn resolve_round(
             }
         }
         indices_to_eliminate.push(actual_index);
+        indices_to_eliminate.sort();
     }
-    indices_to_eliminate.sort();
 
     for (offset, &idx) in indices_to_eliminate.iter().enumerate() {
         let actual_idx = idx - offset;
@@ -204,7 +214,7 @@ pub fn resolve_round(
 }
 
 pub fn finalize_game(ctx: Context<FinalizeGame>) -> Result<()> {
-    let game = &ctx.accounts.game;
+    let game = &mut ctx.accounts.game;
     let game_pool = &ctx.accounts.game_pool;
     let game_config = &ctx.accounts.game_config;
 
@@ -216,6 +226,11 @@ pub fn finalize_game(ctx: Context<FinalizeGame>) -> Result<()> {
     require!(
         game.winner.is_some(),
         GameError::NoWinner
+    );
+
+    require!(
+        !game.house_fee_paid,
+        GameError::AlreadyClaimed
     );
 
     let total_pool = game_pool.total_deposited;
@@ -231,12 +246,14 @@ pub fn finalize_game(ctx: Context<FinalizeGame>) -> Result<()> {
     **game_pool_info.try_borrow_mut_lamports()? -= house_fee;
     **treasury_info.try_borrow_mut_lamports()? += house_fee;
 
+    game.house_fee_paid = true;
+
     msg!("House fee of {} lamports sent to treasury", house_fee);
     Ok(())
 }
 
 pub fn claim_winnings(ctx: Context<ClaimWinnings>) -> Result<()> {
-    let game = &ctx.accounts.game;
+    let game = &mut ctx.accounts.game;
     let game_pool = &ctx.accounts.game_pool;
     let winner = &ctx.accounts.winner;
 
@@ -250,6 +267,16 @@ pub fn claim_winnings(ctx: Context<ClaimWinnings>) -> Result<()> {
         GameError::NotWinner
     );
 
+    require!(
+        game.house_fee_paid,
+        GameError::HouseFeeNotPaid
+    );
+
+    require!(
+        !game.winnings_claimed,
+        GameError::AlreadyClaimed
+    );
+
     let winnings = game_pool.to_account_info().lamports();
     
     let game_pool_info = game_pool.to_account_info();
@@ -257,6 +284,8 @@ pub fn claim_winnings(ctx: Context<ClaimWinnings>) -> Result<()> {
 
     **game_pool_info.try_borrow_mut_lamports()? = 0;
     **winner_info.try_borrow_mut_lamports()? += winnings;
+
+    game.winnings_claimed = true;
 
     msg!("Winner {} claimed {} lamports", winner.key(), winnings);
     Ok(())

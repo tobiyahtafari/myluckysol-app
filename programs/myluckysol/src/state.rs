@@ -31,6 +31,9 @@ pub struct Game {
     pub created_at: i64,
     pub started_at: Option<i64>,
     pub ended_at: Option<i64>,
+    pub vrf_account: Option<Pubkey>,
+    pub house_fee_paid: bool,
+    pub winnings_claimed: bool,
     pub bump: u8,
 }
 

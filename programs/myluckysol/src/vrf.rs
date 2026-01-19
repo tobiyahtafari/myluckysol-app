@@ -1,89 +1,81 @@
 use anchor_lang::prelude::*;
 use switchboard_solana::prelude::*;
+use crate::state::{Game, GameStatus};
+use crate::errors::GameError;
 
 #[derive(Accounts)]
-pub struct RequestRandomness<'info> {
-    #[account(mut)]
-    pub game: Account<'info, crate::state::Game>,
+pub struct SetupVrf<'info> {
+    #[account(
+        mut,
+        constraint = game.status == GameStatus::InProgress @ GameError::InvalidGameState,
+        constraint = game.authority == authority.key() @ GameError::Unauthorized
+    )]
+    pub game: Account<'info, Game>,
 
-    #[account(mut)]
     pub vrf: AccountLoader<'info, VrfAccountData>,
 
-    #[account(mut)]
-    pub oracle_queue: AccountLoader<'info, OracleQueueAccountData>,
-
-    #[account(mut)]
-    pub queue_authority: AccountInfo<'info>,
-
-    #[account(mut)]
-    pub data_buffer: AccountInfo<'info>,
-
-    #[account(mut)]
-    pub permission: AccountLoader<'info, PermissionAccountData>,
-
-    #[account(mut)]
-    pub escrow: Account<'info, anchor_spl::token::TokenAccount>,
-
-    #[account(mut)]
-    pub payer_wallet: Account<'info, anchor_spl::token::TokenAccount>,
-
-    #[account(mut)]
-    pub payer_authority: Signer<'info>,
-
-    pub recent_blockhashes: AccountInfo<'info>,
-
-    pub program_state: AccountLoader<'info, SbState>,
-
-    pub token_program: Program<'info, anchor_spl::token::Token>,
-
-    pub switchboard_program: AccountInfo<'info>,
+    #[account(constraint = authority.key() == game.authority @ GameError::Unauthorized)]
+    pub authority: Signer<'info>,
 }
 
-pub fn request_vrf_randomness(ctx: Context<RequestRandomness>) -> Result<()> {
-    let game = &ctx.accounts.game;
+pub fn setup_vrf_account(ctx: Context<SetupVrf>) -> Result<()> {
+    let game = &mut ctx.accounts.game;
+    let vrf = &ctx.accounts.vrf;
     
-    msg!("Requesting VRF randomness for game {} round {}", 
-        game.game_id, game.current_round);
-
-    let vrf = ctx.accounts.vrf.load()?;
-    let vrf_request_randomness = VrfRequestRandomness {
-        authority: ctx.accounts.payer_authority.to_account_info(),
-        vrf: ctx.accounts.vrf.to_account_info(),
-        oracle_queue: ctx.accounts.oracle_queue.to_account_info(),
-        queue_authority: ctx.accounts.queue_authority.to_account_info(),
-        data_buffer: ctx.accounts.data_buffer.to_account_info(),
-        permission: ctx.accounts.permission.to_account_info(),
-        escrow: ctx.accounts.escrow.clone(),
-        payer_wallet: ctx.accounts.payer_wallet.clone(),
-        payer_authority: ctx.accounts.payer_authority.to_account_info(),
-        recent_blockhashes: ctx.accounts.recent_blockhashes.to_account_info(),
-        program_state: ctx.accounts.program_state.to_account_info(),
-        token_program: ctx.accounts.token_program.to_account_info(),
-    };
-
-    msg!("VRF randomness requested successfully");
+    game.vrf_account = Some(vrf.key());
+    
+    msg!("VRF account {} linked to game {}", vrf.key(), game.game_id);
     Ok(())
 }
 
 #[derive(Accounts)]
-pub struct ConsumeRandomness<'info> {
-    #[account(mut)]
-    pub game: Account<'info, crate::state::Game>,
+pub struct ResolveRoundWithVrf<'info> {
+    #[account(
+        mut,
+        constraint = game.status == GameStatus::RoundInProgress @ GameError::InvalidGameState,
+        constraint = game.vrf_account == Some(vrf.key()) @ GameError::VrfNotVerified
+    )]
+    pub game: Account<'info, Game>,
 
+    #[account(
+        constraint = {
+            let vrf_data = vrf.load()?;
+            vrf_data.get_result().map(|r| r != [0u8; 32]).unwrap_or(false)
+        } @ GameError::InvalidVrfResult
+    )]
     pub vrf: AccountLoader<'info, VrfAccountData>,
+
+    #[account(constraint = authority.key() == game.authority @ GameError::Unauthorized)]
+    pub authority: Signer<'info>,
 }
 
-pub fn consume_vrf_randomness(ctx: Context<ConsumeRandomness>) -> Result<[u8; 32]> {
+pub fn resolve_round_with_verified_vrf(ctx: Context<ResolveRoundWithVrf>) -> Result<[u8; 32]> {
     let vrf = ctx.accounts.vrf.load()?;
     
     let result_buffer = vrf.get_result()?;
     
-    if result_buffer == [0u8; 32] {
-        return Err(crate::errors::GameError::InvalidVrfResult.into());
-    }
+    require!(
+        result_buffer != [0u8; 32],
+        GameError::InvalidVrfResult
+    );
 
-    msg!("VRF result consumed: {:?}", &result_buffer[..8]);
+    msg!("Verified VRF result for game {}: {:?}", 
+        ctx.accounts.game.game_id, 
+        &result_buffer[..8]);
+    
     Ok(result_buffer)
+}
+
+pub fn verify_vrf_result(vrf_account: &AccountLoader<VrfAccountData>) -> Result<[u8; 32]> {
+    let vrf = vrf_account.load()?;
+    let result = vrf.get_result()?;
+    
+    require!(
+        result != [0u8; 32],
+        GameError::InvalidVrfResult
+    );
+    
+    Ok(result)
 }
 
 pub fn calculate_elimination_index(

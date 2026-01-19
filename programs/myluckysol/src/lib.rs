@@ -13,6 +13,8 @@ use state::*;
 use errors::*;
 use constants::*;
 
+pub mod vrf;
+
 #[program]
 pub mod myluckysol {
     use super::*;
@@ -134,8 +136,18 @@ pub struct StartRound<'info> {
 
 #[derive(Accounts)]
 pub struct ResolveRound<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = game.vrf_account.is_some() @ GameError::VrfNotVerified
+    )]
     pub game: Account<'info, Game>,
+
+    #[account(
+        constraint = {
+            game.vrf_account == Some(vrf.key())
+        } @ GameError::VrfNotVerified
+    )]
+    pub vrf: AccountLoader<'info, switchboard_solana::VrfAccountData>,
 
     #[account(constraint = authority.key() == game.authority @ GameError::Unauthorized)]
     pub authority: Signer<'info>,
