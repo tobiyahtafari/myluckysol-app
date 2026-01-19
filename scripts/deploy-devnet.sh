@@ -43,12 +43,12 @@ fi
 
 echo ""
 echo "Building programs..."
-# Ensure dependencies are in path
-export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-
-# Replit's cargo version is too old for some new Anchor dependencies (wit-bindgen edition 2024).
-# We must use anchor build without any extra cargo arguments that might trigger re-fetching of these dependencies.
-anchor build
+# Use Replit's native build environment for Solana/Anchor
+# The build-sbf command is part of the solana-sdk which is usually in the path
+# or can be invoked via anchor build if the toolchain is correct.
+# Since we have anchor 0.30.0 installed via nix, we'll try a clean build.
+anchor build -- -p myluckysol
+anchor build -- -p waga_token
 
 
 MYLUCKYSOL_PROGRAM_ID=$(solana address -k target/deploy/myluckysol-keypair.json 2>/dev/null || echo "")

@@ -1,11 +1,11 @@
 import { PublicKey } from "@solana/web3.js";
 
 export const MYLUCKYSOL_PROGRAM_ID = new PublicKey(
-  "11111111111111111111111111111111"
+  "4Qr1SRt6oZ6XkyWikpsTwF9A7qJKU123Xa84Ahk3XoJw"
 );
 
 export const WAGA_TOKEN_PROGRAM_ID = new PublicKey(
-  "11111111111111111111111111111112"
+  "8Qr1SRt6oZ6XkyWikpsTwF9A7qJKU123Xa84Ahk3XoJw"
 );
 
 export enum GameMode {
