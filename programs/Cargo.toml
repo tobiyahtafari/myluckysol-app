@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "myluckysol",
+    "waga-token"
+]
+resolver = "2"
