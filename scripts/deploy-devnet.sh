@@ -43,12 +43,18 @@ fi
 
 echo ""
 echo "Building programs..."
-# Use Replit's native build environment for Solana/Anchor
-# The build-sbf command is part of the solana-sdk which is usually in the path
-# or can be invoked via anchor build if the toolchain is correct.
-# Since we have anchor 0.30.0 installed via nix, we'll try a clean build.
-anchor build -- -p myluckysol
-anchor build -- -p waga_token
+# Use Replit's native Solana SDK location
+export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+
+# Force build-sbf path
+if ! command -v cargo-build-sbf &> /dev/null; then
+    echo "Attempting to locate cargo-build-sbf..."
+    # Try common Nix or local install paths
+    export PATH="$PATH:/nix/store/4q0790r3b01fygbamhjik5h13hw4q3sc-solana-cli-1.17.31/bin"
+fi
+
+# Standard build command
+anchor build
 
 
 MYLUCKYSOL_PROGRAM_ID=$(solana address -k target/deploy/myluckysol-keypair.json 2>/dev/null || echo "")
