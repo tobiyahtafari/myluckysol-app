@@ -43,13 +43,11 @@ fi
 
 echo ""
 echo "Building programs..."
-# Use Replit's native solana-install to ensure all tools are present
-if ! command -v cargo-build-sbf &> /dev/null; then
-    echo "Installing missing solana build tools..."
-    solana-install init 1.17.31
-    export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-fi
+# Ensure dependencies are in path
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
 
+# Replit's cargo version is too old for some new Anchor dependencies (wit-bindgen edition 2024).
+# We must use anchor build without any extra cargo arguments that might trigger re-fetching of these dependencies.
 anchor build
 
 
