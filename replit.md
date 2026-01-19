@@ -93,18 +93,17 @@ The app supports multiple Solana wallets:
 - Users can toggle between Devnet and Mainnet via the network badge in the header
 - Devnet users can request free SOL airdrops for testing
 - Network preference is persisted in localStorage
+- Mainnet switching requires a confirmation dialog to prevent accidental SOL usage
 
 ### Wallet Connection Flow
 1. Click "Connect Wallet" in header
 2. Select from available wallets in modal
 3. Approve connection in wallet extension
 4. View balance and network in dropdown menu
+5. Wallet auto-reconnects on page load using event listeners
 
 ## Solana Programs
-See `SOLANA_PROGRAMS.md` for detailed documentation on:
-- Main game program with VRF integration
-- WAGA token program
-- Deployment scripts for devnet
+See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `scripts/deploy-devnet.sh` in the Replit Shell.
 
 ## Running the App
 The app runs on port 5000 with the "Start application" workflow (`npm run dev`).

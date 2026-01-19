@@ -43,7 +43,15 @@ fi
 
 echo ""
 echo "Building programs..."
+# Use Replit's native solana-install to ensure all tools are present
+if ! command -v cargo-build-sbf &> /dev/null; then
+    echo "Installing missing solana build tools..."
+    solana-install init 1.17.31
+    export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+fi
+
 anchor build
+
 
 MYLUCKYSOL_PROGRAM_ID=$(solana address -k target/deploy/myluckysol-keypair.json 2>/dev/null || echo "")
 WAGA_TOKEN_PROGRAM_ID=$(solana address -k target/deploy/waga_token-keypair.json 2>/dev/null || echo "")
