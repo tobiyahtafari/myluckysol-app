@@ -43,22 +43,21 @@ fi
 
 echo ""
 echo "Building programs..."
-cd programs
 anchor build
 
-MYLUCKYSOL_PROGRAM_ID=$(solana address -k ../target/deploy/myluckysol-keypair.json 2>/dev/null || echo "")
-WAGA_TOKEN_PROGRAM_ID=$(solana address -k ../target/deploy/waga_token-keypair.json 2>/dev/null || echo "")
+MYLUCKYSOL_PROGRAM_ID=$(solana address -k target/deploy/myluckysol-keypair.json 2>/dev/null || echo "")
+WAGA_TOKEN_PROGRAM_ID=$(solana address -k target/deploy/waga_token-keypair.json 2>/dev/null || echo "")
 
 if [ -n "$MYLUCKYSOL_PROGRAM_ID" ]; then
     echo "MyLuckySol Program ID: $MYLUCKYSOL_PROGRAM_ID"
-    sed -i "s/11111111111111111111111111111111/$MYLUCKYSOL_PROGRAM_ID/g" ../programs/myluckysol/src/lib.rs
-    sed -i "s/myluckysol = \"11111111111111111111111111111111\"/myluckysol = \"$MYLUCKYSOL_PROGRAM_ID\"/g" ../Anchor.toml
+    sed -i "s/11111111111111111111111111111111/$MYLUCKYSOL_PROGRAM_ID/g" programs/myluckysol/src/lib.rs
+    sed -i "s/myluckysol = \"11111111111111111111111111111111\"/myluckysol = \"$MYLUCKYSOL_PROGRAM_ID\"/g" Anchor.toml
 fi
 
 if [ -n "$WAGA_TOKEN_PROGRAM_ID" ]; then
     echo "WAGA Token Program ID: $WAGA_TOKEN_PROGRAM_ID"
-    sed -i "s/11111111111111111111111111111112/$WAGA_TOKEN_PROGRAM_ID/g" ../programs/waga-token/src/lib.rs
-    sed -i "s/waga_token = \"11111111111111111111111111111112\"/waga_token = \"$WAGA_TOKEN_PROGRAM_ID\"/g" ../Anchor.toml
+    sed -i "s/11111111111111111111111111111112/$WAGA_TOKEN_PROGRAM_ID/g" programs/waga-token/src/lib.rs
+    sed -i "s/waga_token = \"11111111111111111111111111111112\"/waga_token = \"$WAGA_TOKEN_PROGRAM_ID\"/g" Anchor.toml
 fi
 
 echo ""
