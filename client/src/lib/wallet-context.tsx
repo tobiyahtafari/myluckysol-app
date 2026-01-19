@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import type { PlayerProfile } from "@shared/schema";
@@ -9,11 +9,10 @@ import {
   type NetworkType,
   getAllWallets,
   getAvailableWallets,
+  getWalletByName,
   connectWallet,
   disconnectWallet,
   getConnection,
-  DEVNET_RPC,
-  MAINNET_RPC,
 } from "./solana/wallet-adapter";
 
 interface WalletState {
@@ -25,6 +24,7 @@ interface WalletState {
   wagaBalance: number;
   walletName: WalletName | null;
   network: NetworkType;
+  balanceLoading: boolean;
 }
 
 interface WalletContextType extends WalletState {
@@ -34,7 +34,7 @@ interface WalletContextType extends WalletState {
   profile: PlayerProfile | undefined;
   availableWallets: WalletInfo[];
   allWallets: WalletInfo[];
-  switchNetwork: (network: NetworkType) => void;
+  switchNetwork: (network: NetworkType) => Promise<void>;
   refreshBalance: () => Promise<void>;
   requestAirdrop: () => Promise<string>;
   connection: Connection;
@@ -46,26 +46,29 @@ const WalletContext = createContext<WalletContextType | null>(null);
 const WALLET_STORAGE_KEY = "myluckysol_wallet";
 const NETWORK_STORAGE_KEY = "myluckysol_network";
 
+function getSavedNetwork(): NetworkType {
+  if (typeof window === "undefined") return "devnet";
+  return (localStorage.getItem(NETWORK_STORAGE_KEY) as NetworkType) || "devnet";
+}
+
 export function WalletProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [adapter, setAdapter] = useState<WalletAdapter | null>(null);
-  const [connection, setConnection] = useState<Connection>(() => getConnection("devnet"));
+  const adapterRef = useRef<WalletAdapter | null>(null);
   
-  const [state, setState] = useState<WalletState>(() => {
-    const savedNetwork = typeof window !== "undefined" 
-      ? (localStorage.getItem(NETWORK_STORAGE_KEY) as NetworkType) || "devnet"
-      : "devnet";
-    return {
-      connected: false,
-      connecting: false,
-      address: null,
-      publicKey: null,
-      balance: 0,
-      wagaBalance: 0,
-      walletName: null,
-      network: savedNetwork,
-    };
-  });
+  const [connection, setConnection] = useState<Connection>(() => getConnection(getSavedNetwork()));
+  
+  const [state, setState] = useState<WalletState>(() => ({
+    connected: false,
+    connecting: false,
+    address: null,
+    publicKey: null,
+    balance: 0,
+    wagaBalance: 0,
+    walletName: null,
+    network: getSavedNetwork(),
+    balanceLoading: false,
+  }));
 
   const { data: profile } = useQuery<PlayerProfile>({
     queryKey: ["/api/profile", state.address],
@@ -75,14 +78,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const refreshBalance = useCallback(async () => {
     if (!state.publicKey || !connection) return;
     
+    setState(prev => ({ ...prev, balanceLoading: true }));
+    
     try {
       const balance = await connection.getBalance(state.publicKey);
       setState(prev => ({
         ...prev,
         balance: balance / LAMPORTS_PER_SOL,
+        balanceLoading: false,
       }));
     } catch (error) {
       console.error("Failed to fetch balance:", error);
+      setState(prev => ({ ...prev, balanceLoading: false }));
     }
   }, [state.publicKey, connection]);
 
@@ -94,45 +101,149 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [state.connected, state.publicKey, refreshBalance]);
 
+  const handleConnect = useCallback((publicKey: PublicKey) => {
+    setState(prev => ({
+      ...prev,
+      connected: true,
+      connecting: false,
+      address: publicKey.toBase58(),
+      publicKey,
+    }));
+  }, []);
+
+  const handleDisconnect = useCallback(() => {
+    setAdapter(null);
+    adapterRef.current = null;
+    localStorage.removeItem(WALLET_STORAGE_KEY);
+    
+    setState(prev => ({
+      ...prev,
+      connected: false,
+      connecting: false,
+      address: null,
+      publicKey: null,
+      balance: 0,
+      wagaBalance: 0,
+      walletName: null,
+    }));
+  }, []);
+
+  const handleAccountChanged = useCallback((publicKey: PublicKey | null) => {
+    if (publicKey) {
+      setState(prev => ({
+        ...prev,
+        address: publicKey.toBase58(),
+        publicKey,
+      }));
+    } else {
+      handleDisconnect();
+    }
+  }, [handleDisconnect]);
+
+  useEffect(() => {
+    const currentAdapter = adapterRef.current;
+    if (!currentAdapter?.on) return;
+
+    const onConnect = () => {
+      if (currentAdapter.publicKey) {
+        handleConnect(currentAdapter.publicKey);
+      }
+    };
+
+    const onDisconnect = () => {
+      handleDisconnect();
+    };
+
+    const onAccountChanged = (publicKey: PublicKey | null) => {
+      handleAccountChanged(publicKey);
+    };
+
+    currentAdapter.on("connect", onConnect);
+    currentAdapter.on("disconnect", onDisconnect);
+    currentAdapter.on("accountChanged", onAccountChanged);
+
+    return () => {
+      if (currentAdapter.off) {
+        currentAdapter.off("connect", onConnect);
+        currentAdapter.off("disconnect", onDisconnect);
+        currentAdapter.off("accountChanged", onAccountChanged);
+      }
+    };
+  }, [adapter, handleConnect, handleDisconnect, handleAccountChanged]);
+
   useEffect(() => {
     const savedWallet = localStorage.getItem(WALLET_STORAGE_KEY) as WalletName | null;
-    if (savedWallet) {
-      const wallets = getAllWallets();
-      const wallet = wallets.find(w => w.name === savedWallet);
-      if (wallet?.installed && wallet.adapter) {
-        if (wallet.adapter.connected && wallet.adapter.publicKey) {
-          setAdapter(wallet.adapter);
+    if (!savedWallet) return;
+
+    const attemptReconnect = async () => {
+      const walletAdapter = getWalletByName(savedWallet);
+      if (!walletAdapter) return;
+
+      try {
+        if (walletAdapter.connected && walletAdapter.publicKey) {
+          setAdapter(walletAdapter);
+          adapterRef.current = walletAdapter;
+          
+          const balance = await connection.getBalance(walletAdapter.publicKey);
+          
           setState(prev => ({
             ...prev,
             connected: true,
-            address: wallet.adapter!.publicKey!.toBase58(),
-            publicKey: wallet.adapter!.publicKey,
+            address: walletAdapter.publicKey!.toBase58(),
+            publicKey: walletAdapter.publicKey,
+            balance: balance / LAMPORTS_PER_SOL,
+            walletName: savedWallet,
+          }));
+        } else {
+          setState(prev => ({ ...prev, connecting: true }));
+          
+          const publicKey = await connectWallet(walletAdapter);
+          
+          setAdapter(walletAdapter);
+          adapterRef.current = walletAdapter;
+          
+          const balance = await connection.getBalance(publicKey);
+          
+          setState(prev => ({
+            ...prev,
+            connected: true,
+            connecting: false,
+            address: publicKey.toBase58(),
+            publicKey,
+            balance: balance / LAMPORTS_PER_SOL,
             walletName: savedWallet,
           }));
         }
+      } catch (error) {
+        console.error("Failed to reconnect wallet:", error);
+        localStorage.removeItem(WALLET_STORAGE_KEY);
+        setState(prev => ({ ...prev, connecting: false }));
       }
-    }
-  }, []);
+    };
+
+    const timer = setTimeout(attemptReconnect, 100);
+    return () => clearTimeout(timer);
+  }, [connection]);
 
   const connect = useCallback(async (walletName: WalletName) => {
     setState(prev => ({ ...prev, connecting: true }));
     
     try {
-      const wallets = getAllWallets();
-      const wallet = wallets.find(w => w.name === walletName);
+      const walletAdapter = getWalletByName(walletName);
       
-      if (!wallet) {
-        throw new Error(`Wallet ${walletName} not found`);
-      }
-      
-      if (!wallet.installed || !wallet.adapter) {
-        window.open(wallet.url, "_blank");
-        throw new Error(`Please install ${wallet.displayName} wallet`);
+      if (!walletAdapter) {
+        const allWallets = getAllWallets();
+        const wallet = allWallets.find(w => w.name === walletName);
+        if (wallet) {
+          window.open(wallet.url, "_blank");
+        }
+        throw new Error(`Please install ${walletName} wallet`);
       }
 
-      const publicKey = await connectWallet(wallet.adapter);
+      const publicKey = await connectWallet(walletAdapter);
       
-      setAdapter(wallet.adapter);
+      setAdapter(walletAdapter);
+      adapterRef.current = walletAdapter;
       localStorage.setItem(WALLET_STORAGE_KEY, walletName);
       
       const balance = await connection.getBalance(publicKey);
@@ -163,22 +274,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
     }
     
-    setAdapter(null);
-    localStorage.removeItem(WALLET_STORAGE_KEY);
-    
-    setState(prev => ({
-      ...prev,
-      connected: false,
-      connecting: false,
-      address: null,
-      publicKey: null,
-      balance: 0,
-      wagaBalance: 0,
-      walletName: null,
-    }));
-  }, [adapter]);
+    handleDisconnect();
+  }, [adapter, handleDisconnect]);
 
-  const switchNetwork = useCallback((network: NetworkType) => {
+  const switchNetwork = useCallback(async (network: NetworkType) => {
+    setState(prev => ({ ...prev, balanceLoading: true }));
+    
     const newConnection = getConnection(network);
     setConnection(newConnection);
     localStorage.setItem(NETWORK_STORAGE_KEY, network);
@@ -189,12 +290,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }));
 
     if (state.publicKey) {
-      newConnection.getBalance(state.publicKey).then(balance => {
+      try {
+        const balance = await newConnection.getBalance(state.publicKey);
         setState(prev => ({
           ...prev,
           balance: balance / LAMPORTS_PER_SOL,
+          balanceLoading: false,
         }));
-      });
+      } catch (error) {
+        console.error("Failed to fetch balance on new network:", error);
+        setState(prev => ({ ...prev, balanceLoading: false }));
+      }
+    } else {
+      setState(prev => ({ ...prev, balanceLoading: false }));
     }
   }, [state.publicKey]);
 

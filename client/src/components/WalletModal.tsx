@@ -68,8 +68,8 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                   <button
                     key={wallet.name}
                     onClick={() => handleConnect(wallet.name)}
-                    disabled={connecting}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-transparent hover:border-[#F5B800]/30 disabled:opacity-50"
+                    disabled={connecting || connectingWallet !== null}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-transparent hover:border-[#F5B800]/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid={`button-connect-${wallet.name}`}
                   >
                     <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
@@ -78,7 +78,15 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                         alt={wallet.displayName}
                         className="w-6 h-6 object-contain"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            const fallback = document.createElement('span');
+                            fallback.textContent = wallet.displayName.charAt(0);
+                            fallback.className = 'text-white font-bold text-lg';
+                            parent.appendChild(fallback);
+                          }
                         }}
                       />
                     </div>

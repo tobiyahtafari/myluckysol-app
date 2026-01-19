@@ -8,7 +8,8 @@ MyLuckySol is a casino-grade, provably fair chance-based game DApp on Solana. Pl
 - **Backend**: Express.js
 - **Styling**: TailwindCSS + Framer Motion
 - **State Management**: Zustand + TanStack Query
-- **Wallet**: Custom wallet context (simulated for MVP)
+- **Wallet**: Multi-wallet support (Phantom, OKX, Solflare, Backpack)
+- **Blockchain**: Solana (devnet for testing, mainnet for production)
 
 ## Game Modes
 1. **1v1 Mode**: 2 players, 1 round, 120s timer
@@ -80,6 +81,30 @@ shared/
 - No emoji usage
 - Space Grotesk font family
 - Framer Motion for animations
+
+## Wallet Integration
+The app supports multiple Solana wallets:
+- **Phantom**: Most popular Solana wallet
+- **OKX Wallet**: Multi-chain wallet with Solana support
+- **Solflare**: Solana-native wallet
+- **Backpack**: xNFT-enabled wallet
+
+### Network Switching
+- Users can toggle between Devnet and Mainnet via the network badge in the header
+- Devnet users can request free SOL airdrops for testing
+- Network preference is persisted in localStorage
+
+### Wallet Connection Flow
+1. Click "Connect Wallet" in header
+2. Select from available wallets in modal
+3. Approve connection in wallet extension
+4. View balance and network in dropdown menu
+
+## Solana Programs
+See `SOLANA_PROGRAMS.md` for detailed documentation on:
+- Main game program with VRF integration
+- WAGA token program
+- Deployment scripts for devnet
 
 ## Running the App
 The app runs on port 5000 with the "Start application" workflow (`npm run dev`).

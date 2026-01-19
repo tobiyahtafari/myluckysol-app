@@ -21,6 +21,8 @@ export interface WalletAdapter {
     connection: Connection,
     options?: SendOptions
   ): Promise<string>;
+  on?(event: string, callback: (...args: any[]) => void): void;
+  off?(event: string, callback: (...args: any[]) => void): void;
 }
 
 export interface PhantomProvider extends WalletAdapter {
@@ -67,14 +69,14 @@ export interface WalletInfo {
 }
 
 export function getPhantomWallet(): PhantomProvider | null {
-  if (typeof window !== "undefined" && window.phantom?.solana?.isPhantom) {
+  if (typeof window !== "undefined" && window.phantom?.solana?.isPhantom === true) {
     return window.phantom.solana;
   }
   return null;
 }
 
 export function getSolflareWallet(): SolflareProvider | null {
-  if (typeof window !== "undefined" && window.solflare?.isSolflare) {
+  if (typeof window !== "undefined" && window.solflare?.isSolflare === true) {
     return window.solflare;
   }
   return null;
@@ -82,21 +84,39 @@ export function getSolflareWallet(): SolflareProvider | null {
 
 export function getOKXWallet(): OKXProvider | null {
   if (typeof window !== "undefined" && window.okxwallet?.solana) {
-    return window.okxwallet.solana;
+    const provider = window.okxwallet.solana;
+    if (provider.isOkxWallet === true || provider.publicKey !== undefined) {
+      return provider;
+    }
   }
   return null;
 }
 
 export function getBackpackWallet(): BackpackProvider | null {
   if (typeof window !== "undefined") {
-    if (window.backpack?.isBackpack) {
+    if (window.backpack?.isBackpack === true) {
       return window.backpack;
     }
-    if (window.xnft?.solana) {
+    if (window.xnft?.solana?.isBackpack === true) {
       return window.xnft.solana;
     }
   }
   return null;
+}
+
+export function getWalletByName(name: WalletName): WalletAdapter | null {
+  switch (name) {
+    case "phantom":
+      return getPhantomWallet();
+    case "solflare":
+      return getSolflareWallet();
+    case "okx":
+      return getOKXWallet();
+    case "backpack":
+      return getBackpackWallet();
+    default:
+      return null;
+  }
 }
 
 export function getAllWallets(): WalletInfo[] {
