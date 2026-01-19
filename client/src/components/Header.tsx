@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet-context";
-import { Wallet, LogOut, User, Trophy, Gamepad2 } from "lucide-react";
+import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2 } from "lucide-react";
 import headerLogo from "@assets/myluckysol-header-logo_1768586127704.png";
+import { WalletModal } from "./WalletModal";
+import { NetworkBadge } from "./NetworkBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +13,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
+import { useToast } from "@/hooks/use-toast";
 
 export function Header() {
-  const { connected, shortAddress, balance, wagaBalance, connect, disconnect, profile } = useWallet();
+  const { 
+    connected, 
+    shortAddress, 
+    balance, 
+    wagaBalance, 
+    disconnect, 
+    profile,
+    network,
+    requestAirdrop,
+    walletName,
+  } = useWallet();
   const [location] = useLocation();
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [airdropLoading, setAirdropLoading] = useState(false);
+  const { toast } = useToast();
 
   const navItems = [
     { href: "/", label: "Home", icon: null },
@@ -22,40 +38,71 @@ export function Header() {
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   ];
 
+  const handleAirdrop = async () => {
+    setAirdropLoading(true);
+    try {
+      await requestAirdrop();
+      toast({
+        title: "Airdrop successful",
+        description: "1 SOL has been added to your wallet",
+      });
+    } catch (error) {
+      toast({
+        title: "Airdrop failed",
+        description: error instanceof Error ? error.message : "Failed to request airdrop",
+        variant: "destructive",
+      });
+    } finally {
+      setAirdropLoading(false);
+    }
+  };
+
+  const getWalletDisplayName = () => {
+    const names: Record<string, string> = {
+      phantom: "Phantom",
+      solflare: "Solflare",
+      okx: "OKX",
+      backpack: "Backpack",
+    };
+    return walletName ? names[walletName] : null;
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2">
-            <img
-              src={headerLogo}
-              alt="MyLuckySol"
-              className="h-14 w-auto"
-              data-testid="img-header-logo"
-            />
-          </Link>
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <img
+                src={headerLogo}
+                alt="MyLuckySol"
+                className="h-14 w-auto"
+                data-testid="img-header-logo"
+              />
+            </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const isActive = location === item.href;
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant={isActive ? "secondary" : "ghost"}
-                    className={`gap-2 ${isActive ? "text-secondary-foreground" : "text-muted-foreground"}`}
-                    data-testid={`link-nav-${item.label.toLowerCase()}`}
-                  >
-                    {item.icon && <item.icon className="h-4 w-4" />}
-                    {item.label}
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
+            <nav className="hidden md:flex items-center gap-1">
+              {navItems.map((item) => {
+                const isActive = location === item.href;
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <Button
+                      variant={isActive ? "secondary" : "ghost"}
+                      className={`gap-2 ${isActive ? "text-secondary-foreground" : "text-muted-foreground"}`}
+                      data-testid={`link-nav-${item.label.toLowerCase()}`}
+                    >
+                      {item.icon && <item.icon className="h-4 w-4" />}
+                      {item.label}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </nav>
 
-          <div className="flex items-center gap-3">
-            {connected ? (
-              <>
+            <div className="flex items-center gap-3">
+              {connected && <NetworkBadge />}
+              
+              {connected ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="gap-2" data-testid="button-wallet-dropdown">
@@ -63,21 +110,47 @@ export function Header() {
                       {profile?.username || shortAddress}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <div className="px-3 py-2 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">SOL</span>
-                        <span className="text-sm font-medium font-mono text-gradient-gold">
-                          {balance.toFixed(2)}
+                  <DropdownMenuContent align="end" className="w-64">
+                    <div className="px-3 py-2 space-y-2">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Connected via {getWalletDisplayName()}</span>
+                        <span className={network === "devnet" ? "text-purple-400" : "text-green-400"}>
+                          {network === "devnet" ? "Devnet" : "Mainnet"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">WAGA</span>
+                        <span className="text-xs text-muted-foreground">SOL Balance</span>
+                        <span className="text-sm font-medium font-mono text-gradient-gold">
+                          {balance.toFixed(4)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">WAGA Tokens</span>
                         <span className="text-sm font-medium font-mono text-secondary">
                           {wagaBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </span>
                       </div>
                     </div>
+                    
+                    {network === "devnet" && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={handleAirdrop}
+                          disabled={airdropLoading}
+                          className="cursor-pointer"
+                          data-testid="button-airdrop"
+                        >
+                          {airdropLoading ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Droplets className="h-4 w-4 mr-2 text-cyan-400" />
+                          )}
+                          Request Devnet SOL
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
@@ -96,35 +169,41 @@ export function Header() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </>
-            ) : (
-              <Button onClick={connect} className="gap-2" data-testid="button-connect-wallet">
-                <Wallet className="h-4 w-4" />
-                Connect Wallet
-              </Button>
-            )}
+              ) : (
+                <Button 
+                  onClick={() => setWalletModalOpen(true)} 
+                  className="gap-2" 
+                  data-testid="button-connect-wallet"
+                >
+                  <Wallet className="h-4 w-4" />
+                  Connect Wallet
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <nav className="md:hidden flex items-center justify-center gap-1 pb-2 px-4">
-        {navItems.map((item) => {
-          const isActive = location === item.href;
-          return (
-            <Link key={item.href} href={item.href}>
-              <Button
-                variant={isActive ? "secondary" : "ghost"}
-                size="sm"
-                className={`gap-1 ${isActive ? "text-secondary-foreground" : "text-muted-foreground"}`}
-                data-testid={`link-nav-mobile-${item.label.toLowerCase()}`}
-              >
-                {item.icon && <item.icon className="h-3 w-3" />}
-                {item.label}
-              </Button>
-            </Link>
-          );
-        })}
-      </nav>
-    </header>
+        <nav className="md:hidden flex items-center justify-center gap-1 pb-2 px-4">
+          {navItems.map((item) => {
+            const isActive = location === item.href;
+            return (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  size="sm"
+                  className={`gap-1 ${isActive ? "text-secondary-foreground" : "text-muted-foreground"}`}
+                  data-testid={`link-nav-mobile-${item.label.toLowerCase()}`}
+                >
+                  {item.icon && <item.icon className="h-3 w-3" />}
+                  {item.label}
+                </Button>
+              </Link>
+            );
+          })}
+        </nav>
+      </header>
+
+      <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
+    </>
   );
 }

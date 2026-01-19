@@ -3,7 +3,7 @@ import { getAnchorInstructionDiscriminator } from "./crypto-shim";
 
 export const ANCHOR_DISCRIMINATOR_SIZE = 8;
 
-export function getInstructionDiscriminator(name: string): Buffer {
+export function getInstructionDiscriminator(name: string): Uint8Array {
   return getAnchorInstructionDiscriminator(name);
 }
 
@@ -77,7 +77,20 @@ export interface DecodedGamePool {
   bump: number;
 }
 
-export function decodeGameConfig(data: Buffer): DecodedGameConfig | null {
+function readUInt16LE(data: Uint8Array, offset: number): number {
+  return data[offset] | (data[offset + 1] << 8);
+}
+
+function readBigUInt64LE(data: Uint8Array, offset: number): bigint {
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  return view.getBigUint64(offset, true);
+}
+
+function readUInt8(data: Uint8Array, offset: number): number {
+  return data[offset];
+}
+
+export function decodeGameConfig(data: Uint8Array): DecodedGameConfig | null {
   if (data.length < ANCHOR_DISCRIMINATOR_SIZE + 32 + 32 + 2 + 8 + 8 + 1) {
     return null;
   }
@@ -90,16 +103,16 @@ export function decodeGameConfig(data: Buffer): DecodedGameConfig | null {
   const treasuryWallet = data.subarray(offset, offset + 32);
   offset += 32;
   
-  const houseFeeBps = data.readUInt16LE(offset);
+  const houseFeeBps = readUInt16LE(data, offset);
   offset += 2;
   
-  const totalGamesCreated = data.readBigUInt64LE(offset);
+  const totalGamesCreated = readBigUInt64LE(data, offset);
   offset += 8;
   
-  const totalSolWagered = data.readBigUInt64LE(offset);
+  const totalSolWagered = readBigUInt64LE(data, offset);
   offset += 8;
   
-  const bump = data.readUInt8(offset);
+  const bump = readUInt8(data, offset);
   
   return {
     authority: new Uint8Array(authority),
@@ -111,20 +124,20 @@ export function decodeGameConfig(data: Buffer): DecodedGameConfig | null {
   };
 }
 
-export function decodeGamePool(data: Buffer): DecodedGamePool | null {
+export function decodeGamePool(data: Uint8Array): DecodedGamePool | null {
   if (data.length < ANCHOR_DISCRIMINATOR_SIZE + 8 + 8 + 1) {
     return null;
   }
   
   let offset = ANCHOR_DISCRIMINATOR_SIZE;
   
-  const gameId = data.readBigUInt64LE(offset);
+  const gameId = readBigUInt64LE(data, offset);
   offset += 8;
   
-  const totalDeposited = data.readBigUInt64LE(offset);
+  const totalDeposited = readBigUInt64LE(data, offset);
   offset += 8;
   
-  const bump = data.readUInt8(offset);
+  const bump = readUInt8(data, offset);
   
   return {
     gameId,
@@ -137,19 +150,19 @@ export function encodeCreateGameData(
   gameId: bigint,
   mode: GameModeValue,
   wagerAmount: bigint
-): Buffer {
-  const discriminator = INSTRUCTION_DISCRIMINATORS.createGame;
-  const buffer = Buffer.alloc(8 + 8 + 1 + 8);
+): Uint8Array {
+  const buffer = new Uint8Array(8 + 8 + 1 + 8);
+  const view = new DataView(buffer.buffer);
   
-  discriminator.copy(buffer, 0);
-  buffer.writeBigUInt64LE(gameId, 8);
-  buffer.writeUInt8(mode, 16);
-  buffer.writeBigUInt64LE(wagerAmount, 17);
+  buffer.set(INSTRUCTION_DISCRIMINATORS.createGame, 0);
+  view.setBigUint64(8, gameId, true);
+  buffer[16] = mode;
+  view.setBigUint64(17, wagerAmount, true);
   
   return buffer;
 }
 
-export function encodeJoinGameData(): Buffer {
+export function encodeJoinGameData(): Uint8Array {
   return INSTRUCTION_DISCRIMINATORS.joinGame;
 }
 

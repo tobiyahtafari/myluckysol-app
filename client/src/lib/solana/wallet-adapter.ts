@@ -4,6 +4,7 @@ import {
   Transaction,
   VersionedTransaction,
   SendOptions,
+  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 
 export interface WalletAdapter {
@@ -30,13 +31,39 @@ export interface SolflareProvider extends WalletAdapter {
   isSolflare?: boolean;
 }
 
+export interface OKXProvider extends WalletAdapter {
+  isOkxWallet?: boolean;
+}
+
+export interface BackpackProvider extends WalletAdapter {
+  isBackpack?: boolean;
+}
+
 declare global {
   interface Window {
     phantom?: {
       solana?: PhantomProvider;
     };
     solflare?: SolflareProvider;
+    okxwallet?: {
+      solana?: OKXProvider;
+    };
+    backpack?: BackpackProvider;
+    xnft?: {
+      solana?: BackpackProvider;
+    };
   }
+}
+
+export type WalletName = "phantom" | "solflare" | "okx" | "backpack";
+
+export interface WalletInfo {
+  name: WalletName;
+  displayName: string;
+  icon: string;
+  adapter: WalletAdapter | null;
+  installed: boolean;
+  url: string;
 }
 
 export function getPhantomWallet(): PhantomProvider | null {
@@ -53,20 +80,69 @@ export function getSolflareWallet(): SolflareProvider | null {
   return null;
 }
 
-export function getAvailableWallets(): { name: string; adapter: WalletAdapter }[] {
-  const wallets: { name: string; adapter: WalletAdapter }[] = [];
-  
+export function getOKXWallet(): OKXProvider | null {
+  if (typeof window !== "undefined" && window.okxwallet?.solana) {
+    return window.okxwallet.solana;
+  }
+  return null;
+}
+
+export function getBackpackWallet(): BackpackProvider | null {
+  if (typeof window !== "undefined") {
+    if (window.backpack?.isBackpack) {
+      return window.backpack;
+    }
+    if (window.xnft?.solana) {
+      return window.xnft.solana;
+    }
+  }
+  return null;
+}
+
+export function getAllWallets(): WalletInfo[] {
   const phantom = getPhantomWallet();
-  if (phantom) {
-    wallets.push({ name: "Phantom", adapter: phantom });
-  }
-  
   const solflare = getSolflareWallet();
-  if (solflare) {
-    wallets.push({ name: "Solflare", adapter: solflare });
-  }
-  
-  return wallets;
+  const okx = getOKXWallet();
+  const backpack = getBackpackWallet();
+
+  return [
+    {
+      name: "phantom",
+      displayName: "Phantom",
+      icon: "https://phantom.app/img/phantom-logo.svg",
+      adapter: phantom,
+      installed: !!phantom,
+      url: "https://phantom.app/",
+    },
+    {
+      name: "solflare",
+      displayName: "Solflare",
+      icon: "https://solflare.com/favicon.ico",
+      adapter: solflare,
+      installed: !!solflare,
+      url: "https://solflare.com/",
+    },
+    {
+      name: "okx",
+      displayName: "OKX Wallet",
+      icon: "https://static.okx.com/cdn/assets/imgs/221/C5E8D9D5E0D48F8D.png",
+      adapter: okx,
+      installed: !!okx,
+      url: "https://www.okx.com/web3",
+    },
+    {
+      name: "backpack",
+      displayName: "Backpack",
+      icon: "https://backpack.app/favicon.ico",
+      adapter: backpack,
+      installed: !!backpack,
+      url: "https://backpack.app/",
+    },
+  ];
+}
+
+export function getAvailableWallets(): WalletInfo[] {
+  return getAllWallets().filter(w => w.installed);
 }
 
 export async function connectWallet(adapter: WalletAdapter): Promise<PublicKey> {
@@ -105,4 +181,35 @@ export async function signAndSendTransaction(
   await connection.confirmTransaction(signature, "confirmed");
   
   return signature;
+}
+
+export async function getWalletBalance(
+  connection: Connection,
+  publicKey: PublicKey
+): Promise<number> {
+  const balance = await connection.getBalance(publicKey);
+  return balance / LAMPORTS_PER_SOL;
+}
+
+export async function requestDevnetAirdrop(
+  connection: Connection,
+  publicKey: PublicKey,
+  amount: number = 1
+): Promise<string> {
+  const signature = await connection.requestAirdrop(
+    publicKey,
+    amount * LAMPORTS_PER_SOL
+  );
+  await connection.confirmTransaction(signature, "confirmed");
+  return signature;
+}
+
+export const DEVNET_RPC = "https://api.devnet.solana.com";
+export const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
+
+export type NetworkType = "devnet" | "mainnet-beta";
+
+export function getConnection(network: NetworkType = "devnet"): Connection {
+  const rpc = network === "devnet" ? DEVNET_RPC : MAINNET_RPC;
+  return new Connection(rpc, "confirmed");
 }

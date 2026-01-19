@@ -55,7 +55,7 @@ export class MyLuckySolClient {
       return null;
     }
 
-    return decodeGameConfig(Buffer.from(accountInfo.data));
+    return decodeGameConfig(new Uint8Array(accountInfo.data));
   }
 
   async getGamePool(gameId: bigint): Promise<DecodedGamePool | null> {
@@ -66,7 +66,7 @@ export class MyLuckySolClient {
       return null;
     }
 
-    return decodeGamePool(Buffer.from(accountInfo.data));
+    return decodeGamePool(new Uint8Array(accountInfo.data));
   }
 
   async getPlayerBalance(walletAddress: PublicKey): Promise<number> {
@@ -102,12 +102,12 @@ export class MyLuckySolClient {
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
 
-    const data = encodeJoinGameData();
+    const instructionData = encodeJoinGameData();
 
     return new TransactionInstruction({
       keys,
       programId: this.programId,
-      data,
+      data: Buffer.from(instructionData),
     });
   }
 
