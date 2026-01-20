@@ -107,7 +107,7 @@ export class MyLuckySolClient {
     return new TransactionInstruction({
       keys,
       programId: this.programId,
-      data: Buffer.from(instructionData),
+      data: instructionData as Buffer,
     });
   }
 
