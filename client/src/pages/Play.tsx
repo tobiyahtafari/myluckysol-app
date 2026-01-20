@@ -47,11 +47,6 @@ export default function Play() {
     }, 100);
   };
 
-  const { data: liveGames, isLoading: isLoadingLive } = useQuery<Game[]>({
-    queryKey: ["/api/games/live"],
-    refetchInterval: 5000,
-  });
-
   const activeGames = liveGames?.filter(g => g.players.some(p => p.walletAddress === address)) || [];
   const otherLiveGames = liveGames?.filter(g => !g.players.some(p => p.walletAddress === address)) || [];
 
