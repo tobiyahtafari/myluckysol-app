@@ -16,10 +16,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SolToUsd } from "@/lib/price-context";
 import { WalletModal } from "@/components/WalletModal";
-import { MyLuckySolClient, DEVNET_RPC, MAINNET_RPC } from "@/lib/solana/game-client";
 
 export default function Play() {
-  const { connected, balance, address, network, adapter, publicKey, connection } = useWallet();
+  const { connected, balance, address, network } = useWallet();
   const { selectedMode, selectedWager, setSelectedMode, setSelectedWager } = useGameStore();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -53,21 +52,7 @@ export default function Play() {
 
   const joinGameMutation = useMutation({
     mutationFn: async (data: { mode: GameModeKey; wager: WagerTier; walletAddress: string }) => {
-      if (!adapter || !publicKey) {
-        throw new Error("Wallet not connected");
-      }
-
-      const client = new MyLuckySolClient(network === "devnet" ? DEVNET_RPC : MAINNET_RPC);
-      const gameId = BigInt(Date.now());
-      
-      const transaction = await client.buildJoinGameTransaction(gameId, publicKey);
-      const signature = await adapter.sendTransaction!(transaction, connection);
-      await connection.confirmTransaction(signature, "confirmed");
-
-      const response = await apiRequest("POST", "/api/games/join", {
-        ...data,
-        txSignature: signature
-      });
+      const response = await apiRequest("POST", "/api/games/join", data);
       return response.json();
     },
     onSuccess: (data) => {
