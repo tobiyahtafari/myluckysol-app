@@ -345,6 +345,8 @@ export class MemStorage implements IStorage {
     // In a production app, the backend (or a dedicated worker) would execute the payout instruction
     // on the Solana program. For this hybrid version, we'll log it as a pending on-chain action.
     console.log(`[ON-CHAIN] Payout of ${payout.toFixed(4)} SOL pending for ${winner.walletAddress}`);
+    console.log(`[ON-CHAIN] Escrow (Treasury) to Winner: ${payout.toFixed(4)} SOL`);
+    console.log(`[ON-CHAIN] Escrow (Treasury) to Foundation Fee: ${(finalGame.poolAmount * 0.1).toFixed(4)} SOL`);
 
     for (const player of finalGame.players) {
       const isWinner = player.id === winner.id;
