@@ -16,9 +16,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SolToUsd } from "@/lib/price-context";
 import { WalletModal } from "@/components/WalletModal";
+import { signAndSendTransaction } from "@/lib/solana/wallet-adapter";
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 export default function Play() {
-  const { connected, balance, address, network } = useWallet();
+  const { connected, balance, address, network, adapter, publicKey, connection } = useWallet();
   const { selectedMode, selectedWager, setSelectedMode, setSelectedWager } = useGameStore();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -52,7 +54,34 @@ export default function Play() {
 
   const joinGameMutation = useMutation({
     mutationFn: async (data: { mode: GameModeKey; wager: WagerTier; walletAddress: string }) => {
-      const response = await apiRequest("POST", "/api/games/join", data);
+      if (!adapter || !publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      // Treasury wallet address (receives the wager)
+      const TREASURY_WALLET = new PublicKey("Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5");
+      
+      // Build SOL transfer transaction
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: TREASURY_WALLET,
+          lamports: Math.round(data.wager * LAMPORTS_PER_SOL),
+        })
+      );
+      
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+      
+      // Sign and send transaction
+      const signature = await signAndSendTransaction(adapter, connection, transaction);
+      
+      // Register with backend after on-chain confirmation
+      const response = await apiRequest("POST", "/api/games/join", {
+        ...data,
+        txSignature: signature
+      });
       return response.json();
     },
     onSuccess: (data) => {
