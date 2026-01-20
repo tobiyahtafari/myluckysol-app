@@ -105,5 +105,9 @@ The app supports multiple Solana wallets:
 ## Solana Programs
 See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `scripts/deploy-devnet.sh` in the Replit Shell.
 
-## Running the App
-The app runs on port 5000 with the "Start application" workflow (`npm run dev`).
+## Recent Changes (2026-01-20)
+- Deployed Solana programs to Devnet:
+  - MyLuckySol: `Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5`
+  - WAGA Token: `9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho`
+- Updated `client/src/lib/solana/program-types.ts` with live Program IDs.
+- Stabilized Anchor build process using `--locked` dependencies.
