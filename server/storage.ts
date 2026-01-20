@@ -8,6 +8,8 @@ import {
   type GameModeKey,
   type WagerTier,
   GAME_MODES,
+  WAGA_ENTRY_MULTIPLIER,
+  WAGA_WIN_MULTIPLIER,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -26,8 +28,9 @@ export interface IStorage {
   getLiveGames(): Promise<Game[]>;
   createGame(game: InsertGame): Promise<Game>;
   updateGame(id: string, updates: Partial<Game>): Promise<Game | undefined>;
+  updateGameStatus(id: string, status: string): Promise<Game | undefined>;
   findAvailableGame(mode: GameModeKey, wager: WagerTier): Promise<Game | undefined>;
-  joinGame(gameId: string, walletAddress: string): Promise<Game | undefined>;
+  joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -187,7 +190,23 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async joinGame(gameId: string, walletAddress: string): Promise<Game | undefined> {
+  async updateGameStatus(id: string, status: string): Promise<Game | undefined> {
+    const game = this.games.get(id);
+    if (!game) return undefined;
+    game.status = status as Game["status"];
+    
+    if (status === "countdown") {
+      game.countdownEndsAt = Date.now() + 10000;
+      setTimeout(() => {
+        this.startGame(id);
+      }, 10000);
+    }
+    
+    this.games.set(id, game);
+    return game;
+  }
+
+  async joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined> {
     const game = this.games.get(gameId);
     if (!game) return undefined;
 
@@ -206,19 +225,19 @@ export class MemStorage implements IStorage {
       walletAddress,
       joinedAt: Date.now(),
       isEliminated: false,
+      txSignature,
     };
 
     game.players.push(player);
     game.poolAmount += game.wager;
 
-    if (game.players.length >= config.players) {
-      game.status = "countdown";
-      game.countdownEndsAt = Date.now() + 10000;
-
-      setTimeout(() => {
-        this.startGame(gameId);
-      }, 10000);
-    }
+    const entryWagaReward = game.wager * WAGA_ENTRY_MULTIPLIER;
+    const profile = await this.getOrCreateProfile(walletAddress);
+    await this.updateProfile(walletAddress, {
+      wagaEarned: (profile.wagaEarned || 0) + entryWagaReward,
+    });
+    
+    console.log(`[DEVNET] Player ${walletAddress.slice(0, 8)}... joined game ${gameId} with ${game.wager} SOL wager. Earned ${entryWagaReward} WAGA entry reward.`);
 
     this.games.set(gameId, game);
     return game;
@@ -311,35 +330,43 @@ export class MemStorage implements IStorage {
 
     const winner = remainingPlayers[0];
     const payout = finalGame.poolAmount * 0.9;
+    const winWagaReward = payout * WAGA_WIN_MULTIPLIER;
 
     finalGame.status = "completed";
     finalGame.completedAt = Date.now();
     finalGame.winnerId = winner.id;
     finalGame.winnerPayout = payout;
-    finalGame.wagaRewards = payout * 100;
+    finalGame.wagaRewards = winWagaReward;
 
     this.games.set(gameId, finalGame);
 
+    console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}... won ${payout.toFixed(4)} SOL and ${winWagaReward} WAGA`);
+
     for (const player of finalGame.players) {
       const isWinner = player.id === winner.id;
+      const entryWagaReward = finalGame.wager * WAGA_ENTRY_MULTIPLIER;
+      const gameWagaEarned = isWinner ? winWagaReward : entryWagaReward;
+      
       await this.addGameHistory(player.walletAddress, {
         gameId: finalGame.id,
         mode: finalGame.mode,
         wager: finalGame.wager,
         result: isWinner ? "won" : "lost",
         payout: isWinner ? payout : undefined,
-        wagaEarned: isWinner ? payout * 100 : finalGame.wager * 10,
+        wagaEarned: gameWagaEarned,
         playedAt: Date.now(),
       });
 
       const profile = await this.getProfile(player.walletAddress);
       if (profile) {
+        const wagaUpdate = isWinner ? winWagaReward : 0;
+        
         await this.updateProfile(player.walletAddress, {
           gamesPlayed: profile.gamesPlayed + 1,
           gamesWon: profile.gamesWon + (isWinner ? 1 : 0),
           totalWagered: profile.totalWagered + finalGame.wager,
           totalWon: profile.totalWon + (isWinner ? payout : 0),
-          wagaEarned: profile.wagaEarned + (isWinner ? payout * 100 : finalGame.wager * 10),
+          wagaEarned: profile.wagaEarned + wagaUpdate,
           currentStreak: isWinner ? profile.currentStreak + 1 : 0,
           bestStreak: isWinner
             ? Math.max(profile.bestStreak, profile.currentStreak + 1)

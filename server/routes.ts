@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { GAME_MODES, WAGER_TIERS, insertGameSchema } from "@shared/schema";
+import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER } from "@shared/schema";
 import type { GameModeKey, WagerTier } from "@shared/schema";
 import { z } from "zod";
 
@@ -10,7 +10,8 @@ const joinGameSchema = z.object({
   wager: z.number().refine((w) => WAGER_TIERS.includes(w as WagerTier), {
     message: "Invalid wager amount",
   }),
-  walletAddress: z.string().optional(),
+  walletAddress: z.string().min(32, "Valid wallet address required"),
+  txSignature: z.string().optional(),
 });
 
 export async function registerRoutes(
@@ -18,15 +19,19 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  // Join or create a game
+  // Join or create a game (requires real wallet address)
   app.post("/api/games/join", async (req, res) => {
     try {
       const body = joinGameSchema.parse(req.body);
       const mode = body.mode as GameModeKey;
       const wager = body.wager as WagerTier;
-      
-      // Generate a mock wallet address for demo purposes
-      const walletAddress = body.walletAddress || generateMockAddress();
+      const walletAddress = body.walletAddress;
+      const txSignature = body.txSignature;
+
+      // Validate wallet address format (Solana base58)
+      if (!walletAddress || walletAddress.length < 32 || walletAddress.length > 44) {
+        return res.status(400).json({ error: "Valid Solana wallet address required" });
+      }
 
       // Try to find an existing game to join
       let game = await storage.findAvailableGame(mode, wager);
@@ -36,34 +41,33 @@ export async function registerRoutes(
         game = await storage.createGame({ mode, wager });
       }
 
-      // Join the game
-      const updatedGame = await storage.joinGame(game.id, walletAddress);
+      // Check if player already in this game
+      if (game.players.some(p => p.walletAddress === walletAddress)) {
+        return res.status(400).json({ error: "Already joined this game" });
+      }
+
+      // Join the game with real wallet
+      const updatedGame = await storage.joinGame(game.id, walletAddress, txSignature);
 
       if (!updatedGame) {
         return res.status(400).json({ error: "Failed to join game" });
       }
 
-      // Auto-fill remaining slots with bots for demo
+      // Check if game is full and should start
       const config = GAME_MODES[mode];
-      const slotsToFill = config.players - updatedGame.players.length;
-      
-      if (slotsToFill > 0) {
-        // Add bot players after a short delay
-        setTimeout(async () => {
-          let currentGame = await storage.getGame(updatedGame.id);
-          if (!currentGame || currentGame.status !== "waiting") return;
-
-          for (let i = 0; i < slotsToFill; i++) {
-            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1500));
-            currentGame = await storage.getGame(updatedGame.id);
-            if (!currentGame || currentGame.status !== "waiting") break;
-            
-            await storage.joinGame(currentGame.id, generateMockAddress());
-          }
-        }, 1000);
+      if (updatedGame.players.length === config.players) {
+        await storage.updateGameStatus(updatedGame.id, "countdown");
       }
 
-      res.json({ gameId: updatedGame.id, game: updatedGame });
+      const wagaReward = wager * WAGA_ENTRY_MULTIPLIER;
+      
+      res.json({ 
+        gameId: updatedGame.id, 
+        game: updatedGame,
+        playersNeeded: config.players - updatedGame.players.length,
+        wagaReward,
+        network: "devnet",
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
@@ -182,13 +186,4 @@ export async function registerRoutes(
   });
 
   return httpServer;
-}
-
-function generateMockAddress(): string {
-  const chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-  let address = "";
-  for (let i = 0; i < 44; i++) {
-    address += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return address;
 }

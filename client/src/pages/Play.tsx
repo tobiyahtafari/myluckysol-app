@@ -15,13 +15,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SolToUsd } from "@/lib/price-context";
+import { WalletModal } from "@/components/WalletModal";
 
 export default function Play() {
-  const { connected, connect, balance, address } = useWallet();
+  const { connected, balance, address, network } = useWallet();
   const { selectedMode, selectedWager, setSelectedMode, setSelectedWager } = useGameStore();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   const { data: liveGames, isLoading: isLoadingLive } = useQuery<Game[]>({
     queryKey: ["/api/games/live"],
@@ -38,6 +40,13 @@ export default function Play() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/games"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      
+      toast({
+        title: "Joined game successfully",
+        description: `You earned ${data.wagaReward} WAGA tokens! ${data.playersNeeded > 0 ? `Waiting for ${data.playersNeeded} more player(s)...` : "Game starting!"}`,
+      });
+      
       setLocation(`/game/${data.gameId}`);
     },
     onError: (error) => {
@@ -51,7 +60,7 @@ export default function Play() {
 
   const handleJoinGame = () => {
     if (!connected) {
-      connect();
+      setShowWalletModal(true);
       return;
     }
 
@@ -67,13 +76,22 @@ export default function Play() {
     if (balance < selectedWager) {
       toast({
         title: "Insufficient balance",
-        description: `You need ${selectedWager} SOL to join this game`,
+        description: `You need ${selectedWager} SOL to join this game. ${network === "devnet" ? "Request an airdrop from your wallet menu." : ""}`,
         variant: "destructive",
       });
       return;
     }
 
-    joinGameMutation.mutate({ mode: selectedMode, wager: selectedWager, walletAddress: address || "" });
+    if (!address) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    joinGameMutation.mutate({ mode: selectedMode, wager: selectedWager, walletAddress: address });
   };
 
   const gameModes: GameModeKey[] = ["1v1", "2-round", "3-round", "4-round"];
@@ -81,29 +99,33 @@ export default function Play() {
 
   if (!connected) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <div className="w-20 h-20 rounded-full gradient-solana flex items-center justify-center mx-auto mb-6 glow-solana">
-            <Wallet className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold mb-4">Connect Your Wallet</h1>
-          <p className="text-muted-foreground mb-8 max-w-md">
-            Connect your Solana wallet to start playing and winning SOL
-          </p>
-          <Button size="lg" onClick={connect} className="gap-2" data-testid="button-connect-to-play">
-            <Wallet className="w-5 h-5" />
-            Connect Wallet
-          </Button>
-        </motion.div>
-      </div>
+      <>
+        <div className="min-h-[80vh] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="w-20 h-20 rounded-full gradient-solana flex items-center justify-center mx-auto mb-6 glow-solana">
+              <Wallet className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold mb-4">Connect Your Wallet</h1>
+            <p className="text-muted-foreground mb-8 max-w-md">
+              Connect your Solana wallet to start playing and winning real SOL on {network === "devnet" ? "Devnet" : "Mainnet"}
+            </p>
+            <Button size="lg" onClick={() => setShowWalletModal(true)} className="gap-2" data-testid="button-connect-to-play">
+              <Wallet className="w-5 h-5" />
+              Connect Wallet
+            </Button>
+          </motion.div>
+        </div>
+        <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
+      </>
     );
   }
 
   return (
+    <>
     <div className="min-h-screen py-8 px-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent" />
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#9945FF]/20 rounded-full blur-3xl animate-pulse" />
@@ -272,11 +294,15 @@ export default function Play() {
         </Tabs>
       </div>
     </div>
+    <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
+    </>
   );
 }
 
 function LiveGameCard({ game, isActive }: { game: Game; isActive?: boolean }) {
   const config = GAME_MODES[game.mode];
+  const playersNeeded = config.players - game.players.length;
+  
   return (
     <Card className={`p-4 border-2 transition-all hover:border-primary/50 ${isActive ? 'border-accent/50' : ''}`}>
       <div className="flex justify-between items-start mb-4">
@@ -286,17 +312,22 @@ function LiveGameCard({ game, isActive }: { game: Game; isActive?: boolean }) {
         </div>
         <div className="text-right">
           <p className="font-bold text-gradient-gold">{game.wager} SOL</p>
-          <p className="text-xs text-muted-foreground">Pool: {game.poolAmount} SOL</p>
+          <p className="text-xs text-muted-foreground">Pool: {game.poolAmount.toFixed(2)} SOL</p>
         </div>
       </div>
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm">{game.players.length}/{config.players} Players</span>
+          <span className="text-sm">
+            {game.players.length}/{config.players} Players
+            {playersNeeded > 0 && game.status === "waiting" && (
+              <span className="text-accent ml-1">(need {playersNeeded} more)</span>
+            )}
+          </span>
         </div>
         <Link href={`/game/${game.id}`}>
-          <Button size="sm" variant={isActive ? "default" : "outline"}>
-            {isActive ? "Join Game" : "Spectate"}
+          <Button size="sm" variant={isActive ? "default" : "outline"} data-testid={`button-join-live-game-${game.id}`}>
+            {isActive ? "Resume" : game.status === "waiting" ? "Join" : "Spectate"}
           </Button>
         </Link>
       </div>

@@ -106,11 +106,33 @@ The app supports multiple Solana wallets:
 See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `scripts/deploy-devnet.sh` in the Replit Shell.
 
 ## Recent Changes (2026-01-20)
-- Deployed Solana programs to Devnet:
-  - MyLuckySol: `Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5`
-  - WAGA Token: `9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho`
-- Updated `client/src/lib/solana/program-types.ts` with live Program IDs.
-- Stabilized Anchor build process using `--locked` dependencies.
+
+### Game System Updates
+- **Removed mock players**: Games now require real wallet connections only - no auto-fill bots
+- **Wallet validation**: Backend validates Solana wallet addresses (32-44 character base58)
+- **WAGA rewards on entry**: Players automatically receive 10x their wager in WAGA tokens when joining a game
+- **WAGA rewards on win**: Winners receive 100x their winnings in WAGA tokens
+- **WAGA balance display**: Wallet dropdown shows WAGA token balance synced from player profile
+- **Success notifications**: Toast messages show WAGA rewards earned when joining games
+- **Players needed indicator**: Live game cards show how many more players are needed
+
+### Solana Programs (Devnet)
+- MyLuckySol: `Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5`
+- WAGA Token: `9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho`
+
+### Architecture Notes
+- Backend validates joins and tracks WAGA rewards in player profiles
+- Games start automatically when all player slots are filled (no bots)
+- On-chain SOL transfers pending integration (currently backend-tracked)
+- Network: Running on Devnet with 11 SOL in deployment wallet
+
+### Files Modified
+- `server/routes.ts`: Removed mock player logic, added wallet validation, returns WAGA rewards
+- `server/storage.ts`: Updated joinGame to distribute WAGA entry rewards
+- `server/waga-service.ts`: New service for WAGA token distribution tracking
+- `client/src/pages/Play.tsx`: Updated to use wallet modal, show rewards in toasts
+- `client/src/lib/wallet-context.tsx`: Syncs WAGA balance from profile
+
 ### Minting WAGA Tokens
 To mint WAGA tokens for testing, run:
 ```bash

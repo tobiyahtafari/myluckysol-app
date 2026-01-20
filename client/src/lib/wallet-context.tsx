@@ -73,7 +73,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const { data: profile } = useQuery<PlayerProfile>({
     queryKey: ["/api/profile", state.address],
     enabled: state.connected && !!state.address,
+    refetchInterval: 10000,
   });
+
+  useEffect(() => {
+    if (profile?.wagaEarned !== undefined) {
+      setState(prev => ({
+        ...prev,
+        wagaBalance: profile.wagaEarned,
+      }));
+    }
+  }, [profile?.wagaEarned]);
 
   const refreshBalance = useCallback(async () => {
     if (!state.publicKey || !connection) return;
