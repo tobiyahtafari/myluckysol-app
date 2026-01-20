@@ -1,13 +1,16 @@
 import { Link } from "wouter";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useWallet } from "@/lib/wallet-context";
 import { Gamepad2, Shield, Zap, Users, Trophy, Coins } from "lucide-react";
+import { WalletModal } from "@/components/WalletModal";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
 
 export default function Home() {
-  const { connect, connected } = useWallet();
+  const { connected } = useWallet();
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
 
   const features = [
     {
@@ -76,7 +79,12 @@ export default function Home() {
                     </Button>
                   </Link>
                 ) : (
-                  <Button size="lg" onClick={connect} className="gap-2 text-lg px-8" data-testid="button-connect-play">
+                  <Button 
+                    size="lg" 
+                    onClick={() => setWalletModalOpen(true)} 
+                    className="gap-2 text-lg px-8" 
+                    data-testid="button-connect-play"
+                  >
                     <Gamepad2 className="w-5 h-5" />
                     Connect & Play
                   </Button>
@@ -225,7 +233,12 @@ export default function Home() {
                 </Button>
               </Link>
             ) : (
-              <Button size="lg" onClick={connect} className="gap-2 text-lg px-8" data-testid="button-connect-cta">
+              <Button 
+                size="lg" 
+                onClick={() => setWalletModalOpen(true)} 
+                className="gap-2 text-lg px-8" 
+                data-testid="button-connect-cta"
+              >
                 <Gamepad2 className="w-5 h-5" />
                 Connect Wallet to Play
               </Button>
@@ -233,6 +246,8 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
 
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-4">
