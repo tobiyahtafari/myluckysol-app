@@ -358,6 +358,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         requestAirdrop,
         connection,
         adapter,
+        publicKey: state.publicKey,
       }}
     >
       {children}

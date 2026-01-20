@@ -342,6 +342,10 @@ export class MemStorage implements IStorage {
 
     console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}... won ${payout.toFixed(4)} SOL and ${winWagaReward} WAGA`);
 
+    // In a production app, the backend (or a dedicated worker) would execute the payout instruction
+    // on the Solana program. For this hybrid version, we'll log it as a pending on-chain action.
+    console.log(`[ON-CHAIN] Payout of ${payout.toFixed(4)} SOL pending for ${winner.walletAddress}`);
+
     for (const player of finalGame.players) {
       const isWinner = player.id === winner.id;
       const entryWagaReward = finalGame.wager * WAGA_ENTRY_MULTIPLIER;

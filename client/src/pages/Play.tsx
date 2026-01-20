@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SolToUsd } from "@/lib/price-context";
 import { WalletModal } from "@/components/WalletModal";
+import { MyLuckySolClient, DEVNET_RPC, MAINNET_RPC } from "@/lib/solana/game-client";
 
 export default function Play() {
-  const { connected, balance, address, network } = useWallet();
+  const { connected, balance, address, network, adapter, publicKey, connection } = useWallet();
   const { selectedMode, selectedWager, setSelectedMode, setSelectedWager } = useGameStore();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -28,7 +29,7 @@ export default function Play() {
   const wagerSectionRef = useRef<HTMLElement>(null);
   const confirmSectionRef = useRef<HTMLElement>(null);
 
-  const { data: liveGames, isLoading: isLoadingLive } = useQuery<Game[]>({
+  const { data: liveGames } = useQuery<Game[]>({
     queryKey: ["/api/games/live"],
     refetchInterval: 5000,
   });
@@ -52,7 +53,21 @@ export default function Play() {
 
   const joinGameMutation = useMutation({
     mutationFn: async (data: { mode: GameModeKey; wager: WagerTier; walletAddress: string }) => {
-      const response = await apiRequest("POST", "/api/games/join", data);
+      if (!adapter || !publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      const client = new MyLuckySolClient(network === "devnet" ? DEVNET_RPC : MAINNET_RPC);
+      const gameId = BigInt(Date.now());
+      
+      const transaction = await client.buildJoinGameTransaction(gameId, publicKey);
+      const signature = await adapter.sendTransaction!(transaction, connection);
+      await connection.confirmTransaction(signature, "confirmed");
+
+      const response = await apiRequest("POST", "/api/games/join", {
+        ...data,
+        txSignature: signature
+      });
       return response.json();
     },
     onSuccess: (data) => {
@@ -61,7 +76,7 @@ export default function Play() {
       
       toast({
         title: "Joined game successfully",
-        description: `You earned ${data.wagaReward} WAGA tokens! ${data.playersNeeded > 0 ? `Waiting for ${data.playersNeeded} more player(s)...` : "Game starting!"}`,
+        description: `You earned ${data.wagaReward} WAGA tokens! ${data.playersNeeded > 0 ? "Waiting for players..." : "Game starting!"}`,
       });
       
       setLocation(`/game/${data.gameId}`);
@@ -145,10 +160,6 @@ export default function Play() {
     <>
     <div className="min-h-screen py-8 px-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#9945FF]/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#03E1FF]/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 right-0 w-80 h-80 bg-[#00FFA3]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#DC1FFF]/10 rounded-full blur-3xl" />
       <div className="container mx-auto max-w-6xl relative z-10">
         <Tabs defaultValue="join" className="space-y-8">
           <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
