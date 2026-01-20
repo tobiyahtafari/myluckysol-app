@@ -18,6 +18,7 @@ import { SolToUsd } from "@/lib/price-context";
 import { WalletModal } from "@/components/WalletModal";
 import { signAndSendTransaction } from "@/lib/solana/wallet-adapter";
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { FOUNDATION_TREASURY_WALLET } from "@shared/constants";
 
 export default function Play() {
   const { connected, balance, address, network, adapter, publicKey, connection } = useWallet();
@@ -58,8 +59,8 @@ export default function Play() {
         throw new Error("Wallet not connected");
       }
 
-      // Treasury wallet address (receives the wager)
-      const TREASURY_WALLET = new PublicKey("Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5");
+      // Foundation treasury wallet (receives wagers, distributes payouts)
+      const TREASURY_WALLET = new PublicKey(FOUNDATION_TREASURY_WALLET);
       
       // Build SOL transfer transaction
       const transaction = new Transaction().add(

@@ -1,0 +1,9 @@
+export const FOUNDATION_TREASURY_WALLET = "BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP";
+
+export const MYLUCKYSOL_PROGRAM_ID = "Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5";
+export const WAGA_TOKEN_MINT = "9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho";
+
+export const PAYOUT_SPLIT = {
+  WINNER_PERCENT: 90,
+  TREASURY_PERCENT: 10,
+};

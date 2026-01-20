@@ -116,22 +116,31 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 - **Success notifications**: Toast messages show WAGA rewards earned when joining games
 - **Players needed indicator**: Live game cards show how many more players are needed
 
-### Solana Programs (Devnet)
-- MyLuckySol: `Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5`
-- WAGA Token: `9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho`
+### Solana Programs & Wallets (Devnet)
+- MyLuckySol Program: `Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5`
+- WAGA Token Mint: `9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho`
+- Foundation Treasury: `BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP` (receives 10% house fee)
+
+### On-Chain Transaction Flow
+1. Player joins game -> Signs SOL transfer to treasury wallet
+2. Transaction confirms on Solana devnet
+3. Backend registers player in game after tx confirmation
+4. When game ends: 90% to winner(s), 10% stays in treasury
 
 ### Architecture Notes
 - Backend validates joins and tracks WAGA rewards in player profiles
 - Games start automatically when all player slots are filled (no bots)
-- On-chain SOL transfers pending integration (currently backend-tracked)
-- Network: Running on Devnet with 11 SOL in deployment wallet
+- On-chain SOL transfers enabled via Buffer polyfill for browser compatibility
+- Network: Running on Devnet
 
 ### Files Modified
 - `server/routes.ts`: Removed mock player logic, added wallet validation, returns WAGA rewards
 - `server/storage.ts`: Updated joinGame to distribute WAGA entry rewards
 - `server/waga-service.ts`: New service for WAGA token distribution tracking
-- `client/src/pages/Play.tsx`: Updated to use wallet modal, show rewards in toasts
+- `client/src/pages/Play.tsx`: On-chain SOL transfers with wallet signing
 - `client/src/lib/wallet-context.tsx`: Syncs WAGA balance from profile
+- `client/src/lib/polyfills.ts`: Buffer polyfill for browser Solana compatibility
+- `shared/constants.ts`: Treasury wallet address and payout split constants
 
 ### Minting WAGA Tokens
 To mint WAGA tokens for testing, run:
