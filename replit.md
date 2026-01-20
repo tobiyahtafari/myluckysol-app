@@ -111,3 +111,9 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
   - WAGA Token: `9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho`
 - Updated `client/src/lib/solana/program-types.ts` with live Program IDs.
 - Stabilized Anchor build process using `--locked` dependencies.
+### Minting WAGA Tokens
+To mint WAGA tokens for testing, run:
+```bash
+anchor run mint-waga
+```
+This will initialize the token (if not already done) and mint 1000 WAGA to your deployment wallet.

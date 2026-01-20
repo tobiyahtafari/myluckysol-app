@@ -6,12 +6,12 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-myluckysol = "4Yx2eKFi5rYYm7H1xc9VJY5DtEjRxfsR6R117UyZ636T"
-waga_token = "34EYtbfFLCRGZhyxR21PJeG45Lhv3vUwoUxwuN8xvmAF"
+myluckysol = "Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5"
+waga_token = "9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho"
 
 [programs.devnet]
-myluckysol = "4Yx2eKFi5rYYm7H1xc9VJY5DtEjRxfsR6R117UyZ636T"
-waga_token = "34EYtbfFLCRGZhyxR21PJeG45Lhv3vUwoUxwuN8xvmAF"
+myluckysol = "Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5"
+waga_token = "9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho"
 
 [registry]
 url = "https://api.apr.dev"
@@ -22,3 +22,4 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+mint-waga = "npx ts-node scripts/mint-waga.ts"
