@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,28 @@ export default function Play() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showWalletModal, setShowWalletModal] = useState(false);
+
+  const wagerSectionRef = useRef<HTMLElement>(null);
+  const confirmSectionRef = useRef<HTMLElement>(null);
+
+  const { data: liveGames, isLoading: isLoadingLive } = useQuery<Game[]>({
+    queryKey: ["/api/games/live"],
+    refetchInterval: 5000,
+  });
+
+  const handleModeSelect = (mode: GameModeKey) => {
+    setSelectedMode(mode);
+    setTimeout(() => {
+      wagerSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  const handleWagerSelect = (wager: WagerTier) => {
+    setSelectedWager(wager);
+    setTimeout(() => {
+      confirmSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
 
   const { data: liveGames, isLoading: isLoadingLive } = useQuery<Game[]>({
     queryKey: ["/api/games/live"],
@@ -166,13 +188,13 @@ export default function Play() {
                       key={mode}
                       mode={mode}
                       isSelected={selectedMode === mode}
-                      onSelect={setSelectedMode}
+                      onSelect={handleModeSelect}
                     />
                   ))}
                 </div>
               </section>
 
-              <section>
+              <section ref={wagerSectionRef}>
                 <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center text-sm font-bold text-black">2</span>
                   Select Wager
@@ -180,13 +202,14 @@ export default function Play() {
                 <Card className="p-6">
                   <WagerSelector
                     selectedWager={selectedWager}
-                    onSelect={setSelectedWager}
+                    onSelect={handleWagerSelect}
                   />
                 </Card>
               </section>
 
               {selectedMode && selectedWager && (
                 <motion.section
+                  ref={confirmSectionRef}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
