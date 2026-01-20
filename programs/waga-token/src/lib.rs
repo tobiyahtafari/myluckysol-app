@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, MintTo, Transfer};
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("11111111111111111111111111111112");
+declare_id!("34EYtbfFLCRGZhyxR21PJeG45Lhv3vUwoUxwuN8xvmAF");
 
 #[program]
 pub mod waga_token {

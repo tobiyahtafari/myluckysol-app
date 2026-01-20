@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, MintTo};
 
-declare_id!("11111111111111111111111111111111");
+declare_id!("4Yx2eKFi5rYYm7H1xc9VJY5DtEjRxfsR6R117UyZ636T");
 
 pub mod state;
 pub mod instructions;

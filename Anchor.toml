@@ -6,12 +6,12 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-myluckysol = "11111111111111111111111111111111"
-waga_token = "11111111111111111111111111111112"
+myluckysol = "4Yx2eKFi5rYYm7H1xc9VJY5DtEjRxfsR6R117UyZ636T"
+waga_token = "34EYtbfFLCRGZhyxR21PJeG45Lhv3vUwoUxwuN8xvmAF"
 
 [programs.devnet]
-myluckysol = "11111111111111111111111111111111"
-waga_token = "11111111111111111111111111111112"
+myluckysol = "4Yx2eKFi5rYYm7H1xc9VJY5DtEjRxfsR6R117UyZ636T"
+waga_token = "34EYtbfFLCRGZhyxR21PJeG45Lhv3vUwoUxwuN8xvmAF"
 
 [registry]
 url = "https://api.apr.dev"

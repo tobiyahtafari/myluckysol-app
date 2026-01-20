@@ -53,8 +53,10 @@ if ! command -v cargo-build-sbf &> /dev/null; then
     export PATH="$PATH:/nix/store/4q0790r3b01fygbamhjik5h13hw4q3sc-solana-cli-1.17.31/bin"
 fi
 
-# Standard build command
-anchor build
+# Replit's cargo version is too old for some new Anchor dependencies (wit-bindgen edition 2024).
+# We'll use the anchor build command without extra flags to use default behavior.
+# AND we will use the --locked flag to ensure it doesn't try to pull in newer problematic dependencies
+anchor build -- --locked
 
 
 MYLUCKYSOL_PROGRAM_ID=$(solana address -k target/deploy/myluckysol-keypair.json 2>/dev/null || echo "")
