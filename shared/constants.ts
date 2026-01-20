@@ -7,3 +7,7 @@ export const PAYOUT_SPLIT = {
   WINNER_PERCENT: 90,
   TREASURY_PERCENT: 10,
 };
+
+// Seed for the game pool PDA
+export const GAME_POOL_SEED = "game_pool";
+export const GAME_CONFIG_SEED = "game_config";

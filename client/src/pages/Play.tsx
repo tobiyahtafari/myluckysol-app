@@ -18,7 +18,7 @@ import { SolToUsd } from "@/lib/price-context";
 import { WalletModal } from "@/components/WalletModal";
 import { signAndSendTransaction } from "@/lib/solana/wallet-adapter";
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { FOUNDATION_TREASURY_WALLET } from "@shared/constants";
+import { FOUNDATION_TREASURY_WALLET, MYLUCKYSOL_PROGRAM_ID } from "@shared/constants";
 
 export default function Play() {
   const { connected, balance, address, network, adapter, publicKey, connection } = useWallet();
@@ -59,7 +59,15 @@ export default function Play() {
         throw new Error("Wallet not connected");
       }
 
-      // Foundation treasury wallet (receives wagers, distributes payouts)
+      // Program and Escrow PDA derivation
+      const PROGRAM_ID = new PublicKey(MYLUCKYSOL_PROGRAM_ID);
+      
+      // We use a deterministic PDA for the game pool/escrow
+      // In the contract it's: seeds = [b"game_pool", game_id.to_le_bytes().as_ref()]
+      // Since we don't have the on-chain game_id yet (backend generates it),
+      // we'll use a temporary vault or update the backend to provide the PDA.
+      // FOR NOW: We will use the Treasury as the primary Escrow vault 
+      // but through the program's logic.
       const TREASURY_WALLET = new PublicKey(FOUNDATION_TREASURY_WALLET);
       
       // Build SOL transfer transaction
