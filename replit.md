@@ -13,9 +13,9 @@ MyLuckySol is a casino-grade, provably fair chance-based game DApp on Solana. Pl
 
 ## Game Modes
 1. **1v1 Mode**: 2 players, 1 round, 90s timer (1 min 30 sec)
-2. **2-Round Mode**: 4 players, 2 rounds, 150s timer
-3. **3-Round Mode**: 8 players, 3 rounds, 150s timer
-4. **4-Round Mode**: 16 players, 4 rounds, 150s timer
+2. **2-Round Mode**: 4 players, 2 rounds, 90s timer (1 min 30 sec)
+3. **3-Round Mode**: 8 players, 3 rounds, 90s timer (1 min 30 sec)
+4. **4-Round Mode**: 16 players, 4 rounds, 90s timer (1 min 30 sec)
 
 ## Wager Tiers
 - 0.01 SOL
