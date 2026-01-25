@@ -8,9 +8,11 @@ import {
   type GameModeKey,
   type WagerTier,
   GAME_MODES,
-  WAGA_ENTRY_MULTIPLIER,
-  WAGA_WIN_MULTIPLIER,
+  WAGA_ENTRY_REWARD_PERCENT,
+  WAGA_WINNER_REWARD_PERCENT,
+  WINNER_SHARE,
 } from "@shared/schema";
+import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
 
 export interface IStorage {
   getProfile(walletAddress: string): Promise<PlayerProfile | undefined>;
@@ -231,13 +233,20 @@ export class MemStorage implements IStorage {
     game.players.push(player);
     game.poolAmount += game.wager;
 
-    const entryWagaReward = game.wager * WAGA_ENTRY_MULTIPLIER;
+    // Calculate WAGA entry reward based on wager tier and USD value
+    const rewardPercent = WAGA_ENTRY_REWARD_PERCENT[game.wager as WagerTier] || 50;
+    const entryWagaReward = await calculateWagaReward(game.wager, rewardPercent);
+    
     const profile = await this.getOrCreateProfile(walletAddress);
     await this.updateProfile(walletAddress, {
       wagaEarned: (profile.wagaEarned || 0) + entryWagaReward,
     });
     
-    console.log(`[DEVNET] Player ${walletAddress.slice(0, 8)}... joined game ${gameId} with ${game.wager} SOL wager. Earned ${entryWagaReward} WAGA entry reward.`);
+    const solPrice = await getSolPrice();
+    const wagaPrice = getWagaPrice();
+    const usdValue = game.wager * solPrice;
+    console.log(`[DEVNET] Player ${walletAddress.slice(0, 8)}... joined game ${gameId} with ${game.wager} SOL wager ($${usdValue.toFixed(2)} USD).`);
+    console.log(`[DEVNET] Entry WAGA Reward: ${entryWagaReward} WAGA (${rewardPercent}% of $${usdValue.toFixed(2)} = $${(usdValue * rewardPercent / 100).toFixed(2)} worth at $${wagaPrice}/WAGA)`);
 
     this.games.set(gameId, game);
     return game;
@@ -329,8 +338,11 @@ export class MemStorage implements IStorage {
     if (!finalGame) return;
 
     const winner = remainingPlayers[0];
-    const payout = finalGame.poolAmount * 0.9;
-    const winWagaReward = payout * WAGA_WIN_MULTIPLIER;
+    const payout = finalGame.poolAmount * WINNER_SHARE; // 90% to winner
+    const treasuryFee = finalGame.poolAmount * (1 - WINNER_SHARE); // 10% to treasury
+    
+    // Winner gets 100% USD value match of SOL winnings in WAGA
+    const winWagaReward = await calculateWagaReward(payout, WAGA_WINNER_REWARD_PERCENT);
 
     finalGame.status = "completed";
     finalGame.completedAt = Date.now();
@@ -340,18 +352,25 @@ export class MemStorage implements IStorage {
 
     this.games.set(gameId, finalGame);
 
-    console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}... won ${payout.toFixed(4)} SOL and ${winWagaReward} WAGA`);
+    const solPrice = await getSolPrice();
+    const wagaPrice = getWagaPrice();
+    const payoutUsd = payout * solPrice;
+    
+    console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}...`);
+    console.log(`[DEVNET] Winner Payout: ${payout.toFixed(4)} SOL ($${payoutUsd.toFixed(2)} USD)`);
+    console.log(`[DEVNET] Winner WAGA Reward: ${winWagaReward} WAGA (100% of $${payoutUsd.toFixed(2)} at $${wagaPrice}/WAGA)`);
+    console.log(`[DEVNET] Treasury Fee: ${treasuryFee.toFixed(4)} SOL`);
 
     // In a production app, the backend (or a dedicated worker) would execute the payout instruction
     // on the Solana program. For this hybrid version, we'll log it as a pending on-chain action.
     console.log(`[ON-CHAIN] Payout of ${payout.toFixed(4)} SOL pending for ${winner.walletAddress}`);
     console.log(`[ON-CHAIN] Escrow (Treasury) to Winner: ${payout.toFixed(4)} SOL`);
-    console.log(`[ON-CHAIN] Escrow (Treasury) to Foundation Fee: ${(finalGame.poolAmount * 0.1).toFixed(4)} SOL`);
+    console.log(`[ON-CHAIN] Escrow (Treasury) to Foundation Fee: ${treasuryFee.toFixed(4)} SOL`);
 
     for (const player of finalGame.players) {
       const isWinner = player.id === winner.id;
-      const entryWagaReward = finalGame.wager * WAGA_ENTRY_MULTIPLIER;
-      const gameWagaEarned = isWinner ? winWagaReward : entryWagaReward;
+      // Entry WAGA rewards already given at join time, no additional entry reward here
+      const gameWagaEarned = isWinner ? winWagaReward : 0; // Only winner gets additional WAGA
       
       await this.addGameHistory(player.walletAddress, {
         gameId: finalGame.id,

@@ -8,7 +8,7 @@ import { GameModeCard } from "@/components/GameModeCard";
 import { WagerSelector } from "@/components/WagerSelector";
 import { useWallet } from "@/lib/wallet-context";
 import { useGameStore } from "@/lib/game-store";
-import { GAME_MODES, type GameModeKey, type WagerTier, type Game } from "@shared/schema";
+import { GAME_MODES, WAGA_ENTRY_REWARD_PERCENT, type GameModeKey, type WagerTier, type Game } from "@shared/schema";
 import { Wallet, ArrowRight, Loader2, Info, Users, Play as PlayIcon } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -276,8 +276,9 @@ export default function Play() {
                             <SolToUsd sol={selectedWager * (selectedConfig?.players || 2) * 0.9} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
-                            <p className="text-xs text-muted-foreground">WAGA Reward</p>
-                            <p className="text-lg font-bold text-secondary">+{selectedWager * 10}</p>
+                            <p className="text-xs text-muted-foreground">WAGA Entry</p>
+                            <p className="text-lg font-bold text-secondary">{WAGA_ENTRY_REWARD_PERCENT[selectedWager]}%</p>
+                            <p className="text-xs text-muted-foreground">of USD value</p>
                           </div>
                         </div>
                       </div>

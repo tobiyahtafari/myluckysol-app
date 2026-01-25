@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER } from "@shared/schema";
-import type { GameModeKey, WagerTier } from "@shared/schema";
+import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_REWARD_PERCENT, type WagerTier, type GameModeKey } from "@shared/schema";
+import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
 import { z } from "zod";
 
 const joinGameSchema = z.object({
@@ -59,13 +59,21 @@ export async function registerRoutes(
         await storage.updateGameStatus(updatedGame.id, "countdown");
       }
 
-      const wagaReward = wager * WAGA_ENTRY_MULTIPLIER;
+      // Calculate WAGA reward based on wager tier
+      const rewardPercent = WAGA_ENTRY_REWARD_PERCENT[wager as WagerTier] || 50;
+      const wagaReward = await calculateWagaReward(wager, rewardPercent);
+      const solPrice = await getSolPrice();
+      const wagaPrice = getWagaPrice();
+      const usdValue = wager * solPrice;
       
       res.json({ 
         gameId: updatedGame.id, 
         game: updatedGame,
         playersNeeded: config.players - updatedGame.players.length,
         wagaReward,
+        wagaRewardPercent: rewardPercent,
+        solUsdValue: usdValue,
+        wagaPrice,
         network: "devnet",
       });
     } catch (error) {

@@ -105,13 +105,31 @@ The app supports multiple Solana wallets:
 ## Solana Programs
 See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `scripts/deploy-devnet.sh` in the Replit Shell.
 
-## Recent Changes (2026-01-20)
+## Recent Changes (2026-01-25)
+
+### WAGA Reward System Overhaul
+- **Tier-based WAGA entry rewards**: Rewards now scale based on wager tier:
+  - 0.01 SOL: 100% of USD value in WAGA
+  - 0.1 SOL: 75% of USD value in WAGA
+  - 1 SOL: 65% of USD value in WAGA
+  - 10 SOL: 50% of USD value in WAGA
+- **Winner WAGA rewards**: Winner receives 100% USD value match of their SOL winnings in WAGA
+- **Price feed integration**: Real-time SOL/USD prices via CoinGecko API
+- **Mock WAGA price**: Using $0.001/WAGA for testing (will integrate Raydium DEX price once live)
+
+### Payout Structure
+- Winner receives exactly 90% of the total pool
+- 10% goes to foundation treasury (BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP)
+
+### Timer Synchronization
+- Countdown timers use server-provided `countdownEndsAt` and `roundEndsAt` timestamps
+- All clients calculate remaining time from the same server timestamp, ensuring sync
+
+## Changes (2026-01-20)
 
 ### Game System Updates
 - **Removed mock players**: Games now require real wallet connections only - no auto-fill bots
 - **Wallet validation**: Backend validates Solana wallet addresses (32-44 character base58)
-- **WAGA rewards on entry**: Players automatically receive 10x their wager in WAGA tokens when joining a game
-- **WAGA rewards on win**: Winners receive 100x their winnings in WAGA tokens
 - **WAGA balance display**: Wallet dropdown shows WAGA token balance synced from player profile
 - **Success notifications**: Toast messages show WAGA rewards earned when joining games
 - **Players needed indicator**: Live game cards show how many more players are needed
@@ -133,11 +151,13 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 - On-chain SOL transfers enabled via Buffer polyfill for browser compatibility
 - Network: Running on Devnet
 
-### Files Modified
-- `server/routes.ts`: Removed mock player logic, added wallet validation, returns WAGA rewards
-- `server/storage.ts`: Updated joinGame to distribute WAGA entry rewards
-- `server/waga-service.ts`: New service for WAGA token distribution tracking
+### Key Files
+- `server/routes.ts`: API endpoints, wallet validation, WAGA reward calculations
+- `server/storage.ts`: Game state management, tier-based WAGA reward distribution
+- `server/price-service.ts`: SOL/USD price feed, WAGA value calculations
+- `shared/schema.ts`: WAGA_ENTRY_REWARD_PERCENT, WAGA_WINNER_REWARD_PERCENT constants
 - `client/src/pages/Play.tsx`: On-chain SOL transfers with wallet signing
+- `client/src/components/WagerSelector.tsx`: Displays tier-based reward percentages
 - `client/src/lib/wallet-context.tsx`: Syncs WAGA balance from profile
 - `client/src/lib/polyfills.ts`: Buffer polyfill for browser Solana compatibility
 - `shared/constants.ts`: Treasury wallet address and payout split constants
