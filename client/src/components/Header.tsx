@@ -233,7 +233,7 @@ export function Header() {
                   data-testid="button-connect-wallet"
                 >
                   <Wallet className="h-4 w-4" />
-                  Connect Wallet
+                  Connect
                 </Button>
               )}
 
