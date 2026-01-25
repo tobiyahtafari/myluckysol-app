@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet-context";
-import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2 } from "lucide-react";
+import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2, Coins, Repeat } from "lucide-react";
 import headerLogo from "@assets/myluckysol-header-logo_1768586127704.png";
 import { WalletModal } from "./WalletModal";
-import { NetworkBadge } from "./NetworkBadge";
+import { useSolPrice } from "@/lib/price-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,47 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+
+function PriceWidget() {
+  const { solPrice } = useSolPrice();
+  const [displayType, setDisplayType] = useState<"SOL" | "WAGA">("SOL");
+  
+  // Mock WAGA price for now
+  const wagaPrice = 0.001;
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="gap-2 h-9 border-border/50 bg-background/50 hover:bg-background/80 transition-all duration-300 group"
+      onClick={() => setDisplayType(prev => prev === "SOL" ? "WAGA" : "SOL")}
+      data-testid="button-price-widget"
+    >
+      <div className="flex items-center gap-1.5">
+        {displayType === "SOL" ? (
+          <>
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center p-1">
+              <span className="text-[10px] font-bold text-white">S</span>
+            </div>
+            <span className="text-sm font-mono font-medium text-gradient-solana">
+              ${solPrice?.toFixed(2) || "---"}
+            </span>
+          </>
+        ) : (
+          <>
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center p-1">
+              <span className="text-[10px] font-bold text-white">W</span>
+            </div>
+            <span className="text-sm font-mono font-medium text-gradient-gold">
+              ${wagaPrice.toFixed(4)}
+            </span>
+          </>
+        )}
+        <Repeat className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    </Button>
+  );
+}
 
 export function Header() {
   const { 
@@ -24,6 +65,7 @@ export function Header() {
     disconnect, 
     profile,
     network,
+    setNetwork,
     requestAirdrop,
     walletName,
   } = useWallet();
@@ -100,7 +142,7 @@ export function Header() {
             </nav>
 
             <div className="flex items-center gap-3">
-              {connected && <NetworkBadge />}
+              <PriceWidget />
               
               {connected ? (
                 <DropdownMenu>
@@ -114,9 +156,18 @@ export function Header() {
                     <div className="px-3 py-2 space-y-2">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>Connected via {getWalletDisplayName()}</span>
-                        <span className={network === "devnet" ? "text-purple-400" : "text-green-400"}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className={`h-6 px-2 text-[10px] uppercase font-bold tracking-wider ${network === "devnet" ? "text-purple-400 bg-purple-400/10" : "text-green-400 bg-green-400/10"}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setNetwork(network === "devnet" ? "mainnet-beta" : "devnet");
+                          }}
+                        >
                           {network === "devnet" ? "Devnet" : "Mainnet"}
-                        </span>
+                        </Button>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">SOL Balance</span>
