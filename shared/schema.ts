@@ -101,7 +101,7 @@ export const playerProfileSchema = z.object({
   lastPlayedAt: z.number().optional(),
 });
 
-export const VESTING_DAILY_PERCENT = 10;
+export const VESTING_DAILY_PERCENT = 2;
 export const VESTING_PERIOD_MS = 24 * 60 * 60 * 1000;
 
 export type PlayerProfile = z.infer<typeof playerProfileSchema>;
