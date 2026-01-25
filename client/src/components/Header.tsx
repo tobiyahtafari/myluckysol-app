@@ -65,7 +65,7 @@ export function Header() {
     disconnect, 
     profile,
     network,
-    setNetwork,
+    switchNetwork,
     requestAirdrop,
     walletName,
   } = useWallet();
@@ -163,7 +163,7 @@ export function Header() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            setNetwork(network === "devnet" ? "mainnet-beta" : "devnet");
+                            switchNetwork(network === "devnet" ? "mainnet-beta" : "devnet");
                           }}
                         >
                           {network === "devnet" ? "Devnet" : "Mainnet"}
