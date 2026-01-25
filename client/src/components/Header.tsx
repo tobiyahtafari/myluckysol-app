@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
+import solanaLogo from "@assets/solanaLogoMark_1769362416276.png";
+import wagaLogo from "@assets/waga-5000px-modified_1769362416276.png";
+
 function PriceWidget() {
   const { solPrice } = useSolPrice();
   const [displayType, setDisplayType] = useState<"SOL" | "WAGA">("SOL");
@@ -33,24 +36,20 @@ function PriceWidget() {
       <div className="flex items-center gap-1.5">
         {displayType === "SOL" ? (
           <>
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center p-1">
-              <span className="text-[10px] font-bold text-white">S</span>
-            </div>
+            <img src={solanaLogo} alt="Solana" className="w-5 h-5 object-contain" />
             <span className="text-sm font-mono font-medium text-gradient-solana">
               ${solPrice?.toFixed(2) || "---"}
             </span>
           </>
         ) : (
           <>
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center p-1">
-              <span className="text-[10px] font-bold text-white">W</span>
-            </div>
+            <img src={wagaLogo} alt="WAGA" className="w-5 h-5 object-contain" />
             <span className="text-sm font-mono font-medium text-gradient-gold">
               ${wagaPrice.toFixed(4)}
             </span>
           </>
         )}
-        <Repeat className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Repeat className="w-3 h-3 text-muted-foreground transition-opacity" />
       </div>
     </Button>
   );
