@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet-context";
-import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2, Coins, Repeat } from "lucide-react";
+import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2, Coins, Repeat, Menu, X } from "lucide-react";
 import headerLogo from "@assets/myluckysol-header-logo_1768586127704.png";
 import { WalletModal } from "./WalletModal";
 import { useSolPrice } from "@/lib/price-context";
@@ -30,7 +30,11 @@ function PriceWidget() {
       variant="outline"
       size="sm"
       className="gap-2 h-9 border-border/50 bg-background/50 hover:bg-background/80 transition-all duration-300 group"
-      onClick={() => setDisplayType(prev => prev === "SOL" ? "WAGA" : "SOL")}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDisplayType(prev => prev === "SOL" ? "WAGA" : "SOL");
+      }}
       data-testid="button-price-widget"
     >
       <div className="flex items-center gap-1.5">
@@ -71,10 +75,10 @@ export function Header() {
   const [location] = useLocation();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [airdropLoading, setAirdropLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { toast } = useToast();
 
   const navItems = [
-    { href: "/", label: "Home", icon: null },
     { href: "/play", label: "Play", icon: Gamepad2 },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   ];
@@ -141,7 +145,9 @@ export function Header() {
             </nav>
 
             <div className="flex items-center gap-3">
-              <PriceWidget />
+              <div className="hidden md:block">
+                <PriceWidget />
+              </div>
               
               {connected ? (
                 <DropdownMenu>
@@ -231,26 +237,42 @@ export function Header() {
               )}
             </div>
           </div>
+
+          {/* Bottom Row Mobile Only: Price Widget and Sandwich Menu */}
+          <div className="flex md:hidden h-12 items-center justify-between gap-4 pb-2">
+            <PriceWidget />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-muted-foreground"
+              data-testid="button-mobile-menu"
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
         </div>
 
-        <nav className="md:hidden flex items-center justify-center gap-1 pb-2 px-4">
-          {navItems.map((item) => {
-            const isActive = location === item.href;
-            return (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  size="sm"
-                  className={`gap-1 ${isActive ? "text-secondary-foreground" : "text-muted-foreground"}`}
-                  data-testid={`link-nav-mobile-${item.label.toLowerCase()}`}
-                >
-                  {item.icon && <item.icon className="h-3 w-3" />}
-                  {item.label}
-                </Button>
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Mobile Navigation Dropdown */}
+        {mobileMenuOpen && (
+          <nav className="md:hidden border-t border-border/50 bg-background px-4 py-4 space-y-2 animate-in slide-in-from-top-4 duration-200">
+            {navItems.map((item) => {
+              const isActive = location === item.href;
+              return (
+                <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                  <Button
+                    variant={isActive ? "secondary" : "ghost"}
+                    className={`w-full justify-start gap-3 h-12 ${isActive ? "text-secondary-foreground" : "text-muted-foreground"}`}
+                    data-testid={`link-nav-mobile-${item.label.toLowerCase()}`}
+                  >
+                    {item.icon && <item.icon className="h-5 w-5" />}
+                    <span className="text-base font-medium">{item.label}</span>
+                  </Button>
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </header>
 
       <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
