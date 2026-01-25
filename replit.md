@@ -133,6 +133,23 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 - Price widget shows SOL/WAGA prices with official logos (always-visible switch arrows)
 - Connect button shortened to "Connect" for mobile
 
+### WAGA Token Vesting System
+- **Winner rewards go to vesting**, NOT immediately to wallet
+- Total WAGA vesting is tracked in player profile (`wagaVestingTotal`, `wagaVestingClaimed`)
+- **10% daily release**: Every 24 hours, players can claim 10% of their total vesting amount
+- Profile page shows vesting progress bar, remaining balance, and claim button
+- This prevents market dumping by gradual token release
+- Entry rewards (from joining games) are still immediate
+
+### WAGA Reward Flow
+1. **Entry Reward**: Player joins game -> WAGA minted immediately to their profile based on tier (100%/75%/65%/50% of USD value)
+2. **Winner Reward**: Game completes -> Winner's 100% USD match of SOL winnings goes to vesting pool
+3. **Daily Claim**: Winner can claim 10% of vesting per 24 hours on Profile page
+
+### Key API Endpoints
+- `GET /api/profile/:walletAddress/vesting` - Get vesting status
+- `POST /api/profile/:walletAddress/claim-vesting` - Claim available vested WAGA
+
 ## Changes (2026-01-20)
 
 ### Game System Updates

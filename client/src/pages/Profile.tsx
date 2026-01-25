@@ -6,7 +6,8 @@ import { LuckBar } from "@/components/LuckBar";
 import { useWallet } from "@/lib/wallet-context";
 import { Link } from "wouter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
-import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Camera, Copy, Check } from "lucide-react";
+import { VESTING_DAILY_PERCENT } from "@shared/schema";
+import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Camera, Copy, Check, Lock, Unlock } from "lucide-react";
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { usernameSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 export default function Profile() {
   const { connected, connect, address, shortAddress, balance, wagaBalance } = useWallet();
@@ -42,6 +44,40 @@ export default function Profile() {
   const { data: history } = useQuery<GameHistory[]>({
     queryKey: ["/api/profile/history", address],
     enabled: connected && !!address,
+  });
+
+  const { data: vestingData, refetch: refetchVesting } = useQuery<{
+    totalVesting: number;
+    claimed: number;
+    remaining: number;
+    nextClaimTime: number;
+    canClaim: boolean;
+    dailyAmount: number;
+  }>({
+    queryKey: ["/api/profile", address, "vesting"],
+    enabled: connected && !!address,
+  });
+
+  const claimVestingMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/profile/${address}/claim-vesting`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      refetchVesting();
+      toast({ 
+        title: "WAGA Claimed", 
+        description: `You received ${data.claimedAmount.toLocaleString()} WAGA tokens!` 
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Claim Failed",
+        description: err.message || "Unable to claim vested tokens",
+        variant: "destructive",
+      });
+    },
   });
 
   const updateUsernameMutation = useMutation({
@@ -115,7 +151,7 @@ export default function Profile() {
           <p className="text-muted-foreground mb-8 max-w-md">
             Connect your wallet to see your stats, luck score, and game history
           </p>
-          <Button size="lg" onClick={connect} className="gap-2" data-testid="button-connect-profile">
+          <Button size="lg" onClick={() => connect("phantom")} className="gap-2" data-testid="button-connect-profile">
             <Wallet className="w-5 h-5" />
             Connect Wallet
           </Button>
@@ -315,6 +351,68 @@ export default function Profile() {
             </Card>
           </div>
 
+          {vestingData && vestingData.totalVesting > 0 && (
+            <Card className="p-6 border-secondary/30 bg-gradient-to-br from-secondary/5 to-transparent">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-secondary" />
+                WAGA Vesting Schedule
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Winner rewards are released gradually at {VESTING_DAILY_PERCENT}% per day to protect WAGA market value.
+              </p>
+              
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center p-3 rounded-lg bg-muted/30">
+                  <p className="text-xs text-muted-foreground">Total Vesting</p>
+                  <p className="text-lg font-bold text-secondary">{vestingData.totalVesting.toLocaleString()}</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-accent/10 border border-accent/30">
+                  <p className="text-xs text-muted-foreground">Claimed</p>
+                  <p className="text-lg font-bold text-accent">{vestingData.claimed.toLocaleString()}</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-primary/10 border border-primary/30">
+                  <p className="text-xs text-muted-foreground">Remaining</p>
+                  <p className="text-lg font-bold text-primary">{vestingData.remaining.toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Vesting Progress</span>
+                  <span>{Math.round((vestingData.claimed / vestingData.totalVesting) * 100)}%</span>
+                </div>
+                <Progress 
+                  value={(vestingData.claimed / vestingData.totalVesting) * 100} 
+                  className="h-2"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                <div>
+                  <p className="text-sm font-medium">Daily Release: {vestingData.dailyAmount.toLocaleString()} WAGA</p>
+                  {vestingData.remaining > 0 && vestingData.nextClaimTime > 0 && !vestingData.canClaim && (
+                    <p className="text-xs text-muted-foreground">
+                      Next claim: {formatTimeUntil(vestingData.nextClaimTime)}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  onClick={() => claimVestingMutation.mutate()}
+                  disabled={!vestingData.canClaim || claimVestingMutation.isPending}
+                  className="gap-2"
+                  data-testid="button-claim-vesting"
+                >
+                  {claimVestingMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Unlock className="w-4 h-4" />
+                  )}
+                  {vestingData.canClaim ? "Claim WAGA" : "Locked"}
+                </Button>
+              </div>
+            </Card>
+          )}
+
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold flex items-center gap-2">
@@ -433,4 +531,13 @@ function formatTimeAgo(timestamp: number): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function formatTimeUntil(timestamp: number): string {
+  const ms = timestamp - Date.now();
+  if (ms <= 0) return "Now";
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }

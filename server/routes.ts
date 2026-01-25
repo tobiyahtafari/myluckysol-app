@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_REWARD_PERCENT, type WagerTier, type GameModeKey } from "@shared/schema";
+import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_REWARD_PERCENT, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, type WagerTier, type GameModeKey } from "@shared/schema";
 import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
 import { z } from "zod";
 
@@ -191,6 +191,76 @@ export async function registerRoutes(
       res.json(message);
     } catch (error) {
       console.error("Error adding chat message:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Claim vested WAGA tokens (10% daily release)
+  app.post("/api/profile/:walletAddress/claim-vesting", async (req, res) => {
+    try {
+      const walletAddress = req.params.walletAddress;
+      
+      // Validate wallet address
+      if (!walletAddress || walletAddress.length < 32 || walletAddress.length > 44) {
+        return res.status(400).json({ error: "Invalid wallet address" });
+      }
+
+      const result = await storage.claimVestedWaga(walletAddress);
+      
+      if (!result) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      if (result.claimedAmount === 0 && result.remainingVesting > 0) {
+        const hoursRemaining = Math.ceil((result.nextClaimTime - Date.now()) / (1000 * 60 * 60));
+        return res.status(400).json({ 
+          error: `Must wait 24 hours between claims. Next claim available in ${hoursRemaining} hours.`,
+          nextClaimTime: result.nextClaimTime,
+          remainingVesting: result.remainingVesting,
+        });
+      }
+
+      res.json({
+        success: true,
+        claimedAmount: result.claimedAmount,
+        remainingVesting: result.remainingVesting,
+        nextClaimTime: result.nextClaimTime,
+        message: result.claimedAmount > 0 
+          ? `Successfully claimed ${result.claimedAmount.toLocaleString()} WAGA tokens!`
+          : "No vested tokens available to claim",
+      });
+    } catch (error) {
+      console.error("Error claiming vested WAGA:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Get vesting status
+  app.get("/api/profile/:walletAddress/vesting", async (req, res) => {
+    try {
+      const profile = await storage.getProfile(req.params.walletAddress);
+      
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      const totalVesting = profile.wagaVestingTotal || 0;
+      const claimed = profile.wagaVestingClaimed || 0;
+      const remaining = totalVesting - claimed;
+      const lastClaim = profile.wagaVestingLastClaim || 0;
+      const nextClaimTime = lastClaim > 0 ? lastClaim + VESTING_PERIOD_MS : 0;
+      const canClaim = remaining > 0 && (lastClaim === 0 || Date.now() >= nextClaimTime);
+
+      res.json({
+        totalVesting,
+        claimed,
+        remaining,
+        nextClaimTime: remaining > 0 ? nextClaimTime : 0,
+        canClaim,
+        dailyAmount: Math.floor(totalVesting * (VESTING_DAILY_PERCENT / 100)),
+      });
+    } catch (error) {
+      console.error("Error getting vesting status:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

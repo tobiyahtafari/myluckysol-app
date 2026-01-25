@@ -11,6 +11,8 @@ import {
   WAGA_ENTRY_REWARD_PERCENT,
   WAGA_WINNER_REWARD_PERCENT,
   WINNER_SHARE,
+  VESTING_DAILY_PERCENT,
+  VESTING_PERIOD_MS,
 } from "@shared/schema";
 import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
 
@@ -22,6 +24,7 @@ export interface IStorage {
   updateProfile(walletAddress: string, updates: Partial<PlayerProfile>): Promise<PlayerProfile | undefined>;
   getOrCreateProfile(walletAddress: string): Promise<PlayerProfile>;
   checkUsernameUnique(username: string): Promise<boolean>;
+  claimVestedWaga(walletAddress: string): Promise<{ claimedAmount: number; remainingVesting: number; nextClaimTime: number } | null>;
   getChatMessages(gameId: string): Promise<ChatMessage[]>;
   addChatMessage(data: ChatMessage): Promise<ChatMessage>;
   getGameHistory(walletAddress: string, limit: number): Promise<GameHistory[]>;
@@ -73,6 +76,8 @@ export class MemStorage implements IStorage {
       totalWagered: 0,
       totalWon: 0,
       wagaEarned: 0,
+      wagaVestingTotal: 0,
+      wagaVestingClaimed: 0,
       currentStreak: 0,
       bestStreak: 0,
       luckScore: 50,
@@ -115,6 +120,56 @@ export class MemStorage implements IStorage {
   async checkUsernameUnique(username: string): Promise<boolean> {
     const profiles = Array.from(this.profiles.values());
     return !profiles.some(p => p.username === username);
+  }
+
+  async claimVestedWaga(walletAddress: string): Promise<{ claimedAmount: number; remainingVesting: number; nextClaimTime: number } | null> {
+    const profile = this.profiles.get(walletAddress);
+    if (!profile) return null;
+
+    const now = Date.now();
+    const lastClaim = profile.wagaVestingLastClaim || 0;
+    const timeSinceLastClaim = now - lastClaim;
+
+    // Check if 24 hours have passed since last claim
+    if (lastClaim > 0 && timeSinceLastClaim < VESTING_PERIOD_MS) {
+      const nextClaimTime = lastClaim + VESTING_PERIOD_MS;
+      return {
+        claimedAmount: 0,
+        remainingVesting: (profile.wagaVestingTotal || 0) - (profile.wagaVestingClaimed || 0),
+        nextClaimTime,
+      };
+    }
+
+    const totalVesting = profile.wagaVestingTotal || 0;
+    const alreadyClaimed = profile.wagaVestingClaimed || 0;
+    const remainingVesting = totalVesting - alreadyClaimed;
+
+    if (remainingVesting <= 0) {
+      return {
+        claimedAmount: 0,
+        remainingVesting: 0,
+        nextClaimTime: 0,
+      };
+    }
+
+    // Calculate 10% of total vesting (not remaining) per day
+    const dailyAmount = Math.floor(totalVesting * (VESTING_DAILY_PERCENT / 100));
+    const claimAmount = Math.min(dailyAmount, remainingVesting);
+
+    // Update profile
+    profile.wagaVestingClaimed = alreadyClaimed + claimAmount;
+    profile.wagaVestingLastClaim = now;
+    profile.wagaEarned = (profile.wagaEarned || 0) + claimAmount;
+    this.profiles.set(walletAddress, profile);
+
+    console.log(`[VESTING] ${walletAddress.slice(0, 8)}... claimed ${claimAmount} WAGA (${VESTING_DAILY_PERCENT}% of ${totalVesting})`);
+    console.log(`[VESTING] Remaining: ${remainingVesting - claimAmount} WAGA`);
+
+    return {
+      claimedAmount: claimAmount,
+      remainingVesting: remainingVesting - claimAmount,
+      nextClaimTime: now + VESTING_PERIOD_MS,
+    };
   }
 
   async getChatMessages(gameId: string): Promise<ChatMessage[]> {
@@ -372,8 +427,8 @@ export class MemStorage implements IStorage {
 
     for (const player of finalGame.players) {
       const isWinner = player.id === winner.id;
-      // Entry WAGA rewards already given at join time, no additional entry reward here
-      const gameWagaEarned = isWinner ? winWagaReward : 0; // Only winner gets additional WAGA
+      // Entry WAGA rewards already given at join time, winner gets vested WAGA
+      const gameWagaEarned = isWinner ? winWagaReward : 0;
       
       await this.addGameHistory(player.walletAddress, {
         gameId: finalGame.id,
@@ -387,19 +442,29 @@ export class MemStorage implements IStorage {
 
       const profile = await this.getProfile(player.walletAddress);
       if (profile) {
-        const wagaUpdate = isWinner ? winWagaReward : 0;
-        
-        await this.updateProfile(player.walletAddress, {
-          gamesPlayed: profile.gamesPlayed + 1,
-          gamesWon: profile.gamesWon + (isWinner ? 1 : 0),
-          totalWagered: profile.totalWagered + finalGame.wager,
-          totalWon: profile.totalWon + (isWinner ? payout : 0),
-          wagaEarned: profile.wagaEarned + wagaUpdate,
-          currentStreak: isWinner ? profile.currentStreak + 1 : 0,
-          bestStreak: isWinner
-            ? Math.max(profile.bestStreak, profile.currentStreak + 1)
-            : profile.bestStreak,
-        });
+        // Winner WAGA rewards go to vesting, NOT direct to wagaEarned
+        // This prevents market dumping by releasing 10% daily
+        if (isWinner) {
+          await this.updateProfile(player.walletAddress, {
+            gamesPlayed: profile.gamesPlayed + 1,
+            gamesWon: profile.gamesWon + 1,
+            totalWagered: profile.totalWagered + finalGame.wager,
+            totalWon: profile.totalWon + payout,
+            wagaVestingTotal: (profile.wagaVestingTotal || 0) + winWagaReward,
+            currentStreak: profile.currentStreak + 1,
+            bestStreak: Math.max(profile.bestStreak, profile.currentStreak + 1),
+          });
+          console.log(`[VESTING] Added ${winWagaReward} WAGA to vesting for winner ${player.walletAddress.slice(0, 8)}...`);
+        } else {
+          await this.updateProfile(player.walletAddress, {
+            gamesPlayed: profile.gamesPlayed + 1,
+            gamesWon: profile.gamesWon,
+            totalWagered: profile.totalWagered + finalGame.wager,
+            totalWon: profile.totalWon,
+            currentStreak: 0,
+            bestStreak: profile.bestStreak,
+          });
+        }
       }
     }
   }

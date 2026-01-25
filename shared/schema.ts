@@ -91,12 +91,18 @@ export const playerProfileSchema = z.object({
   totalWagered: z.number().default(0),
   totalWon: z.number().default(0),
   wagaEarned: z.number().default(0),
+  wagaVestingTotal: z.number().default(0),
+  wagaVestingClaimed: z.number().default(0),
+  wagaVestingLastClaim: z.number().optional(),
   currentStreak: z.number().default(0),
   bestStreak: z.number().default(0),
   luckScore: z.number().default(50),
   createdAt: z.number(),
   lastPlayedAt: z.number().optional(),
 });
+
+export const VESTING_DAILY_PERCENT = 10;
+export const VESTING_PERIOD_MS = 24 * 60 * 60 * 1000;
 
 export type PlayerProfile = z.infer<typeof playerProfileSchema>;
 
