@@ -66,6 +66,7 @@ export const gameSchema = z.object({
   countdownEndsAt: z.number().optional(),
   roundEndsAt: z.number().optional(),
   createdAt: z.number(),
+  serverTime: z.number().optional(),
 });
 
 export type Game = z.infer<typeof gameSchema>;

@@ -151,6 +151,7 @@ export default function GameRoom() {
                       <p className="text-sm text-muted-foreground">Game starting in</p>
                       <CountdownTimer
                         targetTime={game.countdownEndsAt}
+                        serverTime={game.serverTime}
                         size="lg"
                       />
                     </div>
@@ -159,6 +160,7 @@ export default function GameRoom() {
                       <p className="text-sm text-muted-foreground">Round {game.currentRound} of {config.rounds}</p>
                       <CountdownTimer
                         targetTime={game.roundEndsAt}
+                        serverTime={game.serverTime}
                         size="lg"
                       />
                     </div>

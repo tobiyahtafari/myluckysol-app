@@ -68,13 +68,14 @@ export async function registerRoutes(
       
       res.json({ 
         gameId: updatedGame.id, 
-        game: updatedGame,
+        game: { ...updatedGame, serverTime: Date.now() },
         playersNeeded: config.players - updatedGame.players.length,
         wagaReward,
         wagaRewardPercent: rewardPercent,
         solUsdValue: usdValue,
         wagaPrice,
         network: "devnet",
+        serverTime: Date.now(),
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -103,7 +104,8 @@ export async function registerRoutes(
       if (!game) {
         return res.status(404).json({ error: "Game not found" });
       }
-      res.json(game);
+      // Include server time for client-side clock synchronization
+      res.json({ ...game, serverTime: Date.now() });
     } catch (error) {
       console.error("Error getting game:", error);
       res.status(500).json({ error: "Internal server error" });

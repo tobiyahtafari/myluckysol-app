@@ -3,17 +3,23 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface CountdownTimerProps {
   targetTime: number;
+  serverTime?: number;
   onComplete?: () => void;
   size?: "sm" | "md" | "lg";
 }
 
-export function CountdownTimer({ targetTime, onComplete, size = "md" }: CountdownTimerProps) {
+export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md" }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
+    // Calculate the offset between server time and client time
+    // If serverTime is provided, use it to sync; otherwise fall back to local time
+    const clockOffset = serverTime ? (serverTime - Date.now()) : 0;
+    
     const updateTimer = () => {
-      const now = Date.now();
-      const remaining = Math.max(0, Math.floor((targetTime - now) / 1000));
+      // Adjust client time by the offset to sync with server
+      const adjustedNow = Date.now() + clockOffset;
+      const remaining = Math.max(0, Math.floor((targetTime - adjustedNow) / 1000));
       setTimeLeft(remaining);
 
       if (remaining === 0 && onComplete) {
@@ -25,7 +31,7 @@ export function CountdownTimer({ targetTime, onComplete, size = "md" }: Countdow
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [targetTime, onComplete]);
+  }, [targetTime, serverTime, onComplete]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;

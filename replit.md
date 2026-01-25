@@ -12,7 +12,7 @@ MyLuckySol is a casino-grade, provably fair chance-based game DApp on Solana. Pl
 - **Blockchain**: Solana (devnet for testing, mainnet for production)
 
 ## Game Modes
-1. **1v1 Mode**: 2 players, 1 round, 120s timer
+1. **1v1 Mode**: 2 players, 1 round, 90s timer (1 min 30 sec)
 2. **2-Round Mode**: 4 players, 2 rounds, 150s timer
 3. **3-Round Mode**: 8 players, 3 rounds, 150s timer
 4. **4-Round Mode**: 16 players, 4 rounds, 150s timer
@@ -123,7 +123,15 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 
 ### Timer Synchronization
 - Countdown timers use server-provided `countdownEndsAt` and `roundEndsAt` timestamps
-- All clients calculate remaining time from the same server timestamp, ensuring sync
+- Server includes `serverTime` in game API responses for client clock synchronization
+- CountdownTimer component calculates clock offset between server and client time
+- All clients display the same countdown regardless of local clock differences
+
+### Header/Navbar Updates
+- Mobile: Logo on left (spanning both rows), Connect button and sandwich menu on top-right, price widget on bottom-right
+- Desktop: Logo acts as home button, Play and Leaderboard nav links, price widget, wallet dropdown
+- Price widget shows SOL/WAGA prices with official logos (always-visible switch arrows)
+- Connect button shortened to "Connect" for mobile
 
 ## Changes (2026-01-20)
 
