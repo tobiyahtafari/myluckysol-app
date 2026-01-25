@@ -117,11 +117,11 @@ export function Header() {
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-2 h-full py-1">
+            <Link href="/" className="flex items-center gap-2 h-full pt-4 pb-2">
               <img
                 src={headerLogo}
                 alt="MyLuckySol"
-                className="h-14 w-auto md:h-14"
+                className="h-14 w-auto md:h-14 md:pt-0"
                 data-testid="img-header-logo"
               />
             </Link>
