@@ -117,15 +117,16 @@ export function Header() {
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 h-full py-1">
               <img
                 src={headerLogo}
                 alt="MyLuckySol"
-                className="h-14 w-auto"
+                className="h-14 w-auto md:h-14"
                 data-testid="img-header-logo"
               />
             </Link>
 
+            {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {
                 const isActive = location === item.href;
@@ -144,7 +145,7 @@ export function Header() {
               })}
             </nav>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="hidden md:block">
                 <PriceWidget />
               </div>
@@ -235,21 +236,25 @@ export function Header() {
                   Connect Wallet
                 </Button>
               )}
+
+              {/* Mobile Sandwich Menu */}
+              <div className="md:hidden">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="text-muted-foreground"
+                  data-testid="button-mobile-menu"
+                >
+                  {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Bottom Row Mobile Only: Price Widget and Sandwich Menu */}
-          <div className="flex md:hidden h-12 items-center justify-between gap-4 pb-2">
+          {/* Bottom Row Mobile Only: Price Widget positioned to the right */}
+          <div className="flex md:hidden h-10 items-center justify-end pb-2">
             <PriceWidget />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-muted-foreground"
-              data-testid="button-mobile-menu"
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </Button>
           </div>
         </div>
 
