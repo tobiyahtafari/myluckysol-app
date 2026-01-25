@@ -198,7 +198,8 @@ export class MemStorage implements IStorage {
     game.status = status as Game["status"];
     
     if (status === "countdown") {
-      game.countdownEndsAt = Date.now() + 10000;
+      const now = Date.now();
+      game.countdownEndsAt = now + 10000;
       setTimeout(() => {
         this.startGame(id);
       }, 10000);
@@ -258,10 +259,11 @@ export class MemStorage implements IStorage {
 
     const config = GAME_MODES[game.mode];
     const roundDuration = config.timer * 1000;
+    const now = Date.now();
 
     game.status = "in_progress";
-    game.startedAt = Date.now();
-    game.roundEndsAt = Date.now() + roundDuration;
+    game.startedAt = now;
+    game.roundEndsAt = now + roundDuration;
 
     const playerIds = game.players.map((p) => p.id);
     game.rounds = [
@@ -324,7 +326,8 @@ export class MemStorage implements IStorage {
       remainingPlayers = winners;
 
       if (remainingPlayers.length > 1) {
-        currentGame.roundEndsAt = Date.now() + roundDuration;
+        const now = Date.now();
+        currentGame.roundEndsAt = now + roundDuration;
       }
 
       this.games.set(gameId, currentGame);

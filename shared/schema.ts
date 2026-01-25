@@ -4,7 +4,7 @@ export const WAGER_TIERS = [0.01, 0.1, 1, 10] as const;
 export type WagerTier = typeof WAGER_TIERS[number];
 
 export const GAME_MODES = {
-  "1v1": { players: 2, rounds: 1, timer: 120, name: "1v1 Mode" },
+  "1v1": { players: 2, rounds: 1, timer: 90, name: "1v1 Mode" },
   "2-round": { players: 4, rounds: 2, timer: 150, name: "2-Round Mode" },
   "3-round": { players: 8, rounds: 3, timer: 150, name: "3-Round Mode" },
   "4-round": { players: 16, rounds: 4, timer: 150, name: "4-Round Mode" },
