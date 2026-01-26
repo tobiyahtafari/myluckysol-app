@@ -54,12 +54,27 @@ export default function Home() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
 
         <div className="container mx-auto px-4 relative">
-          <div className="flex flex-col lg:flex-row items-center gap-12">
+          <div className="flex flex-col items-center gap-12">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="relative w-full max-w-xs md:max-w-sm mx-auto mb-4"
+            >
+              <div className="absolute inset-0 gradient-solana blur-3xl opacity-30 rounded-full scale-110" />
+              <img
+                src={heroLogo}
+                alt="MyLuckySol"
+                className="relative w-full animate-float"
+                data-testid="img-hero-logo"
+              />
+            </motion.div>
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="flex-1 text-center lg:text-left"
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-center"
             >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                 Test Your Luck on{" "}
@@ -110,23 +125,6 @@ export default function Home() {
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
                   </motion.div>
                 ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex-1 flex justify-center"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 gradient-solana blur-3xl opacity-30 rounded-full scale-110" />
-                <img
-                  src={heroLogo}
-                  alt="MyLuckySol"
-                  className="relative w-full max-w-md animate-float"
-                  data-testid="img-hero-logo"
-                />
               </div>
             </motion.div>
           </div>
