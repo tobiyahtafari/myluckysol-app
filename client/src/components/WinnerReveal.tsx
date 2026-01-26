@@ -99,7 +99,7 @@ export function WinnerReveal({
                 isCurrentUserWinner ? "text-gradient-gold" : "text-destructive"
               }`}
             >
-              {isCurrentUserWinner ? "You Won!" : (winnerAddress === winnerAddress ? "Winner" : "You Lost")}
+              {isCurrentUserWinner ? "You Won!" : "You Lost"}
             </motion.h2>
             <motion.p
               initial={{ y: 20, opacity: 0 }}
