@@ -277,7 +277,7 @@ export default function Play() {
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
                             <p className="text-xs text-muted-foreground">WAGA Winner</p>
-                            <p className="text-lg font-bold text-[#FF00FF]">100%</p>
+                            <p className="text-lg font-bold text-white">100%</p>
                             <p className="text-xs text-muted-foreground">of USD value</p>
                           </div>
                         </div>
