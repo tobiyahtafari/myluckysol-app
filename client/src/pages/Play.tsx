@@ -247,9 +247,9 @@ export default function Play() {
                     Confirm & Play
                   </h2>
                   <Card className="p-6">
-                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center justify-center gap-6 text-center">
+                      <div className="space-y-4 w-full">
+                        <div className="flex flex-col items-center gap-2">
                           <Info className="w-5 h-5 text-muted-foreground" />
                           <div>
                             <p className="font-medium">{selectedConfig?.name}</p>

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Users, Clock, Layers } from "lucide-react";
+import { Users, Clock, Layers, Trophy } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { GAME_MODES, type GameModeKey } from "@shared/schema";
 
@@ -85,6 +85,14 @@ export function GameModeCard({ mode, isSelected, onSelect }: GameModeCardProps) 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Layers className="w-4 h-4" />
               <span>{config.rounds} Round{config.rounds > 1 ? "s" : ""}</span>
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <div className="flex items-center justify-center gap-2 py-1 px-3 rounded-full bg-green-500/10 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.15)] animate-pulse">
+                <Trophy className="w-4 h-4 text-green-400" />
+                <span className="text-sm font-bold text-green-400">
+                  {mode === "1v1" ? "1.8x" : mode === "2-round" ? "3.6x" : mode === "3-round" ? "7.2x" : "14.4x"} SOL Winnings
+                </span>
+              </div>
             </div>
           </div>
 
