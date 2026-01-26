@@ -96,10 +96,10 @@ export function WinnerReveal({
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
               className={`text-3xl font-bold mb-2 ${
-                isCurrentUserWinner ? "text-gradient-gold" : ""
+                isCurrentUserWinner ? "text-gradient-gold" : "text-destructive"
               }`}
             >
-              {isCurrentUserWinner ? "You Won!" : "Winner Revealed!"}
+              {isCurrentUserWinner ? "You Won!" : "You Lost"}
             </motion.h2>
             <motion.p
               initial={{ y: 20, opacity: 0 }}
@@ -107,7 +107,7 @@ export function WinnerReveal({
               transition={{ delay: 0.2 }}
               className="text-muted-foreground"
             >
-              {shortAddress}
+              {isCurrentUserWinner ? "Congratulations!" : `Winner: ${shortAddress}`}
             </motion.p>
           </div>
 
