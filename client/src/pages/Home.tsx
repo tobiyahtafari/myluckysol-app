@@ -59,7 +59,7 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6 }}
-              className="relative w-full max-w-xs md:max-w-sm mx-auto mb-4"
+              className="relative w-full max-w-xs md:max-w-sm mx-auto mb-0"
             >
               <div className="absolute inset-0 gradient-solana blur-3xl opacity-30 rounded-full scale-110" />
               <img
@@ -74,7 +74,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-center"
+              className="text-center mt-[-2rem]"
             >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                 Test Your Luck on{" "}
