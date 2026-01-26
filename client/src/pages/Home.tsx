@@ -170,6 +170,87 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="py-20 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Explore Our <span className="text-gradient-solana">Game Modes</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Choose your strategy and play for massive SOL payouts with our provably fair modes.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                mode: "1v1 Mode",
+                multiplier: "1.8x",
+                chance: "50%",
+                time: "90s",
+                color: "from-[#FFD700] to-[#FFA500]",
+              },
+              {
+                mode: "2-Round Mode",
+                multiplier: "3.6x",
+                chance: "25%",
+                time: "180s",
+                color: "from-[#9945FF] to-[#DC1FFF]",
+              },
+              {
+                mode: "3-Round Mode",
+                multiplier: "7.2x",
+                chance: "12.5%",
+                time: "360s",
+                color: "from-[#03E1FF] to-[#00FFA3]",
+              },
+              {
+                mode: "4-Round Mode",
+                multiplier: "14.4x",
+                chance: "6.25%",
+                time: "720s",
+                color: "from-[#00FFA3] to-[#9945FF]",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.mode}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Card className="p-6 text-center border-2 border-primary/10 hover:border-primary/30 transition-all group overflow-hidden relative">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold shadow-lg`}>
+                    {item.multiplier}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{item.mode}</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Win Chance</span>
+                      <span className="text-accent font-semibold">{item.chance}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Duration</span>
+                      <span className="text-primary font-semibold">{item.time}</span>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                      <p className="text-2xl font-black text-gradient-gold tracking-tight">{item.multiplier} SOL</p>
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Potential Return</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="py-20">
         <div className="container mx-auto px-4">
           <motion.div
