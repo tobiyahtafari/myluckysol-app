@@ -74,18 +74,18 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-center mt-[-2rem]"
+              className="text-center mt-[-2rem] w-full"
             >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                 Test Your Luck on{" "}
                 <span className="text-gradient-solana">Solana</span>
               </h1>
-              <p className="text-xl text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0">
+              <p className="text-xl text-muted-foreground mb-8 max-w-xl mx-auto">
                 The ultimate provably fair chance game. One button, instant results, 
                 guaranteed payouts. Win SOL and earn WAGA tokens.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {connected ? (
                   <Link href="/play">
                     <Button size="lg" className="gap-2 text-lg px-8" data-testid="button-play-now">
