@@ -26,7 +26,7 @@ export default function Profile() {
   const [copied, setCopy] = useState(false);
 
   const { data: profile } = useQuery<PlayerProfile>({
-    queryKey: ["/api/profile", address],
+    queryKey: [`/api/profile/${address}`],
     enabled: connected && !!address,
   });
 
@@ -42,7 +42,7 @@ export default function Profile() {
   };
 
   const { data: history } = useQuery<GameHistory[]>({
-    queryKey: ["/api/profile/history", address],
+    queryKey: [`/api/profile/${address}/history`],
     enabled: connected && !!address,
   });
 
@@ -54,7 +54,7 @@ export default function Profile() {
     canClaim: boolean;
     dailyAmount: number;
   }>({
-    queryKey: ["/api/profile", address, "vesting"],
+    queryKey: [`/api/profile/${address}/vesting`],
     enabled: connected && !!address,
   });
 
@@ -64,7 +64,7 @@ export default function Profile() {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      queryClient.invalidateQueries({ queryKey: [`/api/profile/${address}`] });
       refetchVesting();
       toast({ 
         title: "WAGA Claimed", 
@@ -85,7 +85,7 @@ export default function Profile() {
       await apiRequest("PATCH", `/api/profile/${address}`, { username });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      queryClient.invalidateQueries({ queryKey: [`/api/profile/${address}`] });
       setNewUsername("");
       toast({ title: "Username updated" });
     },
@@ -103,7 +103,7 @@ export default function Profile() {
       await apiRequest("PATCH", `/api/profile/${address}`, { avatarUrl });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      queryClient.invalidateQueries({ queryKey: [`/api/profile/${address}`] });
       toast({ title: "Avatar updated" });
     },
   });
@@ -113,7 +113,7 @@ export default function Profile() {
       await apiRequest("PATCH", `/api/profile/${address}`, { referredBy: referrer });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile", address] });
+      queryClient.invalidateQueries({ queryKey: [`/api/profile/${address}`] });
       setReferrerAddress("");
       toast({ title: "Referral code applied! You earned 100 WAGA" });
     },
