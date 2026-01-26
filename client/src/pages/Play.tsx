@@ -276,9 +276,9 @@ export default function Play() {
                             <SolToUsd sol={selectedWager * (selectedConfig?.players || 2) * 0.9} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
-                            <p className="text-xs text-muted-foreground">WAGA Winner</p>
-                            <p className="text-lg font-bold text-white">100%</p>
-                            <p className="text-xs text-muted-foreground">of USD value</p>
+                            <p className="text-xs text-muted-foreground">Winner Receives</p>
+                            <p className="text-lg font-bold text-white leading-tight">100% WAGA Match</p>
+                            <p className="text-xs text-muted-foreground">of SOL USD Value</p>
                           </div>
                         </div>
                       </div>
