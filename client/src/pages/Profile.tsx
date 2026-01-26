@@ -361,7 +361,7 @@ export default function Profile() {
                 Winner rewards are released gradually at {VESTING_DAILY_PERCENT}% per day to protect WAGA market value.
               </p>
               
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="flex flex-col md:grid md:grid-cols-3 gap-4 mb-4">
                 <div className="text-center p-3 rounded-lg bg-muted/30">
                   <p className="text-xs text-muted-foreground">Total Vesting</p>
                   <p className="text-lg font-bold text-secondary">{vestingData.totalVesting.toLocaleString()}</p>
@@ -387,7 +387,7 @@ export default function Profile() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between p-3 rounded-lg bg-muted/30 gap-4">
                 <div>
                   <p className="text-sm font-medium">Daily Release: {vestingData.dailyAmount.toLocaleString()} WAGA</p>
                   {vestingData.remaining > 0 && vestingData.nextClaimTime > 0 && !vestingData.canClaim && (
@@ -399,7 +399,7 @@ export default function Profile() {
                 <Button
                   onClick={() => claimVestingMutation.mutate()}
                   disabled={!vestingData.canClaim || claimVestingMutation.isPending}
-                  className="gap-2"
+                  className="gap-2 w-full md:w-auto"
                   data-testid="button-claim-vesting"
                 >
                   {claimVestingMutation.isPending ? (

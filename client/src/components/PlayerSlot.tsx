@@ -77,7 +77,7 @@ export function PlayerSlot({ player, index, isCurrentUser, isWinner, isEliminate
 
       <div className="text-center">
         <p className="text-sm font-medium truncate max-w-[100px]">
-          {player.displayName || shortAddress}
+          {player.displayName || player.username || shortAddress}
         </p>
         {isCurrentUser && (
           <span className="text-xs text-accent">(You)</span>

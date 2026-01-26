@@ -262,17 +262,17 @@ export default function Play() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                           <div className="p-3 rounded-lg bg-muted/50">
                             <p className="text-xs text-muted-foreground">Your Wager</p>
-                            <p className="text-lg font-bold text-gradient-gold">{selectedWager} SOL</p>
+                            <p className="text-lg font-bold text-gradient-gold">{selectedWager.toFixed(3)} SOL</p>
                             <SolToUsd sol={selectedWager} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
                             <p className="text-xs text-muted-foreground">Total Pool</p>
-                            <p className="text-lg font-bold">{(selectedWager * (selectedConfig?.players || 2)).toFixed(2)} SOL</p>
+                            <p className="text-lg font-bold">{(selectedWager * (selectedConfig?.players || 2)).toFixed(3)} SOL</p>
                             <SolToUsd sol={selectedWager * (selectedConfig?.players || 2)} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
                             <p className="text-xs text-muted-foreground">Winner Gets</p>
-                            <p className="text-lg font-bold text-accent">{(selectedWager * (selectedConfig?.players || 2) * 0.9).toFixed(2)} SOL</p>
+                            <p className="text-lg font-bold text-accent">{(selectedWager * (selectedConfig?.players || 2) * 0.9).toFixed(3)} SOL</p>
                             <SolToUsd sol={selectedWager * (selectedConfig?.players || 2) * 0.9} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
