@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useWallet } from "@/lib/wallet-context";
 import { Gamepad2, Shield, Zap, Users, Trophy, Coins } from "lucide-react";
 import { WalletModal } from "@/components/WalletModal";
+import { EarningsCalculator } from "@/components/EarningsCalculator";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
 
 export default function Home() {
@@ -248,6 +249,19 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-16"
+          >
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold mb-2">Earnings Calculator</h3>
+              <p className="text-muted-foreground">Calculate your potential rewards based on wager and game mode.</p>
+            </div>
+            <EarningsCalculator />
+          </motion.div>
         </div>
       </section>
 
