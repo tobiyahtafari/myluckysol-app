@@ -226,7 +226,7 @@ export default function Home() {
               >
                 <Card className="p-6 text-center border-2 border-primary/10 hover:border-primary/30 transition-all group overflow-hidden relative">
                   <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold shadow-lg`}>
+                  <div className={`w-16 h-16 rounded-2xl border-2 border-primary/30 flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold shadow-lg bg-card group-hover:border-primary/60 transition-colors`}>
                     {item.multiplier}
                   </div>
                   <h3 className="text-xl font-bold mb-2">{item.mode}</h3>
