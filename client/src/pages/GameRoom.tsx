@@ -66,7 +66,7 @@ export default function GameRoom() {
 
   const config = GAME_MODES[game.mode];
   const currentPlayer = game.players.find((p) => p.walletAddress === address);
-  const isCurrentUserWinner = game.winnerId === currentPlayer?.id;
+  const isCurrentUserWinner = !!(address && game.winnerId && game.players.find(p => p.id === game.winnerId)?.walletAddress === address);
   const winner = game.players.find((p) => p.id === game.winnerId);
   const slotsNeeded = config.players;
   const playersJoined = game.players.length;
