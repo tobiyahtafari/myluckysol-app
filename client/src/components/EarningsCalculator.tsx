@@ -38,18 +38,20 @@ export function EarningsCalculator() {
                 <span className="text-3xl font-black text-gradient-gold">{wager} SOL</span>
                 <SolToUsd sol={wager} className="text-lg opacity-70" />
               </div>
-              <Slider
-                value={[wager]}
-                min={0.01}
-                max={10}
-                step={0.01}
-                onValueChange={(val) => setWager(val[0])}
-                className="py-4"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>0.01 SOL</span>
-                <span>5 SOL</span>
-                <span>10 SOL</span>
+              <div className="grid grid-cols-2 gap-3">
+                {WAGER_TIERS.map((tier) => (
+                  <button
+                    key={tier}
+                    onClick={() => setWager(tier)}
+                    className={`p-4 rounded-xl border-2 transition-all font-bold ${
+                      wager === tier
+                        ? "border-primary bg-primary/10 glow-gold text-primary"
+                        : "border-border bg-card/50 hover:border-primary/30"
+                    }`}
+                  >
+                    {tier} SOL
+                  </button>
+                ))}
               </div>
             </div>
           </div>
