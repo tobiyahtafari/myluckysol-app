@@ -46,7 +46,7 @@ export function WagerSelector({ selectedWager, onSelect }: WagerSelectorProps) {
                   </div>
                   <SolToUsd sol={wager} className="text-sm" />
                 </div>
-                <div className="text-xs text-secondary">
+                <div className="text-xs text-[#FF00FF] font-medium">
                   {rewardPercent}% WAGA Reward
                 </div>
               </div>
