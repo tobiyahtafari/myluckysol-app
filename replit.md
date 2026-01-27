@@ -63,11 +63,14 @@ shared/
 ```
 
 ## API Endpoints
+- `POST /api/games/prepare` - Get escrow PDA before SOL transfer
 - `POST /api/games/join` - Join or create a game
 - `GET /api/games/:id` - Get game by ID
 - `GET /api/profile/:walletAddress` - Get player profile
 - `GET /api/profile/:walletAddress/history` - Get game history
-- `GET /api/leaderboard` - Get leaderboard
+- `GET /api/profile/:walletAddress/vesting` - Get WAGA vesting status
+- `POST /api/profile/:walletAddress/claim-vesting` - Claim vested WAGA
+- `GET /api/leaderboard?sortBy=earnings|luck|streaks` - Get leaderboard (real player data)
 
 ## Design System
 - **Background**: Dark (#0f0f17)
