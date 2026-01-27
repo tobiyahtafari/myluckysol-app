@@ -122,14 +122,32 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 - `Game.escrowPDA`: Game pool PDA address for escrow
 - `Game.winnerPayoutTxSig`: Transaction signature for winner payout
 - `Game.treasuryFeeTxSig`: Transaction signature for treasury fee
-- `Player.txSignature`: Wager transfer transaction signature
+- `Player.txSignature`: join_game transaction signature
 
-### New API Endpoints
-- `POST /api/games/prepare` - Get escrow PDA before SOL transfer (returns gameId, escrowPDA, onChainGameId)
-- Updated `POST /api/games/join` - Now accepts gameId from prepare step and txSignature
+### PDA-Based Escrow Architecture (2026-01-27)
+**Complete On-Chain Flow:**
+1. **Game Creation**: storage.createGame() calls createGameOnChain() to initialize game PDA and pool PDA via program's create_game instruction
+2. **Prepare**: /api/games/prepare returns serialized join_game transaction for player to sign
+3. **Player Joins**: Client signs join_game instruction (SOL transferred via CPI, on-chain state updated)
+4. **Validation**: /api/games/join validates:
+   - join_game instruction was executed (not just a SOL transfer)
+   - Wager amount was transferred to escrow PDA
+5. **Finalize**: When game ends, finalize_game instruction pays 10% treasury fee
+6. **Claim**: Winner calls /api/games/:id/claim to get claim_winnings transaction, signs to receive 90%
+
+**Key Security:**
+- Players send SOL to escrow PDA via program's join_game (not direct transfers)
+- Backend validates join_game instruction + wager amount
+- On-chain state (game.total_pool, game_pool.total_deposited) properly updated
+- Finalize/claim work correctly because state is consistent
+
+### API Endpoints
+- `POST /api/games/prepare` - Get join_game transaction to sign (returns gameId, escrowPDA, joinTransaction)
+- `POST /api/games/join` - Confirm join after signing (validates join_game + wager)
+- `POST /api/games/:id/claim` - Get claim_winnings transaction for winner to sign
 
 ### Environment Variables
-- `SOLANA_AUTHORITY_PRIVATE_KEY` (optional) - Base58-encoded private key for on-chain payout execution
+- `SOLANA_AUTHORITY_PRIVATE_KEY` (required) - Base58-encoded private key for on-chain operations
 
 ## Recent Changes (2026-01-25)
 

@@ -237,6 +237,17 @@ export class MemStorage implements IStorage {
     console.log(`[ON-CHAIN] Game ${id} created with on-chain ID ${onChainGameId}`);
     console.log(`[ON-CHAIN] Escrow PDA: ${escrowPDA.toBase58()}`);
     
+    // Initialize game on-chain (creates game and escrow PDAs)
+    if (solanaClient.isOnChainEnabled()) {
+      const result = await solanaClient.createGameOnChain(onChainGameId, game.mode, game.wager);
+      if (result.success) {
+        console.log(`[ON-CHAIN] Game initialized on-chain: ${result.signature}`);
+      } else {
+        console.warn(`[ON-CHAIN] On-chain game creation failed: ${result.error}`);
+        // Game is still created in storage - on-chain initialization can be retried
+      }
+    }
+    
     return newGame;
   }
 

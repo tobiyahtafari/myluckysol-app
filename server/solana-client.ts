@@ -183,6 +183,77 @@ export class SolanaGameClient {
     }
   }
 
+  // Build create_game instruction to initialize game on-chain
+  buildCreateGameInstruction(
+    gameId: bigint,
+    gameMode: string,
+    wagerSol: number
+  ): TransactionInstruction {
+    const [gamePDA] = this.getGamePDA(gameId);
+    const [gamePoolPDA] = this.getGamePoolPDA(gameId);
+    const [gameConfigPDA] = this.getGameConfigPDA();
+
+    // Account ordering per CreateGame context in lib.rs
+    const keys = [
+      { pubkey: gamePDA, isSigner: false, isWritable: true },      // game (init)
+      { pubkey: gamePoolPDA, isSigner: false, isWritable: true },  // game_pool (init)
+      { pubkey: gameConfigPDA, isSigner: false, isWritable: false }, // game_config (read-only)
+      { pubkey: this.authorityKeypair!.publicKey, isSigner: true, isWritable: true }, // creator (payer)
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ];
+
+    // Build instruction data: discriminator + game_id (u64) + game_mode (u8) + wager (u64)
+    const gameModeValue = this.gameModeToValue(gameMode);
+    const wagerLamports = this.wagerToLamports(wagerSol);
+    
+    const data = Buffer.alloc(8 + 8 + 1 + 8); // discriminator + game_id + mode + wager
+    DISCRIMINATORS.createGame.copy(data, 0);
+    data.writeBigUInt64LE(gameId, 8);
+    data.writeUInt8(gameModeValue, 16);
+    data.writeBigUInt64LE(wagerLamports, 17);
+
+    return new TransactionInstruction({
+      keys,
+      programId: this.programId,
+      data,
+    });
+  }
+
+  // Create game on-chain (initializes game and escrow PDAs)
+  async createGameOnChain(
+    gameId: bigint,
+    gameMode: string,
+    wagerSol: number
+  ): Promise<{ success: boolean; signature?: string; error?: string }> {
+    if (!this.authorityKeypair) {
+      console.log(`[SOLANA] On-chain game creation skipped (no authority)`);
+      return { success: false, error: "No authority keypair configured" };
+    }
+
+    try {
+      const instruction = this.buildCreateGameInstruction(gameId, gameMode, wagerSol);
+      const transaction = new Transaction().add(instruction);
+
+      console.log(`[SOLANA] Creating game on-chain...`);
+      console.log(`  - Game ID: ${gameId}`);
+      console.log(`  - Mode: ${gameMode}`);
+      console.log(`  - Wager: ${wagerSol} SOL`);
+
+      const signature = await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [this.authorityKeypair],
+        { commitment: "confirmed" }
+      );
+
+      console.log(`[SOLANA] Game created on-chain! Tx: ${signature}`);
+      return { success: true, signature };
+    } catch (error) {
+      console.error("[SOLANA] On-chain game creation error:", error);
+      return { success: false, error: String(error) };
+    }
+  }
+
   // Build join game instruction (for client to sign)
   buildJoinGameInstruction(
     gameId: bigint,
@@ -252,7 +323,57 @@ export class SolanaGameClient {
     };
   }
 
-  // Execute payout from authority wallet to winner and treasury
+  // Build finalize_game instruction to pay treasury fee from escrow PDA
+  // Note: finalize_game only pays treasury fee, claim_winnings is separate for winner
+  buildFinalizeGameInstruction(
+    gameId: bigint
+  ): TransactionInstruction {
+    const [gamePDA] = this.getGamePDA(gameId);
+    const [gamePoolPDA] = this.getGamePoolPDA(gameId);
+    const [gameConfigPDA] = this.getGameConfigPDA();
+
+    // Account ordering per FinalizeGame context in lib.rs
+    const keys = [
+      { pubkey: gamePDA, isSigner: false, isWritable: true },      // game
+      { pubkey: gamePoolPDA, isSigner: false, isWritable: true },  // game_pool
+      { pubkey: gameConfigPDA, isSigner: false, isWritable: false }, // game_config (read-only)
+      { pubkey: this.treasuryWallet, isSigner: false, isWritable: true }, // treasury
+      { pubkey: this.authorityKeypair!.publicKey, isSigner: true, isWritable: false }, // authority
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ];
+
+    return new TransactionInstruction({
+      keys,
+      programId: this.programId,
+      data: DISCRIMINATORS.finalizeGame, // No args needed
+    });
+  }
+
+  // Build claim_winnings instruction for winner to claim from escrow
+  buildClaimWinningsInstruction(
+    gameId: bigint,
+    winnerWallet: PublicKey
+  ): TransactionInstruction {
+    const [gamePDA] = this.getGamePDA(gameId);
+    const [gamePoolPDA] = this.getGamePoolPDA(gameId);
+
+    // Accounts per ClaimWinnings context: game, game_pool, winner (signer), system_program
+    const keys = [
+      { pubkey: gamePDA, isSigner: false, isWritable: true },
+      { pubkey: gamePoolPDA, isSigner: false, isWritable: true },
+      { pubkey: winnerWallet, isSigner: true, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ];
+
+    return new TransactionInstruction({
+      keys,
+      programId: this.programId,
+      data: DISCRIMINATORS.claimWinnings,
+    });
+  }
+
+  // Execute finalize_game to pay treasury fee from escrow PDA
+  // Note: Winner claims their winnings separately via claim_winnings instruction from frontend
   async executePayoutFromEscrow(
     gameId: bigint,
     winnerWallet: string,
@@ -265,49 +386,31 @@ export class SolanaGameClient {
     }
 
     try {
-      const winnerPubkey = new PublicKey(winnerWallet);
-      const treasuryPubkey = new PublicKey(FOUNDATION_TREASURY_WALLET);
+      const [gamePoolPDA] = this.getGamePoolPDA(gameId);
 
-      const winnerLamports = Math.round(payoutSol * LAMPORTS_PER_SOL);
-      const treasuryLamports = Math.round(treasuryFeeSol * LAMPORTS_PER_SOL);
-      const requiredLamports = winnerLamports + treasuryLamports;
+      // Check escrow PDA balance
+      const escrowBalance = await this.connection.getBalance(gamePoolPDA);
+      const totalPool = payoutSol + treasuryFeeSol;
 
-      // Check authority wallet balance (where wagers are collected)
-      const authorityBalance = await this.connection.getBalance(this.authorityKeypair.publicKey);
-      console.log(`[SOLANA] Authority wallet balance: ${authorityBalance / LAMPORTS_PER_SOL} SOL`);
-      console.log(`[SOLANA] Required for payout: ${requiredLamports / LAMPORTS_PER_SOL} SOL (winner: ${payoutSol}, treasury: ${treasuryFeeSol})`);
+      console.log(`[SOLANA] Escrow PDA: ${gamePoolPDA.toBase58()}`);
+      console.log(`[SOLANA] Escrow PDA balance: ${escrowBalance / LAMPORTS_PER_SOL} SOL`);
+      console.log(`[SOLANA] Total pool: ${totalPool} SOL (winner: ${payoutSol}, treasury: ${treasuryFeeSol})`);
 
-      // Need some buffer for transaction fees
-      const txFeeBuffer = 10000; // 0.00001 SOL for tx fees
-      if (authorityBalance < requiredLamports + txFeeBuffer) {
-        console.warn(`[SOLANA] Authority balance (${authorityBalance}) less than required (${requiredLamports + txFeeBuffer})`);
-        return { success: false, error: "Insufficient authority wallet balance for payout" };
+      if (escrowBalance === 0) {
+        console.warn(`[SOLANA] Escrow balance is 0 - game may not be on-chain or funds not deposited`);
+        return { success: false, error: "No funds in escrow PDA" };
       }
 
-      // Create transaction with transfers
-      const transaction = new Transaction();
-      
-      // Transfer to winner (90%)
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey: this.authorityKeypair.publicKey,
-          toPubkey: winnerPubkey,
-          lamports: winnerLamports,
-        })
-      );
+      // Build finalize_game instruction to pay treasury fee
+      // This instruction pays the 10% house fee to treasury
+      // Winner claims their 90% separately via claim_winnings from frontend
+      const instruction = this.buildFinalizeGameInstruction(gameId);
+      const transaction = new Transaction().add(instruction);
 
-      // Transfer to treasury (10%)
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey: this.authorityKeypair.publicKey,
-          toPubkey: treasuryPubkey,
-          lamports: treasuryLamports,
-        })
-      );
-
-      console.log(`[SOLANA] Executing payout transaction...`);
-      console.log(`  - Winner (${winnerWallet.slice(0, 8)}...): ${payoutSol} SOL`);
-      console.log(`  - Treasury: ${treasuryFeeSol} SOL`);
+      console.log(`[SOLANA] Executing finalize_game instruction...`);
+      console.log(`  - Game ID: ${gameId}`);
+      console.log(`  - Treasury fee: ${treasuryFeeSol} SOL`);
+      console.log(`  - Winner (${winnerWallet.slice(0, 8)}...) can claim: ${payoutSol} SOL`);
 
       const signature = await sendAndConfirmTransaction(
         this.connection,
@@ -316,17 +419,39 @@ export class SolanaGameClient {
         { commitment: "confirmed" }
       );
 
-      console.log(`[SOLANA] Payout successful! Tx: ${signature}`);
+      console.log(`[SOLANA] Finalize game successful! Treasury fee paid. Tx: ${signature}`);
+      console.log(`[SOLANA] Winner can now claim winnings via claim_winnings instruction`);
 
       return {
         success: true,
-        winnerTxSig: signature,
-        treasuryTxSig: signature, // Same transaction
+        treasuryTxSig: signature,
+        // winnerTxSig will be set when winner claims via frontend
       };
     } catch (error) {
       console.error("[SOLANA] Payout error:", error);
       return { success: false, error: String(error) };
     }
+  }
+
+  // Build transaction for winner to claim winnings (called from frontend)
+  async buildClaimWinningsTransaction(
+    gameId: bigint,
+    winnerWallet: PublicKey
+  ): Promise<{ transaction: Transaction; escrowBalance: number }> {
+    const instruction = this.buildClaimWinningsInstruction(gameId, winnerWallet);
+    const transaction = new Transaction().add(instruction);
+
+    const { blockhash } = await this.connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = winnerWallet;
+
+    const [gamePoolPDA] = this.getGamePoolPDA(gameId);
+    const escrowBalance = await this.connection.getBalance(gamePoolPDA);
+
+    return {
+      transaction,
+      escrowBalance: escrowBalance / LAMPORTS_PER_SOL,
+    };
   }
 
   // Verify a transaction signature
@@ -454,6 +579,71 @@ export class SolanaGameClient {
       };
     } catch (error) {
       return { success: false, error: String(error) };
+    }
+  }
+
+  // Validate that a transaction contains a join_game instruction (not just a SOL transfer)
+  async validateJoinGameInstruction(
+    signature: string,
+    expectedPlayer: string,
+    gameId: bigint
+  ): Promise<{ valid: boolean; error?: string }> {
+    try {
+      const tx = await this.connection.getTransaction(signature, {
+        maxSupportedTransactionVersion: 0,
+      });
+
+      if (!tx) {
+        return { valid: false, error: "Transaction not found" };
+      }
+
+      const accountKeys = tx.transaction.message.staticAccountKeys || 
+                          (tx.transaction.message as any).accountKeys;
+      const outerInstructions = (tx.transaction.message as any).compiledInstructions || 
+                          (tx.transaction.message as any).instructions;
+
+      // Get expected PDAs for this game
+      const [expectedGamePDA] = this.getGamePDA(gameId);
+      const [expectedPoolPDA] = this.getGamePoolPDA(gameId);
+      const programIdStr = this.programId.toBase58();
+      const joinGameDiscriminator = DISCRIMINATORS.joinGame;
+
+      // Look for join_game instruction from our program
+      for (const ix of outerInstructions) {
+        const programIdIndex = ix.programIdIndex;
+        const programId = accountKeys[programIdIndex]?.toBase58();
+        
+        if (programId === programIdStr) {
+          // Found our program instruction, check discriminator
+          const data = ix.data ? (typeof ix.data === 'string' 
+            ? Buffer.from(ix.data, 'base64') 
+            : Buffer.from(ix.data)) : null;
+          
+          if (data && data.length >= 8) {
+            const disc = data.slice(0, 8);
+            if (disc.equals(joinGameDiscriminator)) {
+              // Verify accounts match expected game
+              const accountKeyIndices = ix.accountKeyIndexes || ix.accounts;
+              if (accountKeyIndices && accountKeyIndices.length >= 3) {
+                const gamePDA = accountKeys[accountKeyIndices[0]]?.toBase58();
+                const poolPDA = accountKeys[accountKeyIndices[1]]?.toBase58();
+                const player = accountKeys[accountKeyIndices[2]]?.toBase58();
+
+                if (gamePDA === expectedGamePDA.toBase58() && 
+                    poolPDA === expectedPoolPDA.toBase58() &&
+                    player === expectedPlayer) {
+                  console.log(`[ON-CHAIN] Validated join_game instruction for game ${gameId}`);
+                  return { valid: true };
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return { valid: false, error: "No valid join_game instruction found in transaction" };
+    } catch (error) {
+      return { valid: false, error: String(error) };
     }
   }
 

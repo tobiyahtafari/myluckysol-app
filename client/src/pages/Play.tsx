@@ -58,8 +58,8 @@ export default function Play() {
         throw new Error("Wallet not connected");
       }
 
-      // Step 1: Register with backend to get escrow PDA
-      // Backend creates game if needed and returns the escrow address
+      // Step 1: Register with backend to get join transaction
+      // Backend creates game if needed and returns the join_game transaction to sign
       const preRegisterResponse = await apiRequest("POST", "/api/games/prepare", {
         mode: data.mode,
         wager: data.wager,
@@ -67,26 +67,22 @@ export default function Play() {
       });
       const prepareData = await preRegisterResponse.json();
       
-      if (!prepareData.escrowPDA) {
-        throw new Error("Failed to get escrow address");
+      if (!prepareData.joinTransaction) {
+        throw new Error("Failed to get join transaction");
       }
 
-      // Step 2: Build SOL transfer to escrow PDA
-      const escrowPDA = new PublicKey(prepareData.escrowPDA);
+      // Step 2: Deserialize the join_game transaction from backend
+      // This transaction uses the program's join_game instruction which properly
+      // transfers SOL to escrow AND updates the on-chain game state
+      const transactionBuffer = Buffer.from(prepareData.joinTransaction, "base64");
+      const transaction = Transaction.from(transactionBuffer);
       
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: escrowPDA,
-          lamports: Math.round(data.wager * LAMPORTS_PER_SOL),
-        })
-      );
-      
+      // Update blockhash to ensure transaction is fresh
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
       
-      // Step 3: Sign and send transaction to escrow
+      // Step 3: Sign and send the join_game transaction
       const signature = await signAndSendTransaction(adapter, connection, transaction);
       
       // Step 4: Confirm join with backend (includes tx signature for verification)
