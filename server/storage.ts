@@ -15,6 +15,7 @@ import {
   VESTING_PERIOD_MS,
 } from "@shared/schema";
 import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
+import { solanaClient } from "./solana-client";
 
 export interface IStorage {
   getProfile(walletAddress: string): Promise<PlayerProfile | undefined>;
@@ -211,8 +212,14 @@ export class MemStorage implements IStorage {
     const id = `game_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const config = GAME_MODES[game.mode];
     
+    // Generate unique on-chain game ID
+    const onChainGameId = BigInt(Date.now());
+    const [escrowPDA] = solanaClient.getGamePoolPDA(onChainGameId);
+    
     const newGame: Game = {
       id,
+      onChainGameId: onChainGameId.toString(),
+      escrowPDA: escrowPDA.toBase58(),
       mode: game.mode,
       wager: game.wager,
       status: "waiting",
@@ -223,6 +230,10 @@ export class MemStorage implements IStorage {
       createdAt: Date.now(),
     };
     this.games.set(id, newGame);
+    
+    console.log(`[ON-CHAIN] Game ${id} created with on-chain ID ${onChainGameId}`);
+    console.log(`[ON-CHAIN] Escrow PDA: ${escrowPDA.toBase58()}`);
+    
     return newGame;
   }
 
@@ -419,11 +430,33 @@ export class MemStorage implements IStorage {
     console.log(`[DEVNET] Winner WAGA Reward: ${winWagaReward} WAGA (100% of $${payoutUsd.toFixed(2)} at $${wagaPrice}/WAGA)`);
     console.log(`[DEVNET] Treasury Fee: ${treasuryFee.toFixed(4)} SOL`);
 
-    // In a production app, the backend (or a dedicated worker) would execute the payout instruction
-    // on the Solana program. For this hybrid version, we'll log it as a pending on-chain action.
-    console.log(`[ON-CHAIN] Payout of ${payout.toFixed(4)} SOL pending for ${winner.walletAddress}`);
-    console.log(`[ON-CHAIN] Escrow (Treasury) to Winner: ${payout.toFixed(4)} SOL`);
-    console.log(`[ON-CHAIN] Escrow (Treasury) to Foundation Fee: ${treasuryFee.toFixed(4)} SOL`);
+    // Execute on-chain payout if authority key is configured
+    if (solanaClient.isOnChainEnabled() && finalGame.onChainGameId && finalGame.escrowPDA) {
+      try {
+        console.log(`[ON-CHAIN] Executing payout for game ${finalGame.onChainGameId}...`);
+        const payoutResult = await solanaClient.executePayouts(
+          BigInt(finalGame.onChainGameId),
+          winner.walletAddress,
+          payout,
+          treasuryFee
+        );
+        
+        if (payoutResult.success) {
+          finalGame.winnerPayoutTxSig = payoutResult.winnerTxSig;
+          finalGame.treasuryFeeTxSig = payoutResult.treasuryTxSig;
+          console.log(`[ON-CHAIN] Winner payout: ${payoutResult.winnerTxSig?.slice(0, 20)}...`);
+          console.log(`[ON-CHAIN] Treasury fee: ${payoutResult.treasuryTxSig?.slice(0, 20)}...`);
+          this.games.set(gameId, finalGame);
+        }
+      } catch (payoutError) {
+        console.error(`[ON-CHAIN] Payout execution failed:`, payoutError);
+      }
+    } else {
+      // Log as pending on-chain action when authority key is not configured
+      console.log(`[ON-CHAIN] Payout of ${payout.toFixed(4)} SOL pending for ${winner.walletAddress}`);
+      console.log(`[ON-CHAIN] Escrow to Winner: ${payout.toFixed(4)} SOL (requires authority key)`);
+      console.log(`[ON-CHAIN] Escrow to Foundation: ${treasuryFee.toFixed(4)} SOL (requires authority key)`);
+    }
 
     for (const player of finalGame.players) {
       const isWinner = player.id === winner.id;

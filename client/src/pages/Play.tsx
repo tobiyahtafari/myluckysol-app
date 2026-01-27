@@ -17,8 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SolToUsd } from "@/lib/price-context";
 import { WalletModal } from "@/components/WalletModal";
 import { signAndSendTransaction } from "@/lib/solana/wallet-adapter";
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { FOUNDATION_TREASURY_WALLET, MYLUCKYSOL_PROGRAM_ID } from "@shared/constants";
+import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 export default function Play() {
   const { connected, balance, address, network, adapter, publicKey, connection } = useWallet();
@@ -59,22 +58,26 @@ export default function Play() {
         throw new Error("Wallet not connected");
       }
 
-      // Program and Escrow PDA derivation
-      const PROGRAM_ID = new PublicKey(MYLUCKYSOL_PROGRAM_ID);
+      // Step 1: Register with backend to get escrow PDA
+      // Backend creates game if needed and returns the escrow address
+      const preRegisterResponse = await apiRequest("POST", "/api/games/prepare", {
+        mode: data.mode,
+        wager: data.wager,
+        walletAddress: data.walletAddress,
+      });
+      const prepareData = await preRegisterResponse.json();
       
-      // We use a deterministic PDA for the game pool/escrow
-      // In the contract it's: seeds = [b"game_pool", game_id.to_le_bytes().as_ref()]
-      // Since we don't have the on-chain game_id yet (backend generates it),
-      // we'll use a temporary vault or update the backend to provide the PDA.
-      // FOR NOW: We will use the Treasury as the primary Escrow vault 
-      // but through the program's logic.
-      const TREASURY_WALLET = new PublicKey(FOUNDATION_TREASURY_WALLET);
+      if (!prepareData.escrowPDA) {
+        throw new Error("Failed to get escrow address");
+      }
+
+      // Step 2: Build SOL transfer to escrow PDA
+      const escrowPDA = new PublicKey(prepareData.escrowPDA);
       
-      // Build SOL transfer transaction
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
-          toPubkey: TREASURY_WALLET,
+          toPubkey: escrowPDA,
           lamports: Math.round(data.wager * LAMPORTS_PER_SOL),
         })
       );
@@ -83,12 +86,13 @@ export default function Play() {
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
       
-      // Sign and send transaction
+      // Step 3: Sign and send transaction to escrow
       const signature = await signAndSendTransaction(adapter, connection, transaction);
       
-      // Register with backend after on-chain confirmation
+      // Step 4: Confirm join with backend (includes tx signature for verification)
       const response = await apiRequest("POST", "/api/games/join", {
         ...data,
+        gameId: prepareData.gameId,
         txSignature: signature
       });
       return response.json();

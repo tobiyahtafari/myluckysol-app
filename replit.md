@@ -105,6 +105,29 @@ The app supports multiple Solana wallets:
 ## Solana Programs
 See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `scripts/deploy-devnet.sh` in the Replit Shell.
 
+## Recent Changes (2026-01-27)
+
+### On-Chain Escrow Integration
+- **Two-step game join flow**: Frontend calls `/api/games/prepare` to get escrow PDA, then transfers SOL to escrow, then calls `/api/games/join` to confirm
+- **Escrow PDA derivation**: Game pool PDAs derived using seeds `[b"game_pool", game_id.to_le_bytes()]`
+- **On-chain game ID tracking**: Each game gets a unique on-chain ID (bigint timestamp) stored in `onChainGameId` field
+- **Transaction verification**: Backend verifies player wager transactions before registering them in the game
+- **Payout execution**: When authority key is configured, payouts are executed on-chain from escrow PDA
+
+### New Schema Fields
+- `Game.onChainGameId`: On-chain game ID (bigint as string)
+- `Game.escrowPDA`: Game pool PDA address for escrow
+- `Game.winnerPayoutTxSig`: Transaction signature for winner payout
+- `Game.treasuryFeeTxSig`: Transaction signature for treasury fee
+- `Player.txSignature`: Wager transfer transaction signature
+
+### New API Endpoints
+- `POST /api/games/prepare` - Get escrow PDA before SOL transfer (returns gameId, escrowPDA, onChainGameId)
+- Updated `POST /api/games/join` - Now accepts gameId from prepare step and txSignature
+
+### Environment Variables
+- `SOLANA_AUTHORITY_PRIVATE_KEY` (optional) - Base58-encoded private key for on-chain payout execution
+
 ## Recent Changes (2026-01-25)
 
 ### WAGA Reward System Overhaul

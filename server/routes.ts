@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_REWARD_PERCENT, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, type WagerTier, type GameModeKey } from "@shared/schema";
 import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
+import { solanaClient } from "./solana-client";
 import { z } from "zod";
 
 const joinGameSchema = z.object({
@@ -11,13 +12,66 @@ const joinGameSchema = z.object({
     message: "Invalid wager amount",
   }),
   walletAddress: z.string().min(32, "Valid wallet address required"),
+  gameId: z.string().optional(), // Pre-registered game ID
   txSignature: z.string().optional(),
+});
+
+const prepareGameSchema = z.object({
+  mode: z.enum(["1v1", "2-round", "3-round", "4-round"]),
+  wager: z.number().refine((w) => WAGER_TIERS.includes(w as WagerTier), {
+    message: "Invalid wager amount",
+  }),
+  walletAddress: z.string().min(32, "Valid wallet address required"),
 });
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // Prepare game - returns escrow PDA for SOL transfer
+  app.post("/api/games/prepare", async (req, res) => {
+    try {
+      const body = prepareGameSchema.parse(req.body);
+      const mode = body.mode as GameModeKey;
+      const wager = body.wager as WagerTier;
+      const walletAddress = body.walletAddress;
+
+      // Validate wallet address format
+      if (!walletAddress || walletAddress.length < 32 || walletAddress.length > 44) {
+        return res.status(400).json({ error: "Valid Solana wallet address required" });
+      }
+
+      // Find or create a game
+      let game = await storage.findAvailableGame(mode, wager);
+      if (!game) {
+        game = await storage.createGame({ mode, wager });
+      }
+
+      // Check if player already in this game
+      if (game.players.some(p => p.walletAddress === walletAddress)) {
+        return res.status(400).json({ error: "Already joined this game", gameId: game.id });
+      }
+
+      const config = GAME_MODES[mode];
+
+      res.json({
+        gameId: game.id,
+        escrowPDA: game.escrowPDA,
+        onChainGameId: game.onChainGameId,
+        wager,
+        mode,
+        playersNeeded: config.players - game.players.length,
+        network: "devnet",
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error preparing game:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
 
   // Join or create a game (requires real wallet address)
   app.post("/api/games/join", async (req, res) => {
@@ -27,18 +81,27 @@ export async function registerRoutes(
       const wager = body.wager as WagerTier;
       const walletAddress = body.walletAddress;
       const txSignature = body.txSignature;
+      const preGameId = body.gameId;
 
       // Validate wallet address format (Solana base58)
       if (!walletAddress || walletAddress.length < 32 || walletAddress.length > 44) {
         return res.status(400).json({ error: "Valid Solana wallet address required" });
       }
 
-      // Try to find an existing game to join
-      let game = await storage.findAvailableGame(mode, wager);
-
-      if (!game) {
-        // Create a new game
-        game = await storage.createGame({ mode, wager });
+      let game;
+      
+      // If gameId provided from prepare step, use that game
+      if (preGameId) {
+        game = await storage.getGame(preGameId);
+        if (!game) {
+          return res.status(404).json({ error: "Game not found" });
+        }
+      } else {
+        // Fallback: find or create game
+        game = await storage.findAvailableGame(mode, wager);
+        if (!game) {
+          game = await storage.createGame({ mode, wager });
+        }
       }
 
       // Check if player already in this game
@@ -46,7 +109,45 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Already joined this game" });
       }
 
-      // Join the game with real wallet
+      // SECURITY: Verify transaction BEFORE joining - validate amount, sender, and recipient
+      let txVerified = false;
+      if (!txSignature) {
+        console.warn(`[ON-CHAIN] No transaction signature provided for join`);
+        return res.status(400).json({ error: "Transaction signature required to join game" });
+      }
+      
+      if (!game.escrowPDA) {
+        console.warn(`[ON-CHAIN] Game ${game.id} has no escrow PDA`);
+        return res.status(400).json({ error: "Game escrow not configured" });
+      }
+      
+      // First verify the transaction is confirmed
+      const verification = await solanaClient.verifyTransaction(txSignature);
+      if (!verification.confirmed) {
+        console.warn(`[ON-CHAIN] Transaction not confirmed: ${verification.error}`);
+        return res.status(400).json({ error: "Transaction not confirmed" });
+      }
+      
+      // Validate transfer details using instruction-level parsing
+      const transferValidation = await solanaClient.validateTransfer(
+        txSignature,
+        walletAddress,
+        game.escrowPDA,
+        wager
+      );
+      
+      if (!transferValidation.valid) {
+        console.warn(`[ON-CHAIN] Transfer validation failed: ${transferValidation.error}`);
+        return res.status(400).json({ 
+          error: `Transaction validation failed: ${transferValidation.error}` 
+        });
+      }
+      
+      txVerified = true;
+      console.log(`[ON-CHAIN] Transaction ${txSignature.slice(0, 16)}... verified on slot ${verification.slot}`);
+      console.log(`[ON-CHAIN] Transfer validated: ${wager} SOL from ${walletAddress.slice(0, 8)}... to escrow ${game.escrowPDA.slice(0, 8)}...`);
+
+      // Join the game with real wallet (only after tx verified)
       const updatedGame = await storage.joinGame(game.id, walletAddress, txSignature);
 
       if (!updatedGame) {
@@ -65,7 +166,7 @@ export async function registerRoutes(
       const solPrice = await getSolPrice();
       const wagaPrice = getWagaPrice();
       const usdValue = wager * solPrice;
-      
+
       res.json({ 
         gameId: updatedGame.id, 
         game: { ...updatedGame, serverTime: Date.now() },
@@ -74,6 +175,9 @@ export async function registerRoutes(
         wagaRewardPercent: rewardPercent,
         solUsdValue: usdValue,
         wagaPrice,
+        escrowPDA: updatedGame.escrowPDA,
+        onChainGameId: updatedGame.onChainGameId,
+        txVerified,
         network: "devnet",
         serverTime: Date.now(),
       });

@@ -35,6 +35,7 @@ export const playerSchema = z.object({
   joinedAt: z.number(),
   isEliminated: z.boolean().default(false),
   eliminatedRound: z.number().optional(),
+  txSignature: z.string().optional(), // Wager transfer transaction signature
 });
 
 export type Player = z.infer<typeof playerSchema>;
@@ -51,6 +52,8 @@ export type Round = z.infer<typeof roundSchema>;
 
 export const gameSchema = z.object({
   id: z.string(),
+  onChainGameId: z.string().optional(), // On-chain game ID (bigint as string)
+  escrowPDA: z.string().optional(), // Game pool PDA address for escrow
   mode: z.enum(["1v1", "2-round", "3-round", "4-round"]),
   wager: z.number(),
   status: z.enum(["waiting", "countdown", "in_progress", "resolving", "completed"]),
@@ -60,6 +63,8 @@ export const gameSchema = z.object({
   poolAmount: z.number(),
   winnerId: z.string().optional(),
   winnerPayout: z.number().optional(),
+  winnerPayoutTxSig: z.string().optional(), // Transaction signature for winner payout
+  treasuryFeeTxSig: z.string().optional(), // Transaction signature for treasury fee
   wagaRewards: z.number().optional(),
   startedAt: z.number().optional(),
   completedAt: z.number().optional(),
