@@ -1,0 +1,3 @@
+cargo:rerun-if-changed=build/main.rs
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/home/runner/workspace/.tmp/cargo-installPcA6hH/release/build/typenum-5bb0d76bf2bfbc65/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/home/runner/workspace/.tmp/cargo-installPcA6hH/release/build/typenum-5bb0d76bf2bfbc65/out/op.rs
