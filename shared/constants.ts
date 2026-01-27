@@ -1,8 +1,9 @@
 export const FOUNDATION_TREASURY_WALLET = "BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP";
 
 export const MYLUCKYSOL_PROGRAM_ID = "Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5";
-export const WAGA_TOKEN_MINT = "9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho";
+export const WAGA_TOKEN_MINT = "9XU2yJhhAJ1FoUZXbMchZvQMLHui2LQ2a4HC6vaer3JV";
 export const WAGA_REWARDS_VAULT = "9hqGVjFXwBSteHmAhcQ6MpghKv4TVhtCd344NNTtWkjf"; // Authority wallet acts as vault for devnet testing
+export const WAGA_VAULT_ATA = "66bMApCZTRGqfxAXBML6dPAEJX1VwAsBR1DrfwsLaJr1"; // Vault's associated token account
 
 export const PAYOUT_SPLIT = {
   WINNER_PERCENT: 90,

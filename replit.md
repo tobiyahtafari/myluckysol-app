@@ -184,7 +184,9 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 
 ### Solana Programs & Wallets (Devnet)
 - MyLuckySol Program: `Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5`
-- WAGA Token Mint: `9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho`
+- WAGA Token Mint: `9XU2yJhhAJ1FoUZXbMchZvQMLHui2LQ2a4HC6vaer3JV`
+- WAGA Rewards Vault: `9hqGVjFXwBSteHmAhcQ6MpghKv4TVhtCd344NNTtWkjf` (authority wallet)
+- WAGA Vault ATA: `66bMApCZTRGqfxAXBML6dPAEJX1VwAsBR1DrfwsLaJr1` (holds 1B WAGA for rewards)
 - Foundation Treasury: `BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP` (receives 10% house fee)
 
 ### On-Chain Transaction Flow
