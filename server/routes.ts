@@ -61,31 +61,52 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Game not properly initialized" });
       }
       
-      // Get the game pool PDA (escrow) for this game
+      const { PublicKey } = await import("@solana/web3.js");
       const onChainGameId = BigInt(game.onChainGameId);
-      const escrowPDA = solanaClient.getGamePoolPDA(onChainGameId)[0].toBase58();
       
-      // Build join_game transaction for player to sign (uses program's CPI for proper state updates)
-      const { transaction, gamePoolPDA } = await solanaClient.buildJoinGameTransaction(
-        onChainGameId,
-        new (await import("@solana/web3.js")).PublicKey(walletAddress)
-      );
+      // Check if program is deployed - use fallback mode if not
+      const programDeployed = await solanaClient.isProgramDeployed();
       
-      // Serialize transaction for frontend
-      const serializedTx = transaction.serialize({ 
-        requireAllSignatures: false,
-        verifySignatures: false 
-      }).toString("base64");
+      let escrowAddress: string;
+      let serializedTx: string;
+      let useFallbackMode = !programDeployed;
+      
+      if (programDeployed) {
+        // Full on-chain mode: use join_game instruction
+        const escrowPDA = solanaClient.getGamePoolPDA(onChainGameId)[0].toBase58();
+        const { transaction } = await solanaClient.buildJoinGameTransaction(
+          onChainGameId,
+          new PublicKey(walletAddress)
+        );
+        serializedTx = transaction.serialize({ 
+          requireAllSignatures: false,
+          verifySignatures: false 
+        }).toString("base64");
+        escrowAddress = escrowPDA;
+      } else {
+        // Fallback mode: direct SOL transfer to authority wallet
+        console.log(`[FALLBACK] Program not deployed, using direct transfer mode`);
+        const { transaction, escrowAddress: escrow } = await solanaClient.buildFallbackTransferTransaction(
+          new PublicKey(walletAddress),
+          wager
+        );
+        serializedTx = transaction.serialize({ 
+          requireAllSignatures: false,
+          verifySignatures: false 
+        }).toString("base64");
+        escrowAddress = escrow;
+      }
 
       res.json({
         gameId: game.id,
-        escrowPDA, // Game pool PDA for escrow
+        escrowPDA: escrowAddress, // Escrow address (PDA or authority wallet)
         onChainGameId: game.onChainGameId,
         wager,
         mode,
         playersNeeded: config.players - game.players.length,
         network: "devnet",
-        joinTransaction: serializedTx, // Serialized join_game instruction for player to sign
+        joinTransaction: serializedTx,
+        fallbackMode: useFallbackMode, // Let client know we're in fallback mode
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -145,9 +166,7 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Game not properly initialized" });
       }
       
-      // Get the game pool PDA (escrow) for validation
       const onChainGameId = BigInt(game.onChainGameId);
-      const escrowPDA = solanaClient.getGamePoolPDA(onChainGameId)[0].toBase58();
       
       // First verify the transaction is confirmed
       const verification = await solanaClient.verifyTransaction(txSignature);
@@ -156,39 +175,67 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Transaction not confirmed" });
       }
       
-      // SECURITY: Validate that join_game instruction was executed (not just a SOL transfer)
-      // This ensures on-chain game state (total_pool, total_deposited) is properly updated
-      const joinValidation = await solanaClient.validateJoinGameInstruction(
-        txSignature,
-        walletAddress,
-        onChainGameId
-      );
+      // Check if program is deployed - use appropriate validation
+      const programDeployed = await solanaClient.isProgramDeployed();
       
-      if (!joinValidation.valid) {
-        console.warn(`[ON-CHAIN] Join instruction validation failed: ${joinValidation.error}`);
-        return res.status(400).json({ 
-          error: `Transaction validation failed: ${joinValidation.error}` 
-        });
-      }
-      
-      // Also validate the wager amount was transferred via CPI (economic integrity check)
-      const transferValidation = await solanaClient.validateTransfer(
-        txSignature,
-        walletAddress,
-        escrowPDA,
-        wager
-      );
-      
-      if (!transferValidation.valid) {
-        console.warn(`[ON-CHAIN] Wager amount validation failed: ${transferValidation.error}`);
-        return res.status(400).json({ 
-          error: `Wager validation failed: ${transferValidation.error}` 
-        });
+      if (programDeployed) {
+        // Full on-chain mode: validate join_game instruction + wager transfer
+        const escrowPDA = solanaClient.getGamePoolPDA(onChainGameId)[0].toBase58();
+        
+        const joinValidation = await solanaClient.validateJoinGameInstruction(
+          txSignature,
+          walletAddress,
+          onChainGameId
+        );
+        
+        if (!joinValidation.valid) {
+          console.warn(`[ON-CHAIN] Join instruction validation failed: ${joinValidation.error}`);
+          return res.status(400).json({ 
+            error: `Transaction validation failed: ${joinValidation.error}` 
+          });
+        }
+        
+        const transferValidation = await solanaClient.validateTransfer(
+          txSignature,
+          walletAddress,
+          escrowPDA,
+          wager
+        );
+        
+        if (!transferValidation.valid) {
+          console.warn(`[ON-CHAIN] Wager amount validation failed: ${transferValidation.error}`);
+          return res.status(400).json({ 
+            error: `Wager validation failed: ${transferValidation.error}` 
+          });
+        }
+        
+        console.log(`[ON-CHAIN] Join instruction + wager validated for game ${onChainGameId}`);
+      } else {
+        // Fallback mode: validate direct SOL transfer to authority wallet
+        const authorityAddress = solanaClient.getAuthorityAddress();
+        if (!authorityAddress) {
+          return res.status(500).json({ error: "Authority wallet not configured" });
+        }
+        
+        const transferValidation = await solanaClient.validateTransfer(
+          txSignature,
+          walletAddress,
+          authorityAddress,
+          wager
+        );
+        
+        if (!transferValidation.valid) {
+          console.warn(`[FALLBACK] Transfer validation failed: ${transferValidation.error}`);
+          return res.status(400).json({ 
+            error: `Transaction validation failed: ${transferValidation.error}` 
+          });
+        }
+        
+        console.log(`[FALLBACK] Direct SOL transfer validated for game ${onChainGameId}`);
       }
       
       txVerified = true;
       console.log(`[ON-CHAIN] Transaction ${txSignature.slice(0, 16)}... verified on slot ${verification.slot}`);
-      console.log(`[ON-CHAIN] Join instruction + wager validated for game ${onChainGameId} by ${walletAddress.slice(0, 8)}...`);
 
       // Join the game with real wallet (only after tx verified)
       const updatedGame = await storage.joinGame(game.id, walletAddress, txSignature);
@@ -218,7 +265,7 @@ export async function registerRoutes(
         wagaRewardPercent: rewardPercent,
         solUsdValue: usdValue,
         wagaPrice,
-        escrowPDA, // Actual game pool PDA
+        escrowPDA: updatedGame.escrowPDA, // From game state
         onChainGameId: updatedGame.onChainGameId,
         txVerified,
         network: "devnet",
@@ -247,7 +294,9 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Game not completed" });
       }
       
-      if (!game.winner || game.winner.walletAddress !== walletAddress) {
+      // Find the winner player from the players array
+      const winnerPlayer = game.players.find(p => p.walletAddress === game.winnerId);
+      if (!game.winnerId || game.winnerId !== walletAddress) {
         return res.status(403).json({ error: "Only the winner can claim winnings" });
       }
       
