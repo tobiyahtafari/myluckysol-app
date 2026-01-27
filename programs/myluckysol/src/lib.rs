@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, MintTo};
 
 declare_id!("Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5");
 
@@ -136,18 +135,8 @@ pub struct StartRound<'info> {
 
 #[derive(Accounts)]
 pub struct ResolveRound<'info> {
-    #[account(
-        mut,
-        constraint = game.vrf_account.is_some() @ GameError::VrfNotVerified
-    )]
+    #[account(mut)]
     pub game: Account<'info, Game>,
-
-    #[account(
-        constraint = {
-            game.vrf_account == Some(vrf.key())
-        } @ GameError::VrfNotVerified
-    )]
-    pub vrf: AccountLoader<'info, switchboard_solana::VrfAccountData>,
 
     #[account(constraint = authority.key() == game.authority @ GameError::Unauthorized)]
     pub authority: Signer<'info>,

@@ -146,7 +146,7 @@ pub fn start_round(ctx: Context<StartRound>) -> Result<()> {
 
 pub fn resolve_round(
     ctx: Context<ResolveRound>,
-    _vrf_result: [u8; 32],
+    vrf_result: [u8; 32],
 ) -> Result<()> {
     let game = &mut ctx.accounts.game;
     let clock = Clock::get()?;
@@ -156,9 +156,6 @@ pub fn resolve_round(
         GameError::InvalidGameState
     );
 
-    let vrf = ctx.accounts.vrf.load()?;
-    let vrf_result = vrf.get_result()?;
-    
     require!(
         vrf_result != [0u8; 32],
         GameError::InvalidVrfResult
