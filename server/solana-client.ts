@@ -8,7 +8,13 @@ import {
   LAMPORTS_PER_SOL,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
-import { FOUNDATION_TREASURY_WALLET, MYLUCKYSOL_PROGRAM_ID } from "@shared/constants";
+import { 
+  getOrCreateAssociatedTokenAccount, 
+  createTransferInstruction,
+  TOKEN_PROGRAM_ID,
+  getMint
+} from "@solana/spl-token";
+import { FOUNDATION_TREASURY_WALLET, MYLUCKYSOL_PROGRAM_ID, WAGA_TOKEN_MINT, WAGA_REWARDS_VAULT } from "@shared/constants";
 import bs58 from "bs58";
 import { createHash } from "crypto";
 
@@ -445,6 +451,63 @@ export class SolanaGameClient {
       valid: false, 
       error: `No matching transfer found. Expected ${expectedAmount} SOL from ${expectedFrom.slice(0,8)}... to ${expectedTo.slice(0,8)}...` 
     };
+  }
+
+  // Transfer WAGA tokens from rewards vault to user
+  async transferWagaFromVault(
+    recipientWallet: string,
+    amount: number
+  ): Promise<{ success: boolean; txSig?: string; error?: string }> {
+    if (!this.authorityKeypair) {
+      return { success: false, error: "No authority keypair configured" };
+    }
+
+    try {
+      const mintPubkey = new PublicKey(WAGA_TOKEN_MINT);
+      const vaultPubkey = new PublicKey(WAGA_REWARDS_VAULT);
+      const recipientPubkey = new PublicKey(recipientWallet);
+      
+      // Get mint info to handle decimals
+      const mintInfo = await getMint(this.connection, mintPubkey);
+      const amountInUnits = Math.round(amount * Math.pow(10, mintInfo.decimals));
+
+      // 1. Get/Create Associated Token Accounts
+      const vaultATA = await getOrCreateAssociatedTokenAccount(
+        this.connection,
+        this.authorityKeypair,
+        mintPubkey,
+        vaultPubkey
+      );
+
+      const recipientATA = await getOrCreateAssociatedTokenAccount(
+        this.connection,
+        this.authorityKeypair,
+        mintPubkey,
+        recipientPubkey
+      );
+
+      // 2. Build Transfer Instruction
+      const transferIx = createTransferInstruction(
+        vaultATA.address,
+        recipientATA.address,
+        vaultPubkey,
+        amountInUnits
+      );
+
+      const transaction = new Transaction().add(transferIx);
+      
+      const txSig = await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [this.authorityKeypair]
+      );
+
+      console.log(`[WAGA] Transferred ${amount} WAGA from vault to ${recipientWallet}. Tx: ${txSig}`);
+      return { success: true, txSig };
+    } catch (error) {
+      console.error("[WAGA] Transfer error:", error);
+      return { success: false, error: String(error) };
+    }
   }
 }
 

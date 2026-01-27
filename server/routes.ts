@@ -324,11 +324,24 @@ export async function registerRoutes(
         });
       }
 
+      // On-chain transfer from Vault to user
+      let txSig;
+      if (solanaClient.hasAuthority() && result.claimedAmount > 0) {
+        const transferResult = await solanaClient.transferWagaFromVault(walletAddress, result.claimedAmount);
+        if (!transferResult.success) {
+          // If on-chain fails, we should probably rollback the storage claim or log it heavily
+          console.error(`[WAGA] On-chain claim transfer failed for ${walletAddress}: ${transferResult.error}`);
+          return res.status(500).json({ error: "On-chain transfer failed: " + transferResult.error });
+        }
+        txSig = transferResult.txSig;
+      }
+
       res.json({
         success: true,
         claimedAmount: result.claimedAmount,
         remainingVesting: result.remainingVesting,
         nextClaimTime: result.nextClaimTime,
+        txSig,
         message: result.claimedAmount > 0 
           ? `Successfully claimed ${result.claimedAmount.toLocaleString()} WAGA tokens!`
           : "No vested tokens available to claim",
