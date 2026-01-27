@@ -29,7 +29,7 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  // Prepare game - returns escrow PDA for SOL transfer
+  // Prepare game - returns escrow wallet for SOL transfer (authority wallet)
   app.post("/api/games/prepare", async (req, res) => {
     try {
       const body = prepareGameSchema.parse(req.body);
@@ -54,10 +54,16 @@ export async function registerRoutes(
       }
 
       const config = GAME_MODES[mode];
+      
+      // Get the authority wallet address for escrow
+      const escrowWallet = solanaClient.getAuthorityAddress();
+      if (!escrowWallet) {
+        return res.status(500).json({ error: "Escrow wallet not configured" });
+      }
 
       res.json({
         gameId: game.id,
-        escrowPDA: game.escrowPDA,
+        escrowPDA: escrowWallet, // Use authority wallet as escrow for simplicity
         onChainGameId: game.onChainGameId,
         wager,
         mode,
@@ -116,9 +122,11 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Transaction signature required to join game" });
       }
       
-      if (!game.escrowPDA) {
-        console.warn(`[ON-CHAIN] Game ${game.id} has no escrow PDA`);
-        return res.status(400).json({ error: "Game escrow not configured" });
+      // Get the authority wallet address for escrow validation
+      const escrowWallet = solanaClient.getAuthorityAddress();
+      if (!escrowWallet) {
+        console.warn(`[ON-CHAIN] Authority wallet not configured`);
+        return res.status(400).json({ error: "Escrow wallet not configured" });
       }
       
       // First verify the transaction is confirmed
@@ -128,11 +136,11 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Transaction not confirmed" });
       }
       
-      // Validate transfer details using instruction-level parsing
+      // Validate transfer details - SOL should go to authority wallet (escrow)
       const transferValidation = await solanaClient.validateTransfer(
         txSignature,
         walletAddress,
-        game.escrowPDA,
+        escrowWallet,
         wager
       );
       
@@ -145,7 +153,7 @@ export async function registerRoutes(
       
       txVerified = true;
       console.log(`[ON-CHAIN] Transaction ${txSignature.slice(0, 16)}... verified on slot ${verification.slot}`);
-      console.log(`[ON-CHAIN] Transfer validated: ${wager} SOL from ${walletAddress.slice(0, 8)}... to escrow ${game.escrowPDA.slice(0, 8)}...`);
+      console.log(`[ON-CHAIN] Transfer validated: ${wager} SOL from ${walletAddress.slice(0, 8)}... to escrow ${escrowWallet.slice(0, 8)}...`);
 
       // Join the game with real wallet (only after tx verified)
       const updatedGame = await storage.joinGame(game.id, walletAddress, txSignature);
@@ -175,7 +183,7 @@ export async function registerRoutes(
         wagaRewardPercent: rewardPercent,
         solUsdValue: usdValue,
         wagaPrice,
-        escrowPDA: updatedGame.escrowPDA,
+        escrowPDA: escrowWallet, // Use authority wallet for consistency
         onChainGameId: updatedGame.onChainGameId,
         txVerified,
         network: "devnet",

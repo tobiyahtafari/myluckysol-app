@@ -318,6 +318,16 @@ export class MemStorage implements IStorage {
     console.log(`[DEVNET] Player ${walletAddress.slice(0, 8)}... joined game ${gameId} with ${game.wager} SOL wager ($${usdValue.toFixed(2)} USD).`);
     console.log(`[DEVNET] Entry WAGA Reward: ${entryWagaReward} WAGA (${rewardPercent}% of $${usdValue.toFixed(2)} = $${(usdValue * rewardPercent / 100).toFixed(2)} worth at $${wagaPrice}/WAGA)`);
 
+    // Transfer WAGA entry reward on-chain immediately
+    if (entryWagaReward > 0) {
+      const wagaResult = await solanaClient.transferWagaFromVault(walletAddress, entryWagaReward);
+      if (wagaResult.success) {
+        console.log(`[DEVNET] WAGA entry reward transferred! Tx: ${wagaResult.txSig}`);
+      } else {
+        console.warn(`[DEVNET] WAGA entry transfer failed: ${wagaResult.error}`);
+      }
+    }
+
     this.games.set(gameId, game);
     return game;
   }

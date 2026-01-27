@@ -101,6 +101,11 @@ export class SolanaGameClient {
     return this.authorityKeypair !== null;
   }
 
+  // Get authority wallet address (used as escrow)
+  getAuthorityAddress(): string | null {
+    return this.authorityKeypair?.publicKey.toBase58() || null;
+  }
+
   // Alias for executePayoutFromEscrow
   async executePayouts(
     gameId: bigint,
@@ -247,7 +252,7 @@ export class SolanaGameClient {
     };
   }
 
-  // Execute payout from escrow to winner (requires authority)
+  // Execute payout from authority wallet to winner and treasury
   async executePayoutFromEscrow(
     gameId: bigint,
     winnerWallet: string,
@@ -255,38 +260,68 @@ export class SolanaGameClient {
     treasuryFeeSol: number
   ): Promise<{ success: boolean; winnerTxSig?: string; treasuryTxSig?: string; error?: string }> {
     if (!this.authorityKeypair) {
-      // Fallback: just log the expected payout
       console.log(`[SOLANA] Payout pending (no authority): ${payoutSol} SOL to ${winnerWallet}`);
       return { success: false, error: "No authority keypair configured" };
     }
 
     try {
-      const [gamePoolPDA, bump] = this.getGamePoolPDA(gameId);
       const winnerPubkey = new PublicKey(winnerWallet);
+      const treasuryPubkey = new PublicKey(FOUNDATION_TREASURY_WALLET);
 
-      // Check escrow balance
-      const escrowBalance = await this.connection.getBalance(gamePoolPDA);
-      const requiredLamports = Math.round((payoutSol + treasuryFeeSol) * LAMPORTS_PER_SOL);
+      const winnerLamports = Math.round(payoutSol * LAMPORTS_PER_SOL);
+      const treasuryLamports = Math.round(treasuryFeeSol * LAMPORTS_PER_SOL);
+      const requiredLamports = winnerLamports + treasuryLamports;
 
-      if (escrowBalance < requiredLamports) {
-        console.warn(`[SOLANA] Escrow balance (${escrowBalance}) less than required (${requiredLamports})`);
-        // In production, this would trigger the on-chain finalize instruction
-        return { success: false, error: "Insufficient escrow balance" };
+      // Check authority wallet balance (where wagers are collected)
+      const authorityBalance = await this.connection.getBalance(this.authorityKeypair.publicKey);
+      console.log(`[SOLANA] Authority wallet balance: ${authorityBalance / LAMPORTS_PER_SOL} SOL`);
+      console.log(`[SOLANA] Required for payout: ${requiredLamports / LAMPORTS_PER_SOL} SOL (winner: ${payoutSol}, treasury: ${treasuryFeeSol})`);
+
+      // Need some buffer for transaction fees
+      const txFeeBuffer = 10000; // 0.00001 SOL for tx fees
+      if (authorityBalance < requiredLamports + txFeeBuffer) {
+        console.warn(`[SOLANA] Authority balance (${authorityBalance}) less than required (${requiredLamports + txFeeBuffer})`);
+        return { success: false, error: "Insufficient authority wallet balance for payout" };
       }
 
-      // Note: For proper PDA transfers, we need to use the program instruction
-      // This simplified version assumes direct transfers for demo purposes
-      // In production, you would call the finalize_game and claim_winnings instructions
+      // Create transaction with transfers
+      const transaction = new Transaction();
+      
+      // Transfer to winner (90%)
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: this.authorityKeypair.publicKey,
+          toPubkey: winnerPubkey,
+          lamports: winnerLamports,
+        })
+      );
 
-      console.log(`[SOLANA] Payout simulation:`);
+      // Transfer to treasury (10%)
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: this.authorityKeypair.publicKey,
+          toPubkey: treasuryPubkey,
+          lamports: treasuryLamports,
+        })
+      );
+
+      console.log(`[SOLANA] Executing payout transaction...`);
       console.log(`  - Winner (${winnerWallet.slice(0, 8)}...): ${payoutSol} SOL`);
       console.log(`  - Treasury: ${treasuryFeeSol} SOL`);
-      console.log(`  - Escrow PDA: ${gamePoolPDA.toBase58()}`);
+
+      const signature = await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [this.authorityKeypair],
+        { commitment: "confirmed" }
+      );
+
+      console.log(`[SOLANA] Payout successful! Tx: ${signature}`);
 
       return {
         success: true,
-        winnerTxSig: "simulated-winner-payout",
-        treasuryTxSig: "simulated-treasury-fee",
+        winnerTxSig: signature,
+        treasuryTxSig: signature, // Same transaction
       };
     } catch (error) {
       console.error("[SOLANA] Payout error:", error);
