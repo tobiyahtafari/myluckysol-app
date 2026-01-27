@@ -97,8 +97,29 @@ export class SolanaGameClient {
     return this.authorityKeypair !== null;
   }
 
+  private programDeployed: boolean | null = null; // cached check result
+
   isOnChainEnabled(): boolean {
     return this.authorityKeypair !== null;
+  }
+
+  // Check if the program is actually deployed and executable on-chain
+  async isProgramDeployed(): Promise<boolean> {
+    // Return cached result if available
+    if (this.programDeployed !== null) {
+      return this.programDeployed;
+    }
+    
+    try {
+      const accountInfo = await this.connection.getAccountInfo(this.programId);
+      this.programDeployed = accountInfo !== null && accountInfo.executable === true;
+      console.log(`[SOLANA] Program deployed check: ${this.programDeployed}`);
+      return this.programDeployed;
+    } catch (e) {
+      console.warn("[SOLANA] Failed to check program deployment:", e);
+      this.programDeployed = false;
+      return false;
+    }
   }
 
   // Get authority wallet address (used as escrow)
@@ -320,6 +341,36 @@ export class SolanaGameClient {
     return {
       transaction,
       escrowPDA: gamePoolPDA.toBase58(),
+    };
+  }
+
+  // Fallback mode: build a simple SOL transfer to authority wallet (when program not deployed)
+  async buildFallbackTransferTransaction(
+    playerWallet: PublicKey,
+    wagerSol: number
+  ): Promise<{ transaction: Transaction; escrowAddress: string }> {
+    if (!this.authorityKeypair) {
+      throw new Error("Authority keypair required for fallback mode");
+    }
+    
+    const lamports = Math.round(wagerSol * LAMPORTS_PER_SOL);
+    const escrowAddress = this.authorityKeypair.publicKey;
+
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: playerWallet,
+        toPubkey: escrowAddress,
+        lamports,
+      })
+    );
+
+    const { blockhash } = await this.connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = playerWallet;
+
+    return {
+      transaction,
+      escrowAddress: escrowAddress.toBase58(),
     };
   }
 
