@@ -382,5 +382,24 @@ export async function registerRoutes(
     }
   });
 
+  // Get leaderboard
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const sortBy = (req.query.sortBy as string) || "earnings";
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      // Validate sortBy parameter
+      if (!["earnings", "luck", "streaks"].includes(sortBy)) {
+        return res.status(400).json({ error: "Invalid sortBy parameter. Use: earnings, luck, or streaks" });
+      }
+      
+      const leaderboard = await storage.getLeaderboard(sortBy as "earnings" | "luck" | "streaks", limit);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error getting leaderboard:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   return httpServer;
 }

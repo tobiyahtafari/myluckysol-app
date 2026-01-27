@@ -17,6 +17,8 @@ import {
 import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
 import { solanaClient } from "./solana-client";
 
+import type { LeaderboardEntry } from "@shared/schema";
+
 export interface IStorage {
   getProfile(walletAddress: string): Promise<PlayerProfile | undefined>;
   getProfileByUsername(username: string): Promise<PlayerProfile | undefined>;
@@ -37,6 +39,7 @@ export interface IStorage {
   updateGameStatus(id: string, status: string): Promise<Game | undefined>;
   findAvailableGame(mode: GameModeKey, wager: WagerTier): Promise<Game | undefined>;
   joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined>;
+  getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit?: number): Promise<LeaderboardEntry[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -319,6 +322,76 @@ export class MemStorage implements IStorage {
     return game;
   }
 
+  async getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit: number = 50): Promise<LeaderboardEntry[]> {
+    const profiles = Array.from(this.profiles.values());
+    
+    // Only include players who have played at least 1 game
+    const activePlayers = profiles.filter(p => p.gamesPlayed > 0);
+    
+    // Sort based on criteria
+    let sorted: PlayerProfile[];
+    switch (sortBy) {
+      case "earnings":
+        sorted = activePlayers.sort((a, b) => b.totalWon - a.totalWon);
+        break;
+      case "luck":
+        sorted = activePlayers.sort((a, b) => b.luckScore - a.luckScore);
+        break;
+      case "streaks":
+        sorted = activePlayers.sort((a, b) => b.bestStreak - a.bestStreak);
+        break;
+      default:
+        sorted = activePlayers.sort((a, b) => b.totalWon - a.totalWon);
+    }
+    
+    // Take top N and convert to leaderboard entries (matching shared schema)
+    return sorted.slice(0, limit).map((profile, index): LeaderboardEntry => ({
+      rank: index + 1,
+      walletAddress: profile.walletAddress,
+      displayName: profile.username || profile.displayName,
+      totalWon: profile.totalWon,
+      gamesWon: profile.gamesWon,
+      winRate: profile.gamesPlayed > 0 ? (profile.gamesWon / profile.gamesPlayed) * 100 : 0,
+      luckScore: profile.luckScore,
+      bestStreak: profile.bestStreak,
+    }));
+  }
+
+  // Calculate luck score based on actual win rate vs expected win rate
+  // Returns a value 0-100 where 50 is average luck
+  private calculateLuckScore(gamesWon: number, gamesPlayed: number): number {
+    if (gamesPlayed < 3) {
+      // Not enough games to calculate meaningful luck score
+      return 50;
+    }
+    
+    // Assuming average expected win rate across all game modes is ~35%
+    // (mix of 50% for 1v1, 25% for 4-player, 12.5% for 8-player, 6.25% for 16-player)
+    const expectedWinRate = 0.35;
+    const actualWinRate = gamesWon / gamesPlayed;
+    
+    // Calculate luck factor: how much better/worse than expected
+    // If actualWinRate = expectedWinRate, luck = 50
+    // If actualWinRate = 100%, luck approaches 100
+    // If actualWinRate = 0%, luck approaches 0
+    const luckFactor = actualWinRate / expectedWinRate;
+    
+    // Convert to 0-100 scale with 50 as center
+    // Using a sigmoid-like transformation to cap extremes
+    let luckScore: number;
+    if (luckFactor >= 1) {
+      // Above average luck (50-100 range)
+      luckScore = 50 + (50 * Math.min(1, (luckFactor - 1) / 1.5));
+    } else {
+      // Below average luck (0-50 range)
+      luckScore = 50 * luckFactor;
+    }
+    
+    // Add some variance based on streaks - hot streaks boost luck perception
+    // This is capped to prevent extreme swings
+    return Math.round(Math.max(0, Math.min(100, luckScore)));
+  }
+
   private async startGame(gameId: string): Promise<void> {
     const game = this.games.get(gameId);
     if (!game || game.status !== "countdown") return;
@@ -478,24 +551,34 @@ export class MemStorage implements IStorage {
         // Winner WAGA rewards go to vesting, NOT direct to wagaEarned
         // This prevents market dumping by releasing 10% daily
         if (isWinner) {
+          const newGamesWon = profile.gamesWon + 1;
+          const newGamesPlayed = profile.gamesPlayed + 1;
+          const newLuckScore = this.calculateLuckScore(newGamesWon, newGamesPlayed);
+          
           await this.updateProfile(player.walletAddress, {
-            gamesPlayed: profile.gamesPlayed + 1,
-            gamesWon: profile.gamesWon + 1,
+            gamesPlayed: newGamesPlayed,
+            gamesWon: newGamesWon,
             totalWagered: profile.totalWagered + finalGame.wager,
             totalWon: profile.totalWon + payout,
             wagaVestingTotal: (profile.wagaVestingTotal || 0) + winWagaReward,
             currentStreak: profile.currentStreak + 1,
             bestStreak: Math.max(profile.bestStreak, profile.currentStreak + 1),
+            luckScore: newLuckScore,
           });
           console.log(`[VESTING] Added ${winWagaReward} WAGA to vesting for winner ${player.walletAddress.slice(0, 8)}...`);
+          console.log(`[LUCK] Updated luck score for ${player.walletAddress.slice(0, 8)}...: ${newLuckScore}`);
         } else {
+          const newGamesPlayed = profile.gamesPlayed + 1;
+          const newLuckScore = this.calculateLuckScore(profile.gamesWon, newGamesPlayed);
+          
           await this.updateProfile(player.walletAddress, {
-            gamesPlayed: profile.gamesPlayed + 1,
+            gamesPlayed: newGamesPlayed,
             gamesWon: profile.gamesWon,
             totalWagered: profile.totalWagered + finalGame.wager,
             totalWon: profile.totalWon,
             currentStreak: 0,
             bestStreak: profile.bestStreak,
+            luckScore: newLuckScore,
           });
         }
       }
