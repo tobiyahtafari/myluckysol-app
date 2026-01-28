@@ -221,10 +221,12 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 **To deploy from a local machine**:
 1. Install Rust 1.85+ and Solana CLI 1.18+
 2. Install Anchor CLI: `cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --tag v0.30.1`
-3. Clone the repo and navigate to `programs/myluckysol/`
-4. Set up keypair: `export SOLANA_AUTHORITY_PRIVATE_KEY="<your-base58-key>"`
+3. Clone the repo and navigate to the project root
+4. Configure Anchor wallet: Set `ANCHOR_WALLET` env var to keypair file path, or update `wallet` in `Anchor.toml`
 5. Build: `anchor build`
 6. Deploy: `anchor deploy --provider.cluster devnet`
+
+Note: `SOLANA_AUTHORITY_PRIVATE_KEY` is for server runtime only. Anchor uses its own wallet config for deployment.
 
 ### On-Chain Transaction Flow
 
