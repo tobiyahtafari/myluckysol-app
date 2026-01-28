@@ -204,17 +204,41 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 - **Players needed indicator**: Live game cards show how many more players are needed
 
 ### Solana Programs & Wallets (Devnet)
-- MyLuckySol Program: `Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5`
+- MyLuckySol Program: `Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5` (NOT YET DEPLOYED - see below)
 - WAGA Token Mint: `9XU2yJhhAJ1FoUZXbMchZvQMLHui2LQ2a4HC6vaer3JV`
 - WAGA Rewards Vault: `9hqGVjFXwBSteHmAhcQ6MpghKv4TVhtCd344NNTtWkjf` (authority wallet)
 - WAGA Vault ATA: `66bMApCZTRGqfxAXBML6dPAEJX1VwAsBR1DrfwsLaJr1` (holds 1B WAGA for rewards)
 - Foundation Treasury: `BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP` (receives 10% house fee)
 
+### Program Deployment Status (2026-01-28)
+**Current Status**: The MyLuckySol Anchor program is NOT deployed on devnet yet. The app runs in **fallback mode** which uses direct SOL transfers to the authority wallet instead of PDA-based escrow.
+
+**Why it can't be deployed from Replit**:
+- Recent crates.io updates (blake3 v1.8.3, constant_time_eq v0.4.2) require Rust `edition2024`
+- Replit's bundled Solana tools (v1.17.31) use Cargo 1.77 which doesn't support edition2024
+- This is a temporary environment limitation that will be resolved when Replit updates its Rust toolchain
+
+**To deploy from a local machine**:
+1. Install Rust 1.85+ and Solana CLI 1.18+
+2. Install Anchor CLI: `cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked --tag v0.30.1`
+3. Clone the repo and navigate to `programs/myluckysol/`
+4. Set up keypair: `export SOLANA_AUTHORITY_PRIVATE_KEY="<your-base58-key>"`
+5. Build: `anchor build`
+6. Deploy: `anchor deploy --provider.cluster devnet`
+
 ### On-Chain Transaction Flow
-1. Player joins game -> Signs SOL transfer to treasury wallet
+
+**Fallback Mode (current)**:
+1. Player joins game -> Signs SOL transfer to authority wallet
 2. Transaction confirms on Solana devnet
 3. Backend registers player in game after tx confirmation
-4. When game ends: 90% to winner(s), 10% stays in treasury
+4. When game ends: authority wallet pays 90% to winner, 10% to treasury
+
+**Full On-Chain Mode (after program deployment)**:
+1. Player joins game -> Signs join_game instruction (SOL to escrow PDA)
+2. Transaction confirms on Solana devnet
+3. Backend validates join_game instruction + wager amount
+4. When game ends: finalize_game pays 10% treasury, winner claims 90%
 
 ### Architecture Notes
 - Backend validates joins and tracks WAGA rewards in player profiles
