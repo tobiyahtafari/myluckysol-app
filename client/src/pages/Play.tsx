@@ -28,13 +28,14 @@ export default function Play() {
   const [showWalletModal, setShowWalletModal] = useState(false);
 
   // Parse tab from URL
-  const queryParams = new URLSearchParams(location.split("?")[1]);
+  const queryParams = new URLSearchParams(window.location.search);
   const initialTab = queryParams.get("tab") === "live" ? "live" : "join";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Sync tab with URL if it changes externally
   useEffect(() => {
-    const tab = new URLSearchParams(location.split("?")[1]).get("tab");
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
     if (tab === "live") {
       setActiveTab("live");
     } else if (tab === "join") {
