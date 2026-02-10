@@ -7,7 +7,7 @@ export function MobileNav() {
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/play", label: "Live", icon: Activity },
+    { href: "/play?tab=live", label: "Live", icon: Activity },
     { href: "/profile", label: "Profile", icon: User },
     { href: "/leaderboard", label: "Rankings", icon: Trophy },
   ];

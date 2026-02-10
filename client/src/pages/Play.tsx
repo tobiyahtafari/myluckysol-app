@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -22,10 +22,25 @@ import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana
 export default function Play() {
   const { connected, balance, address, network, adapter, publicKey, connection } = useWallet();
   const { selectedMode, selectedWager, setSelectedMode, setSelectedWager } = useGameStore();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showWalletModal, setShowWalletModal] = useState(false);
+
+  // Parse tab from URL
+  const queryParams = new URLSearchParams(location.split("?")[1]);
+  const initialTab = queryParams.get("tab") === "live" ? "live" : "join";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Sync tab with URL if it changes externally
+  useEffect(() => {
+    const tab = new URLSearchParams(location.split("?")[1]).get("tab");
+    if (tab === "live") {
+      setActiveTab("live");
+    } else if (tab === "join") {
+      setActiveTab("join");
+    }
+  }, [location]);
 
   const wagerSectionRef = useRef<HTMLElement>(null);
   const confirmSectionRef = useRef<HTMLElement>(null);
@@ -184,7 +199,7 @@ export default function Play() {
     <div className="min-h-screen py-8 px-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent" />
       <div className="container mx-auto max-w-6xl relative z-10">
-        <Tabs defaultValue="join" className="space-y-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
             <TabsTrigger value="join">Join Game</TabsTrigger>
             <TabsTrigger value="live">Live Games</TabsTrigger>
