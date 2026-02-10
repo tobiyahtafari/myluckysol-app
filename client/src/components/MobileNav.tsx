@@ -43,7 +43,7 @@ export function MobileNav() {
 
           {/* Central Join Button */}
           <div className="relative -top-6">
-            <Link href="/play">
+            <Link href="/play?tab=join">
               <div className="flex flex-col items-center gap-2 group cursor-pointer" data-testid="link-mobile-nav-join">
                 <div className="w-14 h-14 rounded-full bg-primary shadow-[0_0_20px_rgba(245,184,0,0.4)] flex items-center justify-center transition-transform duration-300 group-active:scale-90 border-4 border-background">
                   <Gamepad2 className="h-7 w-7 text-black fill-black" />
