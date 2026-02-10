@@ -36,12 +36,19 @@ export default function Play() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
-    if (tab === "live") {
+    if (tab === "live" && activeTab !== "live") {
       setActiveTab("live");
-    } else if (tab === "join") {
+    } else if (tab === "join" && activeTab !== "join") {
+      setActiveTab("join");
+    } else if (!tab && activeTab !== "join") {
       setActiveTab("join");
     }
-  }, [location]);
+  }, [location, activeTab]);
+
+  const onTabChange = (value: string) => {
+    setActiveTab(value);
+    setLocation(`/play?tab=${value}`);
+  };
 
   const wagerSectionRef = useRef<HTMLElement>(null);
   const confirmSectionRef = useRef<HTMLElement>(null);
@@ -200,7 +207,7 @@ export default function Play() {
     <div className="min-h-screen py-8 px-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent" />
       <div className="container mx-auto max-w-6xl relative z-10">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-8">
           <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
             <TabsTrigger value="join">Join Game</TabsTrigger>
             <TabsTrigger value="live">Live Games</TabsTrigger>
