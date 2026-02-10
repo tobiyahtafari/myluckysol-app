@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WalletProvider } from "@/lib/wallet-context";
 import { Header } from "@/components/Header";
+import { MobileNav } from "@/components/MobileNav";
 import Home from "@/pages/Home";
 import Play from "@/pages/Play";
 import GameRoom from "@/pages/GameRoom";
@@ -33,11 +34,12 @@ function App() {
       <PriceProvider>
         <TooltipProvider>
           <WalletProvider>
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-background pb-24 md:pb-0">
               <Header />
               <main>
                 <Router />
               </main>
+              <MobileNav />
             </div>
             <Toaster />
           </WalletProvider>
