@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { WAGER_TIERS, WAGA_ENTRY_REWARD_PERCENT, type WagerTier } from "@shared/schema";
+import { WAGER_TIERS, WAGA_ENTRY_MULTIPLIER, type WagerTier } from "@shared/schema";
 import { useWallet } from "@/lib/wallet-context";
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 
@@ -20,7 +20,7 @@ export function WagerSelector({ selectedWager, onSelect }: WagerSelectorProps) {
         {WAGER_TIERS.map((wager) => {
           const isSelected = selectedWager === wager;
           const canAfford = !connected || balance >= wager;
-          const rewardPercent = WAGA_ENTRY_REWARD_PERCENT[wager];
+          const wagaReward = Math.floor(wager * WAGA_ENTRY_MULTIPLIER);
 
           return (
             <motion.button
@@ -47,7 +47,7 @@ export function WagerSelector({ selectedWager, onSelect }: WagerSelectorProps) {
                   <SolToUsd sol={wager} className="text-sm" />
                 </div>
                 <div className="text-xs text-white font-medium">
-                  {rewardPercent}% WAGA Reward
+                  +{wagaReward} WAGA
                 </div>
               </div>
 

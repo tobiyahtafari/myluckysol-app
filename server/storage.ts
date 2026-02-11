@@ -8,13 +8,13 @@ import {
   type GameModeKey,
   type WagerTier,
   GAME_MODES,
-  WAGA_ENTRY_REWARD_PERCENT,
-  WAGA_WINNER_REWARD_PERCENT,
+  WAGA_ENTRY_MULTIPLIER,
+  WAGA_WINNER_MULTIPLIER,
   WINNER_SHARE,
   VESTING_DAILY_PERCENT,
   VESTING_PERIOD_MS,
 } from "@shared/schema";
-import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
+import { calculateWagaReward } from "./price-service";
 import { solanaClient } from "./solana-client";
 
 import type { LeaderboardEntry } from "@shared/schema";
@@ -318,20 +318,15 @@ export class MemStorage implements IStorage {
     game.players.push(player);
     game.poolAmount += game.wager;
 
-    // Calculate WAGA entry reward based on wager tier and USD value
-    const rewardPercent = WAGA_ENTRY_REWARD_PERCENT[game.wager as WagerTier] || 50;
-    const entryWagaReward = await calculateWagaReward(game.wager, rewardPercent);
+    const entryWagaReward = calculateWagaReward(game.wager, WAGA_ENTRY_MULTIPLIER);
     
     const profile = await this.getOrCreateProfile(walletAddress);
     await this.updateProfile(walletAddress, {
       wagaEarned: (profile.wagaEarned || 0) + entryWagaReward,
     });
     
-    const solPrice = await getSolPrice();
-    const wagaPrice = getWagaPrice();
-    const usdValue = game.wager * solPrice;
-    console.log(`[DEVNET] Player ${walletAddress.slice(0, 8)}... joined game ${gameId} with ${game.wager} SOL wager ($${usdValue.toFixed(2)} USD).`);
-    console.log(`[DEVNET] Entry WAGA Reward: ${entryWagaReward} WAGA (${rewardPercent}% of $${usdValue.toFixed(2)} = $${(usdValue * rewardPercent / 100).toFixed(2)} worth at $${wagaPrice}/WAGA)`);
+    console.log(`[DEVNET] Player ${walletAddress.slice(0, 8)}... joined game ${gameId} with ${game.wager} SOL wager.`);
+    console.log(`[DEVNET] Entry WAGA Reward: ${entryWagaReward} WAGA (${WAGA_ENTRY_MULTIPLIER}x match on ${game.wager} SOL)`);
 
     // Transfer WAGA entry reward on-chain immediately
     if (entryWagaReward > 0) {
@@ -508,8 +503,7 @@ export class MemStorage implements IStorage {
     const payout = finalGame.poolAmount * WINNER_SHARE; // 90% to winner
     const treasuryFee = finalGame.poolAmount * (1 - WINNER_SHARE); // 10% to treasury
     
-    // Winner gets 100% USD value match of SOL winnings in WAGA
-    const winWagaReward = await calculateWagaReward(payout, WAGA_WINNER_REWARD_PERCENT);
+    const winWagaReward = calculateWagaReward(payout, WAGA_WINNER_MULTIPLIER);
 
     finalGame.status = "completed";
     finalGame.completedAt = Date.now();
@@ -519,13 +513,9 @@ export class MemStorage implements IStorage {
 
     this.games.set(gameId, finalGame);
 
-    const solPrice = await getSolPrice();
-    const wagaPrice = getWagaPrice();
-    const payoutUsd = payout * solPrice;
-    
     console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}...`);
-    console.log(`[DEVNET] Winner Payout: ${payout.toFixed(4)} SOL ($${payoutUsd.toFixed(2)} USD)`);
-    console.log(`[DEVNET] Winner WAGA Reward: ${winWagaReward} WAGA (100% of $${payoutUsd.toFixed(2)} at $${wagaPrice}/WAGA)`);
+    console.log(`[DEVNET] Winner Payout: ${payout.toFixed(4)} SOL`);
+    console.log(`[DEVNET] Winner WAGA Reward: ${winWagaReward} WAGA (${WAGA_WINNER_MULTIPLIER}x match on ${payout.toFixed(4)} SOL)`);
     console.log(`[DEVNET] Treasury Fee: ${treasuryFee.toFixed(4)} SOL`);
 
     // Execute on-chain payout if authority key is configured

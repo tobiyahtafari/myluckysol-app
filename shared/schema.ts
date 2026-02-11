@@ -15,16 +15,9 @@ export type GameModeKey = keyof typeof GAME_MODES;
 export const FOUNDATION_FEE = 0.1;
 export const WINNER_SHARE = 0.9;
 
-// WAGA reward percentages based on wager tier (percentage of USD value)
-export const WAGA_ENTRY_REWARD_PERCENT: Record<WagerTier, number> = {
-  0.01: 100, // 100% USD value in WAGA
-  0.1: 75,   // 75% USD value in WAGA
-  1: 65,     // 65% USD value in WAGA
-  10: 50,    // 50% USD value in WAGA
-};
-
-// Winner receives 100% USD value match of their SOL winnings in WAGA
-export const WAGA_WINNER_REWARD_PERCENT = 100;
+// WAGA reward multipliers (SOL amount * multiplier = WAGA tokens)
+export const WAGA_ENTRY_MULTIPLIER = 100;   // 100x match: 0.01 SOL = 1 WAGA, 1 SOL = 100 WAGA
+export const WAGA_WINNER_MULTIPLIER = 1000; // 1000x match: 0.018 SOL won = 18 WAGA
 
 export type GameStatus = "waiting" | "countdown" | "in_progress" | "resolving" | "completed";
 

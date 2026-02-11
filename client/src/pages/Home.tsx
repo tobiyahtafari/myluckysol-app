@@ -35,7 +35,7 @@ export default function Home() {
     {
       icon: Coins,
       title: "Earn WAGA",
-      description: "Get WAGA tokens on every entry and massive bonuses when you win",
+      description: "100x WAGA match on entry, 1000x WAGA match for winners",
       color: "from-emerald-400 to-green-600",
     },
   ];
@@ -312,7 +312,7 @@ export default function Home() {
             {[
               { step: "1", title: "Connect Wallet", desc: "Connect your Solana wallet (Phantom, OKX, Solflare, etc.)" },
               { step: "2", title: "Choose & Wager", desc: "Select a game mode and wager amount (0.01 - 10 SOL)" },
-              { step: "3", title: "Win & Earn", desc: "Winners get 90% of the pool + WAGA token rewards" },
+              { step: "3", title: "Win & Earn", desc: "Winners get 90% of the pool + 1000x WAGA match reward" },
             ].map((item, i) => (
               <motion.div
                 key={item.step}

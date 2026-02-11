@@ -8,7 +8,7 @@ import { GameModeCard } from "@/components/GameModeCard";
 import { WagerSelector } from "@/components/WagerSelector";
 import { useWallet } from "@/lib/wallet-context";
 import { useGameStore } from "@/lib/game-store";
-import { GAME_MODES, WAGA_ENTRY_REWARD_PERCENT, type GameModeKey, type WagerTier, type Game } from "@shared/schema";
+import { GAME_MODES, WAGA_ENTRY_MULTIPLIER, WAGA_WINNER_MULTIPLIER, type GameModeKey, type WagerTier, type Game } from "@shared/schema";
 import { Wallet, ArrowRight, Loader2, Info, Users, Play as PlayIcon } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -99,7 +99,7 @@ export default function Play() {
       
       toast({
         title: "Joined game successfully",
-        description: `You earned ${data.wagaReward} WAGA tokens! ${data.playersNeeded > 0 ? "Waiting for players..." : "Game starting!"}`,
+        description: `+${data.wagaReward} WAGA entry reward (${WAGA_ENTRY_MULTIPLIER}x match)! ${data.playersNeeded > 0 ? "Waiting for players..." : "Game starting!"}`,
       });
       
       setLocation(`/game/${data.gameId}`);
@@ -276,9 +276,9 @@ export default function Play() {
                             <SolToUsd sol={selectedWager * (selectedConfig?.players || 2) * 0.9} className="text-sm" />
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50">
-                            <p className="text-xs text-muted-foreground">Winner Receives</p>
-                            <p className="text-lg font-bold text-white leading-tight">100% WAGA Match</p>
-                            <p className="text-xs text-muted-foreground">of SOL USD Value</p>
+                            <p className="text-xs text-muted-foreground">Winner WAGA Bonus</p>
+                            <p className="text-lg font-bold text-white leading-tight">{WAGA_WINNER_MULTIPLIER}x Match</p>
+                            <p className="text-xs text-muted-foreground">{Math.floor(selectedWager * (selectedConfig?.players || 2) * 0.9 * WAGA_WINNER_MULTIPLIER).toLocaleString()} WAGA</p>
                           </div>
                         </div>
                       </div>

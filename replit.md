@@ -28,8 +28,8 @@ MyLuckySol is a casino-grade, provably fair chance-based game DApp on Solana. Pl
 - 10% goes to foundation treasury
 
 ## WAGA Token Rewards
-- Entry Reward: 10 × SOL wager (on entry)
-- Win Bonus: 100 × SOL won (final winner only)
+- Entry Reward: 100x SOL wager match (on entry). e.g. 0.01 SOL = 1 WAGA, 1 SOL = 100 WAGA
+- Win Bonus: 1000x SOL won match (final winner only). e.g. 0.018 SOL won = 18 WAGA, 144 SOL won = 144,000 WAGA
 
 ## Project Structure
 ```
@@ -152,12 +152,8 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 ## Recent Changes (2026-01-25)
 
 ### WAGA Reward System Overhaul
-- **Tier-based WAGA entry rewards**: Rewards now scale based on wager tier:
-  - 0.01 SOL: 100% of USD value in WAGA
-  - 0.1 SOL: 75% of USD value in WAGA
-  - 1 SOL: 65% of USD value in WAGA
-  - 10 SOL: 50% of USD value in WAGA
-- **Winner WAGA rewards**: Winner receives 100% USD value match of their SOL winnings in WAGA
+- **Flat WAGA entry rewards**: 100x multiplier on SOL wager amount (e.g. 0.01 SOL = 1 WAGA, 1 SOL = 100 WAGA)
+- **Winner WAGA rewards**: 1000x multiplier on SOL winnings (e.g. 0.018 SOL won = 18 WAGA)
 - **Price feed integration**: Real-time SOL/USD prices via CoinGecko API
 - **Mock WAGA price**: Using $0.001/WAGA for testing (will integrate Raydium DEX price once live)
 
@@ -186,8 +182,8 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 - Entry rewards (from joining games) are still immediate
 
 ### WAGA Reward Flow
-1. **Entry Reward**: Player joins game -> WAGA minted immediately to their profile based on tier (100%/75%/65%/50% of USD value)
-2. **Winner Reward**: Game completes -> Winner's 100% USD match of SOL winnings goes to vesting pool
+1. **Entry Reward**: Player joins game -> WAGA minted immediately to their profile (100x SOL wager match)
+2. **Winner Reward**: Game completes -> Winner's 1000x SOL match in WAGA goes to vesting pool
 3. **Daily Claim**: Winner can claim 10% of vesting per 24 hours on Profile page
 
 ### Key API Endpoints
@@ -250,11 +246,11 @@ Note: `SOLANA_AUTHORITY_PRIVATE_KEY` is for server runtime only. Anchor uses its
 
 ### Key Files
 - `server/routes.ts`: API endpoints, wallet validation, WAGA reward calculations
-- `server/storage.ts`: Game state management, tier-based WAGA reward distribution
+- `server/storage.ts`: Game state management, WAGA reward distribution (100x entry, 1000x winner)
 - `server/price-service.ts`: SOL/USD price feed, WAGA value calculations
-- `shared/schema.ts`: WAGA_ENTRY_REWARD_PERCENT, WAGA_WINNER_REWARD_PERCENT constants
+- `shared/schema.ts`: WAGA_ENTRY_MULTIPLIER, WAGA_WINNER_MULTIPLIER constants
 - `client/src/pages/Play.tsx`: On-chain SOL transfers with wallet signing
-- `client/src/components/WagerSelector.tsx`: Displays tier-based reward percentages
+- `client/src/components/WagerSelector.tsx`: Displays WAGA entry rewards per wager tier
 - `client/src/lib/wallet-context.tsx`: Syncs WAGA balance from profile
 - `client/src/lib/polyfills.ts`: Buffer polyfill for browser Solana compatibility
 - `shared/constants.ts`: Treasury wallet address and payout split constants

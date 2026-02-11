@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_REWARD_PERCENT, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, type WagerTier, type GameModeKey } from "@shared/schema";
-import { calculateWagaReward, getSolPrice, getWagaPrice } from "./price-service";
+import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, type WagerTier, type GameModeKey } from "@shared/schema";
+import { calculateWagaReward } from "./price-service";
 import { solanaClient } from "./solana-client";
 import { z } from "zod";
 
@@ -250,22 +250,15 @@ export async function registerRoutes(
         await storage.updateGameStatus(updatedGame.id, "countdown");
       }
 
-      // Calculate WAGA reward based on wager tier
-      const rewardPercent = WAGA_ENTRY_REWARD_PERCENT[wager as WagerTier] || 50;
-      const wagaReward = await calculateWagaReward(wager, rewardPercent);
-      const solPrice = await getSolPrice();
-      const wagaPrice = getWagaPrice();
-      const usdValue = wager * solPrice;
+      const wagaReward = calculateWagaReward(wager, WAGA_ENTRY_MULTIPLIER);
 
       res.json({ 
         gameId: updatedGame.id, 
         game: { ...updatedGame, serverTime: Date.now() },
         playersNeeded: config.players - updatedGame.players.length,
         wagaReward,
-        wagaRewardPercent: rewardPercent,
-        solUsdValue: usdValue,
-        wagaPrice,
-        escrowPDA: updatedGame.escrowPDA, // From game state
+        wagaMultiplier: WAGA_ENTRY_MULTIPLIER,
+        escrowPDA: updatedGame.escrowPDA,
         onChainGameId: updatedGame.onChainGameId,
         txVerified,
         network: "devnet",

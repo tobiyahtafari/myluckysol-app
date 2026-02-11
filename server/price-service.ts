@@ -31,7 +31,7 @@ export async function getSolPrice(): Promise<number> {
     if (data?.solana?.usd && typeof data.solana.usd === 'number' && data.solana.usd > 0) {
       cachedSolPrice = data.solana.usd;
       lastFetchTime = now;
-      return cachedSolPrice;
+      return cachedSolPrice!;
     }
     
     console.error("Invalid SOL price data:", data);
@@ -48,32 +48,12 @@ export function getWagaPrice(): number {
   return MOCK_WAGA_PRICE_USD;
 }
 
-export async function calculateWagaReward(
+export function calculateWagaReward(
   solAmount: number,
-  rewardPercent: number
-): Promise<number> {
-  // Validate inputs
-  if (!solAmount || solAmount <= 0 || !rewardPercent || rewardPercent <= 0) {
+  multiplier: number
+): number {
+  if (!solAmount || solAmount <= 0 || !multiplier || multiplier <= 0) {
     return 0;
   }
-  
-  const solPrice = await getSolPrice();
-  const wagaPrice = getWagaPrice();
-  
-  // Ensure prices are valid
-  if (!solPrice || solPrice <= 0 || !wagaPrice || wagaPrice <= 0) {
-    console.error("Invalid price data for WAGA calculation");
-    return 0;
-  }
-  
-  // Calculate USD value of SOL
-  const solUsdValue = solAmount * solPrice;
-  
-  // Apply reward percentage
-  const rewardUsdValue = solUsdValue * (rewardPercent / 100);
-  
-  // Convert to WAGA tokens
-  const wagaAmount = rewardUsdValue / wagaPrice;
-  
-  return Math.floor(wagaAmount); // Round down to whole tokens
+  return Math.floor(solAmount * multiplier);
 }
