@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, type WagerTier, type GameModeKey } from "@shared/schema";
-import { calculateWagaReward } from "./price-service";
+import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT, type WagerTier, type GameModeKey } from "@shared/schema";
+import { calculateWagaReward, getUsernameUpdateCostSol } from "./price-service";
 import { solanaClient } from "./solana-client";
 import { z } from "zod";
 
@@ -369,18 +369,35 @@ export async function registerRoutes(
     }
   });
 
-  // Update profile (including username and referral)
+  app.get("/api/profile/:walletAddress/username-cost", async (req, res) => {
+    try {
+      const profile = await storage.getOrCreateProfile(req.params.walletAddress);
+      const updateCount = profile.usernameUpdateCount || 0;
+      const cost = await getUsernameUpdateCostSol(updateCount);
+      const authorityAddress = solanaClient.getAuthorityAddress();
+      res.json({
+        ...cost,
+        updateCount,
+        currentUsername: profile.username || null,
+        paymentAddress: authorityAddress || null,
+      });
+    } catch (error) {
+      console.error("Error getting username cost:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.patch("/api/profile/:walletAddress", async (req, res) => {
     try {
-      const { username, avatarUrl, referredBy } = req.body;
-      const profile = await storage.getProfile(req.params.walletAddress);
+      const { username, avatarUrl, referredBy, txSignature } = req.body;
+      const walletAddress = req.params.walletAddress;
+      const profile = await storage.getProfile(walletAddress);
       
       if (!profile) {
         return res.status(404).json({ error: "Profile not found" });
       }
 
       if (username) {
-        // Rule: username once per 72 hours
         const lastUpdate = profile.usernameUpdatedAt || 0;
         const now = Date.now();
         const seventyTwoHours = 72 * 60 * 60 * 1000;
@@ -393,11 +410,78 @@ export async function registerRoutes(
         if (!isUnique && username !== profile.username) {
           return res.status(400).json({ error: "Username already taken" });
         }
+
+        if (!txSignature) {
+          return res.status(400).json({ error: "SOL payment transaction required for username update" });
+        }
+
+        const updateCount = profile.usernameUpdateCount || 0;
+        const { costSol } = await getUsernameUpdateCostSol(updateCount);
+
+        const verification = await solanaClient.verifyTransaction(txSignature);
+        if (!verification.confirmed) {
+          return res.status(400).json({ error: "Payment transaction not confirmed" });
+        }
+
+        const authorityAddress = solanaClient.getAuthorityAddress();
+        if (!authorityAddress) {
+          return res.status(500).json({ error: "Payment recipient not configured" });
+        }
+
+        const transferValid = await solanaClient.validateTransfer(
+          txSignature,
+          walletAddress,
+          authorityAddress,
+          costSol
+        );
+        if (!transferValid.valid) {
+          console.warn(`[USERNAME] Transfer validation failed: ${transferValid.error}`);
+          return res.status(400).json({ error: `Payment validation failed: ${transferValid.error}` });
+        }
+
         req.body.usernameUpdatedAt = now;
+        req.body.usernameUpdateCount = updateCount + 1;
+
+        const updated = await storage.updateProfile(walletAddress, {
+          username,
+          usernameUpdatedAt: now,
+          usernameUpdateCount: updateCount + 1,
+        });
+
+        if (updated) {
+          const isFirstUsernameSet = updateCount === 0;
+          const referralResult = isFirstUsernameSet 
+            ? await storage.grantPendingReferralRewards(walletAddress) 
+            : null;
+          if (referralResult?.granted) {
+            console.log(`[REFERRAL] Username set triggered referral rewards for ${walletAddress.slice(0, 8)}...`);
+            const freshProfile = await storage.getProfile(walletAddress);
+            return res.json({
+              profile: freshProfile,
+              referralGranted: true,
+              referralReward: REFERRAL_REWARD_AMOUNT,
+            });
+          }
+          return res.json({ profile: updated, referralGranted: false });
+        }
+        return res.status(500).json({ error: "Failed to update profile" });
       }
 
-      const updated = await storage.updateProfile(req.params.walletAddress, req.body);
-      res.json(updated);
+      if (referredBy && !profile.referredBy) {
+        if (profile.username) {
+          return res.status(400).json({ error: "Referral code can only be applied before setting a username" });
+        }
+        const updated = await storage.updateProfile(walletAddress, { referredBy });
+        return res.json({ profile: updated });
+      }
+
+      if (avatarUrl) {
+        const updated = await storage.updateProfile(walletAddress, { avatarUrl });
+        return res.json({ profile: updated });
+      }
+
+      const updated = await storage.updateProfile(walletAddress, req.body);
+      res.json({ profile: updated });
     } catch (error) {
       console.error("Error updating profile:", error);
       res.status(500).json({ error: "Internal server error" });

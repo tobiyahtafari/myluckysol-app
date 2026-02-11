@@ -48,6 +48,14 @@ export function getWagaPrice(): number {
   return MOCK_WAGA_PRICE_USD;
 }
 
+export async function getUsernameUpdateCostSol(updateCount: number): Promise<{ costSol: number; costUsd: number; isFirstUpdate: boolean }> {
+  const isFirstUpdate = updateCount === 0;
+  const costUsd = isFirstUpdate ? 1.0 : 0.5;
+  const solPrice = await getSolPrice();
+  const costSol = parseFloat((costUsd / solPrice).toFixed(6));
+  return { costSol, costUsd, isFirstUpdate };
+}
+
 export function calculateWagaReward(
   solAmount: number,
   multiplier: number

@@ -186,7 +186,18 @@ See `SOLANA_PROGRAMS.md` for detailed documentation. Deployment is handled via `
 2. **Winner Reward**: Game completes -> Winner's 1000x SOL match in WAGA goes to vesting pool
 3. **Daily Claim**: Winner can claim 10% of vesting per 24 hours on Profile page
 
+### Anti-Abuse Referral Program (2026-02-11)
+- **Username gating**: Referral Program is locked until user sets a username
+- **Username update cost**: $1 worth of SOL (spot price) for first update, $0.50 for subsequent updates
+- **Payment verification**: Backend verifies SOL transfer to authority wallet before allowing username change
+- **Deferred referral rewards**: Both referrer and referred user receive 100 WAGA ONLY after the referred user sets their username
+- **Referral flow**:
+  1. User A sets username (pays $1 SOL) -> referral program unlocked -> gets referral link
+  2. User B enters referral code -> registered as pending
+  3. User B sets username (pays $1 SOL) -> both User A and User B receive 100 WAGA
+
 ### Key API Endpoints
+- `GET /api/profile/:walletAddress/username-cost` - Get SOL cost for username update
 - `GET /api/profile/:walletAddress/vesting` - Get vesting status
 - `POST /api/profile/:walletAddress/claim-vesting` - Claim available vested WAGA
 

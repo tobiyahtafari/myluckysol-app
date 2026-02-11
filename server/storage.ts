@@ -13,6 +13,7 @@ import {
   WINNER_SHARE,
   VESTING_DAILY_PERCENT,
   VESTING_PERIOD_MS,
+  REFERRAL_REWARD_AMOUNT,
 } from "@shared/schema";
 import { calculateWagaReward } from "./price-service";
 import { solanaClient } from "./solana-client";
@@ -27,6 +28,7 @@ export interface IStorage {
   updateProfile(walletAddress: string, updates: Partial<PlayerProfile>): Promise<PlayerProfile | undefined>;
   getOrCreateProfile(walletAddress: string): Promise<PlayerProfile>;
   checkUsernameUnique(username: string): Promise<boolean>;
+  grantPendingReferralRewards(walletAddress: string): Promise<{ granted: boolean; referrerWallet?: string } | null>;
   claimVestedWaga(walletAddress: string): Promise<{ claimedAmount: number; remainingVesting: number; nextClaimTime: number } | null>;
   getChatMessages(gameId: string): Promise<ChatMessage[]>;
   addChatMessage(data: ChatMessage): Promise<ChatMessage>;
@@ -74,6 +76,8 @@ export class MemStorage implements IStorage {
     const profile: PlayerProfile = {
       walletAddress: data.walletAddress,
       displayName: data.displayName || "",
+      usernameUpdateCount: 0,
+      referralRewarded: false,
       referralCount: 0,
       gamesPlayed: 0,
       gamesWon: 0,
@@ -95,14 +99,13 @@ export class MemStorage implements IStorage {
     const profile = this.profiles.get(walletAddress);
     if (!profile) return undefined;
     
-    if (updates.referredBy && !profile.referredBy && updates.referredBy !== walletAddress) {
+    if (updates.referredBy && !profile.referredBy && !profile.pendingReferralBy && updates.referredBy !== walletAddress) {
       const referrer = await this.getProfileByUsernameOrWallet(updates.referredBy);
       if (referrer && referrer.walletAddress !== walletAddress) {
-        referrer.wagaEarned += 100;
-        referrer.referralCount = (referrer.referralCount || 0) + 1;
-        this.profiles.set(referrer.walletAddress, referrer);
-        updates.wagaEarned = (profile.wagaEarned || 0) + 100;
+        updates.pendingReferralBy = referrer.walletAddress;
         updates.referredBy = referrer.walletAddress;
+        updates.referralRewarded = false;
+        console.log(`[REFERRAL] Pending referral set: ${walletAddress.slice(0, 8)}... referred by ${referrer.walletAddress.slice(0, 8)}...`);
       } else if (!referrer) {
         delete updates.referredBy;
       }
@@ -111,6 +114,32 @@ export class MemStorage implements IStorage {
     const updated = { ...profile, ...updates };
     this.profiles.set(walletAddress, updated);
     return updated;
+  }
+
+  async grantPendingReferralRewards(walletAddress: string): Promise<{ granted: boolean; referrerWallet?: string } | null> {
+    const profile = this.profiles.get(walletAddress);
+    if (!profile) return null;
+
+    if (!profile.pendingReferralBy || profile.referralRewarded) {
+      return { granted: false };
+    }
+
+    const referrer = this.profiles.get(profile.pendingReferralBy);
+    if (!referrer) {
+      return { granted: false };
+    }
+
+    referrer.wagaEarned = (referrer.wagaEarned || 0) + REFERRAL_REWARD_AMOUNT;
+    referrer.referralCount = (referrer.referralCount || 0) + 1;
+    this.profiles.set(referrer.walletAddress, referrer);
+
+    profile.wagaEarned = (profile.wagaEarned || 0) + REFERRAL_REWARD_AMOUNT;
+    profile.referralRewarded = true;
+    this.profiles.set(walletAddress, profile);
+
+    console.log(`[REFERRAL] Rewards granted! ${walletAddress.slice(0, 8)}... and ${referrer.walletAddress.slice(0, 8)}... each received ${REFERRAL_REWARD_AMOUNT} WAGA`);
+
+    return { granted: true, referrerWallet: referrer.walletAddress };
   }
 
   async getOrCreateProfile(walletAddress: string): Promise<PlayerProfile> {

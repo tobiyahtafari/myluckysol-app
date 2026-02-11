@@ -6,8 +6,8 @@ import { LuckBar } from "@/components/LuckBar";
 import { useWallet } from "@/lib/wallet-context";
 import { Link } from "wouter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
-import { VESTING_DAILY_PERCENT } from "@shared/schema";
-import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Camera, Copy, Check, Lock, Unlock } from "lucide-react";
+import { VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT } from "@shared/schema";
+import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Camera, Copy, Check, Lock, Unlock, AlertTriangle } from "lucide-react";
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,25 +16,52 @@ import { usernameSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { signAndSendTransaction } from "@/lib/solana/wallet-adapter";
+import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 export default function Profile() {
-  const { connected, connect, address, shortAddress, balance, wagaBalance } = useWallet();
+  const { connected, connect, address, shortAddress, balance, wagaBalance, adapter, connection, publicKey } = useWallet();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [newUsername, setNewUsername] = useState("");
   const [referrerAddress, setReferrerAddress] = useState("");
   const [copied, setCopy] = useState(false);
+  const [isPayingForUsername, setIsPayingForUsername] = useState(false);
 
   const { data: profile } = useQuery<PlayerProfile>({
-    queryKey: [`/api/profile/${address}`],
+    queryKey: ['/api/profile', address],
+    queryFn: async () => {
+      const res = await fetch(`/api/profile/${address}`);
+      return res.json();
+    },
     enabled: connected && !!address,
   });
 
+  const { data: usernameCost, refetch: refetchCost } = useQuery<{
+    costSol: number;
+    costUsd: number;
+    isFirstUpdate: boolean;
+    updateCount: number;
+    currentUsername: string | null;
+    paymentAddress: string | null;
+  }>({
+    queryKey: ['/api/profile', address, 'username-cost'],
+    queryFn: async () => {
+      const res = await fetch(`/api/profile/${address}/username-cost`);
+      return res.json();
+    },
+    enabled: connected && !!address,
+  });
+
+  const hasUsername = !!profile?.username;
+  const referralUnlocked = hasUsername;
+
   const referralLink = profile?.username 
     ? `${window.location.origin}/play?ref=${encodeURIComponent(profile.username)}`
-    : `${window.location.origin}/play?ref=${address}`;
+    : "";
 
   const copyReferral = () => {
+    if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
     setCopy(true);
     setTimeout(() => setCopy(false), 2000);
@@ -42,7 +69,11 @@ export default function Profile() {
   };
 
   const { data: history } = useQuery<GameHistory[]>({
-    queryKey: [`/api/profile/${address}/history`],
+    queryKey: ['/api/profile', address, 'history'],
+    queryFn: async () => {
+      const res = await fetch(`/api/profile/${address}/history`);
+      return res.json();
+    },
     enabled: connected && !!address,
   });
 
@@ -54,7 +85,11 @@ export default function Profile() {
     canClaim: boolean;
     dailyAmount: number;
   }>({
-    queryKey: [`/api/profile/${address}/vesting`],
+    queryKey: ['/api/profile', address, 'vesting'],
+    queryFn: async () => {
+      const res = await fetch(`/api/profile/${address}/vesting`);
+      return res.json();
+    },
     enabled: connected && !!address,
   });
 
@@ -64,7 +99,7 @@ export default function Profile() {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/profile/${address}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/profile', address] });
       refetchVesting();
       toast({ 
         title: "WAGA Claimed", 
@@ -80,61 +115,107 @@ export default function Profile() {
     },
   });
 
-  const updateUsernameMutation = useMutation({
-    mutationFn: async (username: string) => {
-      await apiRequest("PATCH", `/api/profile/${address}`, { username });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/profile/${address}`] });
-      setNewUsername("");
-      toast({ title: "Username updated" });
-    },
-    onError: (err: any) => {
-      toast({
-        title: "Update failed",
-        description: err.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateAvatarMutation = useMutation({
-    mutationFn: async (avatarUrl: string) => {
-      await apiRequest("PATCH", `/api/profile/${address}`, { avatarUrl });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/profile/${address}`] });
-      toast({ title: "Avatar updated" });
-    },
-  });
-
-  const referralMutation = useMutation({
-    mutationFn: async (referrer: string) => {
-      await apiRequest("PATCH", `/api/profile/${address}`, { referredBy: referrer });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/profile/${address}`] });
-      setReferrerAddress("");
-      toast({ title: "Referral code applied! You earned 100 WAGA" });
-    },
-    onError: (err: any) => {
-      toast({ title: "Referral failed", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const handleUpdateUsername = (e: React.FormEvent) => {
+  const handleUpdateUsername = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     try {
       usernameSchema.parse(newUsername);
-      updateUsernameMutation.mutate(newUsername);
     } catch (err: any) {
       toast({
         title: "Invalid username",
         description: err.errors?.[0]?.message || "Between 3-20 chars, letters, numbers, ._- only",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (!adapter || !publicKey || !connection || !usernameCost) {
+      toast({ title: "Wallet not connected", variant: "destructive" });
+      return;
+    }
+
+    if (!usernameCost.paymentAddress) {
+      toast({ title: "Payment address not available", variant: "destructive" });
+      return;
+    }
+
+    setIsPayingForUsername(true);
+    try {
+      const costLamports = Math.ceil(usernameCost.costSol * LAMPORTS_PER_SOL);
+
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(usernameCost.paymentAddress),
+          lamports: costLamports,
+        })
+      );
+
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+
+      const signature = await signAndSendTransaction(adapter, connection, transaction);
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const res = await apiRequest("PATCH", `/api/profile/${address}`, {
+        username: newUsername,
+        txSignature: signature,
+      });
+      const data = await res.json();
+
+      queryClient.invalidateQueries({ queryKey: ['/api/profile', address] });
+      refetchCost();
+      setNewUsername("");
+
+      if (data.referralGranted) {
+        toast({ 
+          title: "Username Updated + Referral Bonus",
+          description: `Username set! You and your referrer each earned ${REFERRAL_REWARD_AMOUNT} WAGA!`,
+        });
+      } else {
+        toast({ title: "Username updated successfully" });
+      }
+    } catch (err: any) {
+      const msg = err.message || "Transaction failed";
+      toast({
+        title: "Username update failed",
+        description: msg.includes("User rejected") ? "Transaction was cancelled" : msg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsPayingForUsername(false);
     }
   };
+
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (avatarUrl: string) => {
+      await apiRequest("PATCH", `/api/profile/${address}`, { avatarUrl });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/profile', address] });
+      toast({ title: "Avatar updated" });
+    },
+  });
+
+  const referralMutation = useMutation({
+    mutationFn: async (referrer: string) => {
+      const res = await apiRequest("PATCH", `/api/profile/${address}`, { referredBy: referrer });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/profile', address] });
+      setReferrerAddress("");
+      toast({ 
+        title: "Referral code applied",
+        description: `Referral registered. Both you and your referrer will receive ${REFERRAL_REWARD_AMOUNT} WAGA once you set your username.`,
+      });
+    },
+    onError: (err: any) => {
+      toast({ title: "Referral failed", description: err.message, variant: "destructive" });
+    },
+  });
 
   if (!connected) {
     return (
@@ -209,18 +290,31 @@ export default function Profile() {
                 </label>
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-2xl font-bold mb-1">{profile?.username || shortAddress}</h1>
+                <h1 className="text-2xl font-bold mb-1" data-testid="text-username">{profile?.username || shortAddress}</h1>
                 <p className="text-muted-foreground text-sm break-all">{address}</p>
-                <form onSubmit={handleUpdateUsername} className="mt-4 flex gap-2 max-w-sm mx-auto md:mx-0">
-                  <Input
-                    placeholder="New username"
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
-                    className="h-9"
-                  />
-                  <Button size="sm" type="submit" disabled={updateUsernameMutation.isPending}>
-                    {updateUsernameMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update"}
-                  </Button>
+                <form onSubmit={handleUpdateUsername} className="mt-4 space-y-2 max-w-sm mx-auto md:mx-0">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={hasUsername ? "Change username" : "Set username to unlock referrals"}
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      data-testid="input-username"
+                    />
+                    <Button 
+                      type="submit" 
+                      disabled={isPayingForUsername || !newUsername}
+                      data-testid="button-update-username"
+                    >
+                      {isPayingForUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update"}
+                    </Button>
+                  </div>
+                  {usernameCost && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1" data-testid="text-username-cost">
+                      <Coins className="w-3 h-3" />
+                      Cost: {usernameCost.costSol.toFixed(4)} SOL (~${usernameCost.costUsd.toFixed(2)})
+                      {usernameCost.isFirstUpdate ? " (first time)" : " (update)"}
+                    </p>
+                  )}
                 </form>
                 {profile?.usernameUpdatedAt && (
                   <p className="text-[10px] text-muted-foreground mt-1">
@@ -242,44 +336,84 @@ export default function Profile() {
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className={`p-6 relative ${!referralUnlocked ? 'border-muted' : ''}`}>
+            {!referralUnlocked && (
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-lg z-10 flex flex-col items-center justify-center gap-3 p-6" data-testid="referral-locked-overlay">
+                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+                  <Lock className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-center">Referral Program Locked</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  Set your username above to unlock the Referral Program. Earn {REFERRAL_REWARD_AMOUNT} WAGA for each friend you refer!
+                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span>Username update requires a small SOL payment</span>
+                </div>
+              </div>
+            )}
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <LinkIcon className="w-5 h-5 text-accent" />
               Referral Program
+              {referralUnlocked && (
+                <span className="text-xs text-accent font-normal ml-2">Unlocked</span>
+              )}
             </h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Share your link to earn 100 WAGA for every friend who joins.</p>
+                <p className="text-sm text-muted-foreground">
+                  Share your link to earn {REFERRAL_REWARD_AMOUNT} WAGA for every friend who joins and sets their username.
+                </p>
                 <div className="flex gap-2">
-                  <Input readOnly value={referralLink} className="h-9 text-xs" />
-                  <Button size="sm" onClick={copyReferral} variant="outline" className="h-9">
+                  <Input readOnly value={referralLink || "Set username to generate link"} className="text-xs" data-testid="input-referral-link" />
+                  <Button size="icon" onClick={copyReferral} variant="outline" disabled={!referralLink} data-testid="button-copy-referral">
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
-                <p className="text-xs text-accent">Total Referrals: {profile?.referralCount || 0}</p>
+                <p className="text-xs text-accent" data-testid="text-referral-count">Total Referrals: {profile?.referralCount || 0}</p>
               </div>
               
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Were you referred? Enter their wallet address to receive 100 WAGA.</p>
-                <form 
-                  onSubmit={(e) => { e.preventDefault(); referralMutation.mutate(referrerAddress); }} 
-                  className="flex gap-2"
-                >
-                  <Input 
-                    placeholder="Referrer's Wallet" 
-                    value={referrerAddress}
-                    onChange={(e) => setReferrerAddress(e.target.value)}
-                    className="h-9 text-xs"
-                    disabled={!!profile?.referredBy}
-                  />
-                  <Button 
-                    size="sm" 
-                    type="submit" 
-                    disabled={referralMutation.isPending || !!profile?.referredBy || !referrerAddress}
-                  >
-                    {profile?.referredBy ? "Applied" : "Claim"}
-                  </Button>
-                </form>
+                {!profile?.referredBy && !hasUsername ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Were you referred? Enter their username or wallet address. Both of you will receive {REFERRAL_REWARD_AMOUNT} WAGA once you both set your usernames.
+                    </p>
+                    <form 
+                      onSubmit={(e) => { e.preventDefault(); referralMutation.mutate(referrerAddress); }} 
+                      className="flex gap-2"
+                    >
+                      <Input 
+                        placeholder="Referrer's username or wallet" 
+                        value={referrerAddress}
+                        onChange={(e) => setReferrerAddress(e.target.value)}
+                        className="text-xs"
+                        data-testid="input-referrer"
+                      />
+                      <Button 
+                        type="submit" 
+                        disabled={referralMutation.isPending || !referrerAddress}
+                        data-testid="button-apply-referral"
+                      >
+                        Claim
+                      </Button>
+                    </form>
+                  </>
+                ) : profile?.referredBy && !profile?.referralRewarded ? (
+                  <p className="text-xs text-amber-400 flex items-center gap-1" data-testid="text-referral-pending">
+                    <Clock className="w-3 h-3" />
+                    Referral reward pending - set your username to claim {REFERRAL_REWARD_AMOUNT} WAGA
+                  </p>
+                ) : profile?.referralRewarded ? (
+                  <p className="text-xs text-accent flex items-center gap-1" data-testid="text-referral-claimed">
+                    <Check className="w-3 h-3" />
+                    Referral reward claimed: +{REFERRAL_REWARD_AMOUNT} WAGA
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No referral code applied. Referral codes can only be entered before your first username update.
+                  </p>
+                )}
               </div>
             </div>
           </Card>

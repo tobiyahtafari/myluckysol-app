@@ -82,7 +82,10 @@ export const playerProfileSchema = z.object({
   username: z.string().optional(),
   avatarUrl: z.string().optional(),
   usernameUpdatedAt: z.number().optional(),
+  usernameUpdateCount: z.number().default(0),
   referredBy: z.string().optional(),
+  pendingReferralBy: z.string().optional(),
+  referralRewarded: z.boolean().default(false),
   referralCount: z.number().default(0),
   gamesPlayed: z.number().default(0),
   gamesWon: z.number().default(0),
@@ -101,6 +104,10 @@ export const playerProfileSchema = z.object({
 
 export const VESTING_DAILY_PERCENT = 2;
 export const VESTING_PERIOD_MS = 24 * 60 * 60 * 1000;
+
+export const REFERRAL_REWARD_AMOUNT = 100;
+export const USERNAME_COST_USD_FIRST = 1.0;
+export const USERNAME_COST_USD_SUBSEQUENT = 0.5;
 
 export type PlayerProfile = z.infer<typeof playerProfileSchema>;
 
