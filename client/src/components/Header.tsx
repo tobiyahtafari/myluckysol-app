@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet-context";
-import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2, Coins, Repeat, Menu, X } from "lucide-react";
+import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2, Coins, Repeat, Menu, X, ShieldText } from "lucide-react";
 import headerLogo from "@assets/myluckysol-header-logo_1768586127704.png";
 import { WalletModal } from "./WalletModal";
 import { useSolPrice } from "@/lib/price-context";
@@ -213,6 +213,12 @@ export function Header() {
                       <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
                         <User className="h-4 w-4" />
                         Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/terms" className="flex items-center gap-2 cursor-pointer">
+                        <ShieldText className="h-4 w-4" />
+                        Terms & Privacy
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

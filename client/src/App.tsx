@@ -11,6 +11,8 @@ import Play from "@/pages/Play";
 import GameRoom from "@/pages/GameRoom";
 import Profile from "@/pages/Profile";
 import Leaderboard from "@/pages/Leaderboard";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +23,8 @@ function Router() {
       <Route path="/game/:id" component={GameRoom} />
       <Route path="/profile" component={Profile} />
       <Route path="/leaderboard" component={Leaderboard} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
       <Route component={NotFound} />
     </Switch>
   );
