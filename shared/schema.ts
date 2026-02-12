@@ -54,6 +54,9 @@ export const gameSchema = z.object({
   rounds: z.array(roundSchema),
   currentRound: z.number(),
   poolAmount: z.number(),
+  serverSeed: z.string().optional(),
+  serverSeedHash: z.string().optional(),
+  clientSeed: z.string().optional(),
   winnerId: z.string().optional(),
   winnerPayout: z.number().optional(),
   winnerPayoutTxSig: z.string().optional(), // Transaction signature for winner payout

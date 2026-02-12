@@ -9,7 +9,7 @@ import { PlayerSlot } from "@/components/PlayerSlot";
 import { WinnerReveal } from "@/components/WinnerReveal";
 import { useWallet } from "@/lib/wallet-context";
 import { GAME_MODES, type Game } from "@shared/schema";
-import { ArrowLeft, Users, Loader2, Clock, Trophy, Coins } from "lucide-react";
+import { ArrowLeft, Users, Loader2, Clock, Trophy, Coins, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
@@ -282,6 +282,39 @@ export default function GameRoom() {
                 </div>
               </Card>
             )}
+
+            {/* Provably Fair Info */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-semibold">Provably Fair Verification</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div className="space-y-2">
+                  <div className="text-muted-foreground">Server Seed Hash (Pre-game)</div>
+                  <div className="font-mono bg-black/40 p-3 rounded border border-white/5 break-all text-xs" title={game.serverSeedHash}>
+                    {game.serverSeedHash || "Generating..."}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-muted-foreground">Client Seed (Combined)</div>
+                  <div className="font-mono bg-black/40 p-3 rounded border border-white/5 break-all text-xs" title={game.clientSeed}>
+                    {game.clientSeed || "Waiting for players..."}
+                  </div>
+                </div>
+                {game.status === 'completed' && game.serverSeed && (
+                  <div className="space-y-2 md:col-span-2 pt-2 border-t border-white/5">
+                    <div className="text-muted-foreground">Server Seed (Revealed)</div>
+                    <div className="font-mono bg-black/40 p-3 rounded border border-accent/20 text-accent break-all text-xs" title={game.serverSeed}>
+                      {game.serverSeed}
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                      This game used HMAC-SHA256 for fair winner selection. The Server Seed was generated and hashed before the game started. You can verify the outcome by hashing the Revealed Server Seed and ensuring it matches the Pre-game Hash.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Card>
           </motion.div>
 
           <div className="space-y-8">

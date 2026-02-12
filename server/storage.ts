@@ -17,6 +17,7 @@ import {
 } from "@shared/schema";
 import { calculateWagaReward } from "./price-service";
 import { solanaClient } from "./solana-client";
+import { createHmac, randomBytes } from "crypto";
 
 import type { LeaderboardEntry } from "@shared/schema";
 
@@ -268,10 +269,16 @@ export class MemStorage implements IStorage {
     const onChainGameId = BigInt(Date.now());
     const [escrowPDA] = solanaClient.getGamePoolPDA(onChainGameId);
     
+    // Provably Fair: Generate server seed and hash
+    const serverSeed = randomBytes(32).toString('hex');
+    const serverSeedHash = createHmac('sha256', 'seed_salt').update(serverSeed).digest('hex');
+
     const newGame: Game = {
       id,
       onChainGameId: onChainGameId.toString(),
       escrowPDA: escrowPDA.toBase58(),
+      serverSeed,
+      serverSeedHash,
       mode: game.mode,
       wager: game.wager,
       status: "waiting",
@@ -486,9 +493,22 @@ export class MemStorage implements IStorage {
     this.simulateGame(gameId);
   }
 
+  private generateFairNumber(serverSeed: string, clientSeed: string, nonce: number): number {
+    const hmac = createHmac('sha256', serverSeed);
+    hmac.update(`${clientSeed}-${nonce}`);
+    const hash = hmac.digest('hex');
+    // Use first 8 chars of hash (32 bits) for a random float between 0 and 1
+    const val = parseInt(hash.substring(0, 8), 16);
+    return val / 0xFFFFFFFF;
+  }
+
   private async simulateGame(gameId: string): Promise<void> {
     const game = this.games.get(gameId);
     if (!game) return;
+
+    // Use a combined client seed from all players' wallets
+    const clientSeed = game.players.map(p => p.walletAddress.substring(0, 8)).join('-');
+    game.clientSeed = clientSeed;
 
     const config = GAME_MODES[game.mode];
     const roundDuration = config.timer * 1000;
@@ -506,7 +526,9 @@ export class MemStorage implements IStorage {
 
       for (let i = 0; i < remainingPlayers.length; i += 2) {
         if (i + 1 < remainingPlayers.length) {
-          const winner = Math.random() > 0.5 ? remainingPlayers[i] : remainingPlayers[i + 1];
+          // Provably Fair Selection
+          const fairNumber = this.generateFairNumber(currentGame.serverSeed || 'default', clientSeed, round + i);
+          const winner = fairNumber > 0.5 ? remainingPlayers[i] : remainingPlayers[i + 1];
           const loser = winner === remainingPlayers[i] ? remainingPlayers[i + 1] : remainingPlayers[i];
           winners.push(winner);
           losers.push(loser);
