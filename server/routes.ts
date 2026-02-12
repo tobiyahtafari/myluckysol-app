@@ -374,12 +374,12 @@ export async function registerRoutes(
       const profile = await storage.getOrCreateProfile(req.params.walletAddress);
       const updateCount = profile.usernameUpdateCount || 0;
       const cost = await getUsernameUpdateCostSol(updateCount);
-      const authorityAddress = solanaClient.getAuthorityAddress();
+      const treasuryAddress = solanaClient.getTreasuryWallet().toBase58();
       res.json({
         ...cost,
         updateCount,
         currentUsername: profile.username || null,
-        paymentAddress: authorityAddress || null,
+        paymentAddress: treasuryAddress,
       });
     } catch (error) {
       console.error("Error getting username cost:", error);
@@ -423,15 +423,12 @@ export async function registerRoutes(
           return res.status(400).json({ error: "Payment transaction not confirmed" });
         }
 
-        const authorityAddress = solanaClient.getAuthorityAddress();
-        if (!authorityAddress) {
-          return res.status(500).json({ error: "Payment recipient not configured" });
-        }
+        const treasuryAddress = solanaClient.getTreasuryWallet().toBase58();
 
         const transferValid = await solanaClient.validateTransfer(
           txSignature,
           walletAddress,
-          authorityAddress,
+          treasuryAddress,
           costSol
         );
         if (!transferValid.valid) {
@@ -455,11 +452,43 @@ export async function registerRoutes(
             : null;
           if (referralResult?.granted) {
             console.log(`[REFERRAL] Username set triggered referral rewards for ${walletAddress.slice(0, 8)}...`);
+
+            let referralTxSigs: { referred?: string; referrer?: string } = {};
+
+            if (solanaClient.hasAuthority()) {
+              const referredTransfer = await solanaClient.transferWagaFromVault(walletAddress, REFERRAL_REWARD_AMOUNT);
+              if (!referredTransfer.success) {
+                console.error(`[WAGA] Failed to send referral reward to referred user: ${referredTransfer.error}`);
+                await storage.rollbackReferralRewards(walletAddress);
+                return res.status(500).json({ error: "Failed to transfer referral WAGA reward on-chain. Please try again." });
+              }
+              referralTxSigs.referred = referredTransfer.txSig;
+              console.log(`[WAGA] Referral reward sent to referred user ${walletAddress.slice(0, 8)}... Tx: ${referredTransfer.txSig}`);
+
+              if (referralResult.referrerWallet) {
+                const referrerTransfer = await solanaClient.transferWagaFromVault(referralResult.referrerWallet, REFERRAL_REWARD_AMOUNT);
+                if (!referrerTransfer.success) {
+                  console.error(`[WAGA] Failed to send referral reward to referrer: ${referrerTransfer.error}`);
+                  const referrerProfile = await storage.getProfile(referralResult.referrerWallet);
+                  if (referrerProfile) {
+                    await storage.updateProfile(referralResult.referrerWallet, {
+                      wagaEarned: Math.max(0, (referrerProfile.wagaEarned || 0) - REFERRAL_REWARD_AMOUNT),
+                    });
+                    console.log(`[WAGA] Rolled back referrer wagaEarned for ${referralResult.referrerWallet.slice(0, 8)}...`);
+                  }
+                } else {
+                  referralTxSigs.referrer = referrerTransfer.txSig;
+                  console.log(`[WAGA] Referral reward sent to referrer ${referralResult.referrerWallet.slice(0, 8)}... Tx: ${referrerTransfer.txSig}`);
+                }
+              }
+            }
+
             const freshProfile = await storage.getProfile(walletAddress);
             return res.json({
               profile: freshProfile,
               referralGranted: true,
               referralReward: REFERRAL_REWARD_AMOUNT,
+              referralTxSigs,
             });
           }
           return res.json({ profile: updated, referralGranted: false });

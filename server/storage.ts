@@ -29,6 +29,7 @@ export interface IStorage {
   getOrCreateProfile(walletAddress: string): Promise<PlayerProfile>;
   checkUsernameUnique(username: string): Promise<boolean>;
   grantPendingReferralRewards(walletAddress: string): Promise<{ granted: boolean; referrerWallet?: string } | null>;
+  rollbackReferralRewards(walletAddress: string): Promise<void>;
   claimVestedWaga(walletAddress: string): Promise<{ claimedAmount: number; remainingVesting: number; nextClaimTime: number } | null>;
   getChatMessages(gameId: string): Promise<ChatMessage[]>;
   addChatMessage(data: ChatMessage): Promise<ChatMessage>;
@@ -140,6 +141,25 @@ export class MemStorage implements IStorage {
     console.log(`[REFERRAL] Rewards granted! ${walletAddress.slice(0, 8)}... and ${referrer.walletAddress.slice(0, 8)}... each received ${REFERRAL_REWARD_AMOUNT} WAGA`);
 
     return { granted: true, referrerWallet: referrer.walletAddress };
+  }
+
+  async rollbackReferralRewards(walletAddress: string): Promise<void> {
+    const profile = this.profiles.get(walletAddress);
+    if (!profile) return;
+
+    if (profile.pendingReferralBy) {
+      const referrer = this.profiles.get(profile.pendingReferralBy);
+      if (referrer) {
+        referrer.wagaEarned = Math.max(0, (referrer.wagaEarned || 0) - REFERRAL_REWARD_AMOUNT);
+        referrer.referralCount = Math.max(0, (referrer.referralCount || 0) - 1);
+        this.profiles.set(referrer.walletAddress, referrer);
+      }
+    }
+
+    profile.wagaEarned = Math.max(0, (profile.wagaEarned || 0) - REFERRAL_REWARD_AMOUNT);
+    profile.referralRewarded = false;
+    this.profiles.set(walletAddress, profile);
+    console.log(`[REFERRAL] Rolled back referral rewards for ${walletAddress.slice(0, 8)}...`);
   }
 
   async getOrCreateProfile(walletAddress: string): Promise<PlayerProfile> {
