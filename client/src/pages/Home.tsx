@@ -375,15 +375,15 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              Built on Solana. Powered by Switchboard VRF.
+              Built on Solana. Powered by HMAC-SHA256 Provably Fair.
             </p>
             <div className="flex items-center gap-6">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Terms
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Privacy
-              </a>
+              </Link>
               <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Docs
               </a>
