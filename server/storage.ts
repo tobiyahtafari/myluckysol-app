@@ -495,18 +495,8 @@ export class MemStorage implements IStorage {
     for (const [wallet, stats] of allStats) {
       const profile = this.profiles.get(wallet);
       const winRate = stats.gamesPlayed > 0 ? (stats.gamesWon / stats.gamesPlayed) * 100 : 0;
-      const expectedWinRate = 0.35;
       const actualWinRate = stats.gamesPlayed > 0 ? stats.gamesWon / stats.gamesPlayed : 0;
-      const luckFactor = actualWinRate / expectedWinRate;
-      let luckScore = 50;
-      if (stats.gamesPlayed >= 3) {
-        if (luckFactor >= 1) {
-          luckScore = 50 + (50 * Math.min(1, (luckFactor - 1) / 1.5));
-        } else {
-          luckScore = 50 * luckFactor;
-        }
-        luckScore = Math.round(Math.max(0, Math.min(100, luckScore)));
-      }
+      const luckScore = Math.round(actualWinRate * 100);
 
       entries.push({
         rank: 0,
@@ -516,7 +506,7 @@ export class MemStorage implements IStorage {
         gamesWon: stats.gamesWon,
         gamesPlayed: stats.gamesPlayed,
         winRate,
-        luckScore,
+        luckScore: stats.gamesPlayed > 0 ? luckScore : 50,
         bestStreak: stats.bestStreak,
       });
     }
