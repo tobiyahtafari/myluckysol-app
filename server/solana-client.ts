@@ -400,6 +400,34 @@ export class SolanaGameClient {
     });
   }
 
+  // Transfer SOL directly (for fallback mode)
+  async transferSol(
+    to: string,
+    sol: number
+  ): Promise<{ success: boolean; txSig?: string; error?: string }> {
+    if (!this.authorityKeypair) return { success: false, error: "No authority" };
+    
+    try {
+      const lamports = Math.round(sol * LAMPORTS_PER_SOL);
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: this.authorityKeypair.publicKey,
+          toPubkey: new PublicKey(to),
+          lamports,
+        })
+      );
+
+      const signature = await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [this.authorityKeypair]
+      );
+      return { success: true, txSig: signature };
+    } catch (e) {
+      return { success: false, error: String(e) };
+    }
+  }
+
   // Build claim_winnings instruction for winner to claim from escrow
   buildClaimWinningsInstruction(
     gameId: bigint,

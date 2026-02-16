@@ -590,25 +590,50 @@ export class MemStorage implements IStorage {
     console.log(`[DEVNET] Treasury Fee: ${treasuryFee.toFixed(4)} SOL`);
 
     // Execute on-chain payout if authority key is configured
-    if (solanaClient.isOnChainEnabled() && finalGame.onChainGameId && finalGame.escrowPDA) {
+    if (solanaClient.isOnChainEnabled() && finalGame.onChainGameId) {
       try {
-        console.log(`[ON-CHAIN] Executing payout for game ${finalGame.onChainGameId}...`);
-        const payoutResult = await solanaClient.executePayouts(
-          BigInt(finalGame.onChainGameId),
-          winner.walletAddress,
-          payout,
-          treasuryFee
-        );
+        const programDeployed = await solanaClient.isProgramDeployed();
         
-        if (payoutResult.success) {
-          finalGame.winnerPayoutTxSig = payoutResult.winnerTxSig;
-          finalGame.treasuryFeeTxSig = payoutResult.treasuryTxSig;
-          console.log(`[ON-CHAIN] Winner payout: ${payoutResult.winnerTxSig?.slice(0, 20)}...`);
-          console.log(`[ON-CHAIN] Treasury fee: ${payoutResult.treasuryTxSig?.slice(0, 20)}...`);
+        if (programDeployed) {
+          // ON-CHAIN MODE: Finalize game to pay treasury, winner claims separately
+          console.log(`[ON-CHAIN] Executing payout for game ${finalGame.onChainGameId}...`);
+          const payoutResult = await solanaClient.executePayouts(
+            BigInt(finalGame.onChainGameId),
+            winner.walletAddress,
+            payout,
+            treasuryFee
+          );
+          
+          if (payoutResult.success) {
+            finalGame.winnerPayoutTxSig = payoutResult.winnerTxSig;
+            finalGame.treasuryFeeTxSig = payoutResult.treasuryTxSig;
+            console.log(`[ON-CHAIN] Finalize game successful! Tx: ${payoutResult.treasuryTxSig?.slice(0, 20)}...`);
+            this.games.set(gameId, finalGame);
+          }
+        } else {
+          // FALLBACK MODE: Program not deployed, direct transfer to winner and treasury
+          console.log(`[FALLBACK] Executing direct transfers for game ${finalGame.id}...`);
+          const winnerTransfer = await solanaClient.transferSol(winner.walletAddress, payout);
+          const treasuryTransfer = await solanaClient.transferSol(solanaClient.getTreasuryWallet().toBase58(), treasuryFee);
+          
+          if (winnerTransfer.success) {
+            finalGame.winnerPayoutTxSig = winnerTransfer.txSig;
+            console.log(`[FALLBACK] Winner payout sent: ${winnerTransfer.txSig?.slice(0, 20)}...`);
+          } else {
+            console.error(`[FALLBACK] Winner payout failed: ${winnerTransfer.error}`);
+          }
+          
+          if (treasuryTransfer.success) {
+            finalGame.treasuryFeeTxSig = treasuryTransfer.txSig;
+            console.log(`[FALLBACK] Treasury fee sent: ${treasuryTransfer.txSig?.slice(0, 20)}...`);
+          } else {
+            console.error(`[FALLBACK] Treasury fee failed: ${treasuryTransfer.error}`);
+          }
+          
           this.games.set(gameId, finalGame);
         }
       } catch (payoutError) {
-        console.error(`[ON-CHAIN] Payout execution failed:`, payoutError);
+        console.error(`[PAYOUT] Payout execution failed:`, payoutError);
       }
     } else {
       // Log as pending on-chain action when authority key is not configured
