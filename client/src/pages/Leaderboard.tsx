@@ -3,18 +3,90 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWallet } from "@/lib/wallet-context";
-import type { LeaderboardEntry } from "@shared/schema";
-import { Trophy, TrendingUp, Coins, Flame, Crown, Medal, Award, Users } from "lucide-react";
-import { useState } from "react";
+import type { LeaderboardEntry, LeaderboardPeriod } from "@shared/schema";
+import { Trophy, TrendingUp, Coins, Flame, Crown, Medal, Award, Users, Clock, Calendar, CalendarDays, Infinity } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
+
+function getNextResetTime(period: LeaderboardPeriod): number {
+  const now = new Date();
+  
+  if (period === "daily") {
+    const next = new Date(now);
+    next.setUTCDate(next.getUTCDate() + 1);
+    next.setUTCHours(0, 0, 0, 0);
+    return next.getTime();
+  }
+  
+  if (period === "weekly") {
+    const next = new Date(now);
+    const day = next.getUTCDay();
+    const daysUntilMonday = day === 0 ? 1 : 8 - day;
+    next.setUTCDate(next.getUTCDate() + daysUntilMonday);
+    next.setUTCHours(0, 0, 0, 0);
+    return next.getTime();
+  }
+  
+  if (period === "monthly") {
+    const next = new Date(now);
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    next.setUTCDate(1);
+    next.setUTCHours(0, 0, 0, 0);
+    return next.getTime();
+  }
+  
+  return 0;
+}
+
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return "Resetting...";
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+  return `${minutes}m ${seconds}s`;
+}
+
+function ResetTimer({ period }: { period: LeaderboardPeriod }) {
+  const [timeLeft, setTimeLeft] = useState(0);
+  
+  useEffect(() => {
+    const update = () => {
+      const resetTime = getNextResetTime(period);
+      setTimeLeft(Math.max(0, resetTime - Date.now()));
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [period]);
+  
+  if (period === "all") return null;
+  
+  return (
+    <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-muted/50 text-sm" data-testid="text-reset-timer">
+      <Clock className="w-4 h-4 text-muted-foreground" />
+      <span className="text-muted-foreground">Resets in:</span>
+      <span className="font-mono font-semibold text-primary">{formatCountdown(timeLeft)}</span>
+    </div>
+  );
+}
 
 export default function Leaderboard() {
   const { address } = useWallet();
   const [activeTab, setActiveTab] = useState<"earnings" | "luck" | "streaks">("earnings");
+  const [activePeriod, setActivePeriod] = useState<LeaderboardPeriod>("all");
 
   const { data: leaderboard, isLoading } = useQuery<LeaderboardEntry[]>({
-    queryKey: [`/api/leaderboard?sortBy=${activeTab}`],
+    queryKey: [`/api/leaderboard?sortBy=${activeTab}&period=${activePeriod}`],
   });
 
   const displayLeaderboard = leaderboard || [];
@@ -45,6 +117,13 @@ export default function Leaderboard() {
     }
   };
 
+  const periodOptions: { value: LeaderboardPeriod; label: string; icon: typeof Infinity }[] = [
+    { value: "all", label: "All Time", icon: Infinity },
+    { value: "daily", label: "Daily", icon: Clock },
+    { value: "weekly", label: "Weekly", icon: Calendar },
+    { value: "monthly", label: "Monthly", icon: CalendarDays },
+  ];
+
   return (
     <div className="min-h-screen py-8 px-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent" />
@@ -55,7 +134,7 @@ export default function Leaderboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <div className="w-16 h-16 rounded-full gradient-gold flex items-center justify-center mx-auto mb-4 glow-gold">
             <Trophy className="w-8 h-8 text-black" />
@@ -68,19 +147,39 @@ export default function Leaderboard() {
           </p>
         </motion.div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="space-y-6">
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
+          {periodOptions.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setActivePeriod(opt.value)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activePeriod === opt.value
+                  ? "bg-primary/20 border border-primary/50 text-primary"
+                  : "bg-card border border-card-border text-muted-foreground hover-elevate"
+              }`}
+              data-testid={`button-period-${opt.value}`}
+            >
+              <opt.icon className="w-4 h-4" />
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <ResetTimer period={activePeriod} />
+
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="space-y-6 mt-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="earnings" className="gap-2" data-testid="tab-earnings">
               <Coins className="w-4 h-4" />
-              <span className="hidden sm:inline">Earnings</span>
+              <span className="text-xs sm:text-sm">Earnings</span>
             </TabsTrigger>
             <TabsTrigger value="luck" className="gap-2" data-testid="tab-luck">
               <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">Luck Score</span>
+              <span className="text-xs sm:text-sm">Luck Score</span>
             </TabsTrigger>
             <TabsTrigger value="streaks" className="gap-2" data-testid="tab-streaks">
               <Flame className="w-4 h-4" />
-              <span className="hidden sm:inline">Streaks</span>
+              <span className="text-xs sm:text-sm">Streaks</span>
             </TabsTrigger>
           </TabsList>
 
@@ -93,7 +192,11 @@ export default function Leaderboard() {
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Users className="w-12 h-12 mb-4 opacity-50" />
               <p className="text-lg font-medium">No players yet</p>
-              <p className="text-sm">Be the first to play and claim the top spot!</p>
+              <p className="text-sm">
+                {activePeriod === "all" 
+                  ? "Be the first to play and claim the top spot!" 
+                  : `No games played this ${activePeriod === "daily" ? "day" : activePeriod === "weekly" ? "week" : "month"} yet.`}
+              </p>
             </div>
           ) : (
             <>

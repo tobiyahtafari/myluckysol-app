@@ -139,12 +139,15 @@ export const leaderboardEntrySchema = z.object({
   displayName: z.string().optional(),
   totalWon: z.number(),
   gamesWon: z.number(),
+  gamesPlayed: z.number().optional(),
   winRate: z.number(),
   luckScore: z.number(),
   bestStreak: z.number(),
 });
 
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
+
+export type LeaderboardPeriod = "all" | "daily" | "weekly" | "monthly";
 
 export const gameHistorySchema = z.object({
   gameId: z.string(),

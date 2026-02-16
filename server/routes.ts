@@ -630,13 +630,21 @@ export async function registerRoutes(
     try {
       const sortBy = (req.query.sortBy as string) || "earnings";
       const limit = parseInt(req.query.limit as string) || 50;
+      const period = (req.query.period as string) || "all";
       
-      // Validate sortBy parameter
       if (!["earnings", "luck", "streaks"].includes(sortBy)) {
         return res.status(400).json({ error: "Invalid sortBy parameter. Use: earnings, luck, or streaks" });
       }
       
-      const leaderboard = await storage.getLeaderboard(sortBy as "earnings" | "luck" | "streaks", limit);
+      if (!["all", "daily", "weekly", "monthly"].includes(period)) {
+        return res.status(400).json({ error: "Invalid period parameter. Use: all, daily, weekly, or monthly" });
+      }
+      
+      const leaderboard = await storage.getLeaderboard(
+        sortBy as "earnings" | "luck" | "streaks", 
+        limit,
+        period as "all" | "daily" | "weekly" | "monthly"
+      );
       res.json(leaderboard);
     } catch (error) {
       console.error("Error getting leaderboard:", error);

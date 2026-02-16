@@ -7,6 +7,8 @@ import {
   type ChatMessage,
   type GameModeKey,
   type WagerTier,
+  type LeaderboardEntry,
+  type LeaderboardPeriod,
   GAME_MODES,
   WAGA_ENTRY_MULTIPLIER,
   WAGA_WINNER_MULTIPLIER,
@@ -18,8 +20,6 @@ import {
 import { calculateWagaReward } from "./price-service";
 import { solanaClient } from "./solana-client";
 import { createHmac, randomBytes } from "crypto";
-
-import type { LeaderboardEntry } from "@shared/schema";
 
 export interface IStorage {
   getProfile(walletAddress: string): Promise<PlayerProfile | undefined>;
@@ -43,7 +43,7 @@ export interface IStorage {
   updateGameStatus(id: string, status: string): Promise<Game | undefined>;
   findAvailableGame(mode: GameModeKey, wager: WagerTier): Promise<Game | undefined>;
   joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined>;
-  getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit?: number): Promise<LeaderboardEntry[]>;
+  getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit?: number, period?: LeaderboardPeriod): Promise<LeaderboardEntry[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -398,38 +398,144 @@ export class MemStorage implements IStorage {
     return game;
   }
 
-  async getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit: number = 50): Promise<LeaderboardEntry[]> {
-    const profiles = Array.from(this.profiles.values());
+  private getPeriodStartTime(period: LeaderboardPeriod): number {
+    if (period === "all") return 0;
     
-    // Only include players who have played at least 1 game
-    const activePlayers = profiles.filter(p => p.gamesPlayed > 0);
+    const now = new Date();
     
-    // Sort based on criteria
-    let sorted: PlayerProfile[];
-    switch (sortBy) {
-      case "earnings":
-        sorted = activePlayers.sort((a, b) => b.totalWon - a.totalWon);
-        break;
-      case "luck":
-        sorted = activePlayers.sort((a, b) => b.luckScore - a.luckScore);
-        break;
-      case "streaks":
-        sorted = activePlayers.sort((a, b) => b.bestStreak - a.bestStreak);
-        break;
-      default:
-        sorted = activePlayers.sort((a, b) => b.totalWon - a.totalWon);
+    if (period === "daily") {
+      const start = new Date(now);
+      start.setUTCHours(0, 0, 0, 0);
+      return start.getTime();
     }
     
-    // Take top N and convert to leaderboard entries (matching shared schema)
-    return sorted.slice(0, limit).map((profile, index): LeaderboardEntry => ({
+    if (period === "weekly") {
+      const start = new Date(now);
+      const day = start.getUTCDay();
+      const diff = day === 0 ? 6 : day - 1;
+      start.setUTCDate(start.getUTCDate() - diff);
+      start.setUTCHours(0, 0, 0, 0);
+      return start.getTime();
+    }
+    
+    if (period === "monthly") {
+      const start = new Date(now);
+      start.setUTCDate(1);
+      start.setUTCHours(0, 0, 0, 0);
+      return start.getTime();
+    }
+    
+    return 0;
+  }
+
+  async getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit: number = 50, period: LeaderboardPeriod = "all"): Promise<LeaderboardEntry[]> {
+    if (period === "all") {
+      const profiles = Array.from(this.profiles.values());
+      const activePlayers = profiles.filter(p => p.gamesPlayed > 0);
+      
+      let sorted: PlayerProfile[];
+      switch (sortBy) {
+        case "earnings":
+          sorted = activePlayers.sort((a, b) => b.totalWon - a.totalWon);
+          break;
+        case "luck":
+          sorted = activePlayers.sort((a, b) => b.luckScore - a.luckScore);
+          break;
+        case "streaks":
+          sorted = activePlayers.sort((a, b) => b.bestStreak - a.bestStreak);
+          break;
+        default:
+          sorted = activePlayers.sort((a, b) => b.totalWon - a.totalWon);
+      }
+      
+      return sorted.slice(0, limit).map((profile, index): LeaderboardEntry => ({
+        rank: index + 1,
+        walletAddress: profile.walletAddress,
+        displayName: profile.username || profile.displayName,
+        totalWon: profile.totalWon,
+        gamesWon: profile.gamesWon,
+        gamesPlayed: profile.gamesPlayed,
+        winRate: profile.gamesPlayed > 0 ? (profile.gamesWon / profile.gamesPlayed) * 100 : 0,
+        luckScore: profile.luckScore,
+        bestStreak: profile.bestStreak,
+      }));
+    }
+
+    const periodStart = this.getPeriodStartTime(period);
+    const playerStats = new Map<string, { totalWon: number; gamesWon: number; gamesPlayed: number; currentStreak: number; bestStreak: number }>();
+
+    const allEntries = Array.from(this.gameHistory.entries());
+    for (const [wallet, histories] of allEntries) {
+      const periodGames = histories.filter((h: GameHistory) => h.playedAt >= periodStart);
+      if (periodGames.length === 0) continue;
+
+      let totalWon = 0;
+      let gamesWon = 0;
+      let gamesPlayed = periodGames.length;
+      let currentStreak = 0;
+      let bestStreak = 0;
+
+      const sorted = [...periodGames].sort((a, b) => a.playedAt - b.playedAt);
+      for (const game of sorted) {
+        if (game.result === "won") {
+          totalWon += game.payout || 0;
+          gamesWon++;
+          currentStreak++;
+          bestStreak = Math.max(bestStreak, currentStreak);
+        } else {
+          currentStreak = 0;
+        }
+      }
+
+      playerStats.set(wallet, { totalWon, gamesWon, gamesPlayed, currentStreak, bestStreak });
+    }
+
+    const entries: LeaderboardEntry[] = [];
+    const allStats = Array.from(playerStats.entries());
+    for (const [wallet, stats] of allStats) {
+      const profile = this.profiles.get(wallet);
+      const winRate = stats.gamesPlayed > 0 ? (stats.gamesWon / stats.gamesPlayed) * 100 : 0;
+      const expectedWinRate = 0.35;
+      const actualWinRate = stats.gamesPlayed > 0 ? stats.gamesWon / stats.gamesPlayed : 0;
+      const luckFactor = actualWinRate / expectedWinRate;
+      let luckScore = 50;
+      if (stats.gamesPlayed >= 3) {
+        if (luckFactor >= 1) {
+          luckScore = 50 + (50 * Math.min(1, (luckFactor - 1) / 1.5));
+        } else {
+          luckScore = 50 * luckFactor;
+        }
+        luckScore = Math.round(Math.max(0, Math.min(100, luckScore)));
+      }
+
+      entries.push({
+        rank: 0,
+        walletAddress: wallet,
+        displayName: profile?.username || profile?.displayName,
+        totalWon: stats.totalWon,
+        gamesWon: stats.gamesWon,
+        gamesPlayed: stats.gamesPlayed,
+        winRate,
+        luckScore,
+        bestStreak: stats.bestStreak,
+      });
+    }
+
+    switch (sortBy) {
+      case "earnings":
+        entries.sort((a, b) => b.totalWon - a.totalWon);
+        break;
+      case "luck":
+        entries.sort((a, b) => b.luckScore - a.luckScore);
+        break;
+      case "streaks":
+        entries.sort((a, b) => b.bestStreak - a.bestStreak);
+        break;
+    }
+
+    return entries.slice(0, limit).map((entry, index) => ({
+      ...entry,
       rank: index + 1,
-      walletAddress: profile.walletAddress,
-      displayName: profile.username || profile.displayName,
-      totalWon: profile.totalWon,
-      gamesWon: profile.gamesWon,
-      winRate: profile.gamesPlayed > 0 ? (profile.gamesWon / profile.gamesPlayed) * 100 : 0,
-      luckScore: profile.luckScore,
-      bestStreak: profile.bestStreak,
     }));
   }
 
@@ -581,14 +687,6 @@ export class MemStorage implements IStorage {
     finalGame.winnerId = winner.id;
     finalGame.winnerPayout = payout;
     finalGame.wagaRewards = winWagaReward;
-
-    // Update winner's profile stats
-    const winnerProfile = await this.getOrCreateProfile(winner.walletAddress);
-    await this.updateProfile(winner.walletAddress, {
-      totalWon: (winnerProfile.totalWon || 0) + payout,
-      gamesWon: (winnerProfile.gamesWon || 0) + 1,
-      wagaVestingTotal: (winnerProfile.wagaVestingTotal || 0) + winWagaReward,
-    });
 
     console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}...`);
     console.log(`[DEVNET] Winner Payout: ${payout.toFixed(4)} SOL`);

@@ -159,6 +159,7 @@ export default function GameRoom() {
                         targetTime={game.countdownEndsAt}
                         serverTime={game.serverTime}
                         size="lg"
+                        enableSound
                       />
                     </div>
                   ) : game.status === "in_progress" && game.roundEndsAt ? (
@@ -168,6 +169,7 @@ export default function GameRoom() {
                         targetTime={game.roundEndsAt}
                         serverTime={game.serverTime}
                         size="lg"
+                        enableSound
                       />
                     </div>
                   ) : game.status === "resolving" ? (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface CountdownTimerProps {
@@ -6,21 +6,41 @@ interface CountdownTimerProps {
   serverTime?: number;
   onComplete?: () => void;
   size?: "sm" | "md" | "lg";
+  enableSound?: boolean;
 }
 
-export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md" }: CountdownTimerProps) {
+export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md", enableSound = false }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const tickAudioRef = useRef<HTMLAudioElement | null>(null);
+  const lastTickedSecond = useRef<number>(-1);
 
   useEffect(() => {
-    // Calculate the offset between server time and client time
-    // If serverTime is provided, use it to sync; otherwise fall back to local time
+    if (enableSound) {
+      tickAudioRef.current = new Audio("/sounds/tick.mp3");
+      tickAudioRef.current.volume = 0.4;
+    }
+  }, [enableSound]);
+
+  const playTick = useCallback(() => {
+    if (!isMuted && enableSound && tickAudioRef.current) {
+      tickAudioRef.current.currentTime = 0;
+      tickAudioRef.current.play().catch(() => {});
+    }
+  }, [isMuted, enableSound]);
+
+  useEffect(() => {
     const clockOffset = serverTime ? (serverTime - Date.now()) : 0;
     
     const updateTimer = () => {
-      // Adjust client time by the offset to sync with server
       const adjustedNow = Date.now() + clockOffset;
       const remaining = Math.max(0, Math.floor((targetTime - adjustedNow) / 1000));
       setTimeLeft(remaining);
+
+      if (enableSound && remaining <= 10 && remaining > 0 && remaining !== lastTickedSecond.current) {
+        lastTickedSecond.current = remaining;
+        playTick();
+      }
 
       if (remaining === 0 && onComplete) {
         onComplete();
@@ -28,10 +48,10 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
     };
 
     updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+    const interval = setInterval(updateTimer, 200);
 
     return () => clearInterval(interval);
-  }, [targetTime, serverTime, onComplete]);
+  }, [targetTime, serverTime, onComplete, enableSound, playTick]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -81,11 +101,22 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
         </motion.div>
       </AnimatePresence>
 
-      <p className={`text-sm font-medium ${
-        isUrgent ? "text-red-400 animate-pulse" : isWarning ? "text-amber-400" : "text-muted-foreground"
-      }`}>
-        {isUrgent ? "Final seconds!" : isWarning ? "Time running out..." : "Time remaining"}
-      </p>
+      <div className="flex items-center gap-3">
+        <p className={`text-sm font-medium ${
+          isUrgent ? "text-red-400 animate-pulse" : isWarning ? "text-amber-400" : "text-muted-foreground"
+        }`}>
+          {isUrgent ? "Final seconds!" : isWarning ? "Time running out..." : "Time remaining"}
+        </p>
+        {enableSound && (
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            data-testid="button-mute-countdown"
+          >
+            {isMuted ? "Unmute" : "Mute"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
