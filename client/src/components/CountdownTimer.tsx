@@ -17,7 +17,7 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
 
   useEffect(() => {
     if (enableSound) {
-      tickAudioRef.current = new Audio("/sounds/tick.mp3");
+      tickAudioRef.current = new Audio("/sounds/tick.wav");
       tickAudioRef.current.volume = 0.4;
     }
   }, [enableSound]);
