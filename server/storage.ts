@@ -582,12 +582,29 @@ export class MemStorage implements IStorage {
     finalGame.winnerPayout = payout;
     finalGame.wagaRewards = winWagaReward;
 
-    this.games.set(gameId, finalGame);
+    // Update winner's profile stats
+    const winnerProfile = await this.getOrCreateProfile(winner.walletAddress);
+    await this.updateProfile(winner.walletAddress, {
+      totalWon: (winnerProfile.totalWon || 0) + payout,
+      gamesWon: (winnerProfile.gamesWon || 0) + 1,
+      wagaVestingTotal: (winnerProfile.wagaVestingTotal || 0) + winWagaReward,
+    });
 
     console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}...`);
     console.log(`[DEVNET] Winner Payout: ${payout.toFixed(4)} SOL`);
     console.log(`[DEVNET] Winner WAGA Reward: ${winWagaReward} WAGA (${WAGA_WINNER_MULTIPLIER}x match on ${payout.toFixed(4)} SOL)`);
     console.log(`[DEVNET] Treasury Fee: ${treasuryFee.toFixed(4)} SOL`);
+
+    // Execute WAGA winner reward transfer (vested reward from vault)
+    if (winWagaReward > 0) {
+      console.log(`[PAYOUT] Sending winning WAGA match: ${winWagaReward} WAGA`);
+      const wagaResult = await solanaClient.transferWagaFromVault(winner.walletAddress, winWagaReward);
+      if (wagaResult.success) {
+        console.log(`[PAYOUT] Winner WAGA match sent! Tx: ${wagaResult.txSig}`);
+      } else {
+        console.error(`[PAYOUT] Winner WAGA match failed: ${wagaResult.error}`);
+      }
+    }
 
     // Execute on-chain payout if authority key is configured
     if (solanaClient.isOnChainEnabled() && finalGame.onChainGameId) {
@@ -613,6 +630,8 @@ export class MemStorage implements IStorage {
         } else {
           // FALLBACK MODE: Program not deployed, direct transfer to winner and treasury
           console.log(`[FALLBACK] Executing direct transfers for game ${finalGame.id}...`);
+          
+          // Execute SOL transfers
           const winnerTransfer = await solanaClient.transferSol(winner.walletAddress, payout);
           const treasuryTransfer = await solanaClient.transferSol(solanaClient.getTreasuryWallet().toBase58(), treasuryFee);
           
