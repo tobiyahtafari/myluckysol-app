@@ -282,14 +282,18 @@ export default function GameRoom() {
                 </div>
               </Card>
             )}
+          </motion.div>
 
+          <div className="space-y-8">
+            <GameChat gameId={game.id} />
+            
             {/* Provably Fair Info */}
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldCheck className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-semibold">Provably Fair Verification</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              <div className="grid grid-cols-1 gap-6 text-sm">
                 <div className="space-y-2">
                   <div className="text-muted-foreground">Server Seed Hash (Pre-game)</div>
                   <div className="font-mono bg-black/40 p-3 rounded border border-white/5 break-all text-xs" title={game.serverSeedHash}>
@@ -303,7 +307,7 @@ export default function GameRoom() {
                   </div>
                 </div>
                 {game.status === 'completed' && game.serverSeed && (
-                  <div className="space-y-2 md:col-span-2 pt-2 border-t border-white/5">
+                  <div className="space-y-2 pt-2 border-t border-white/5">
                     <div className="text-muted-foreground">Server Seed (Revealed)</div>
                     <div className="font-mono bg-black/40 p-3 rounded border border-accent/20 text-accent break-all text-xs" title={game.serverSeed}>
                       {game.serverSeed}
@@ -315,10 +319,6 @@ export default function GameRoom() {
                 )}
               </div>
             </Card>
-          </motion.div>
-
-          <div className="space-y-8">
-            <GameChat gameId={game.id} />
           </div>
         </div>
       </div>
