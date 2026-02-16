@@ -25,6 +25,16 @@ export function GameChat({ gameId }: { gameId: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
 
+  const { data: profile } = useQuery<PlayerProfile>({
+    queryKey: ["/api/profile", address],
+    enabled: !!address,
+  });
+
+  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
+    queryKey: ["/api/games", gameId, "chat"],
+    refetchInterval: 2000,
+  });
+
   useEffect(() => {
     // Initialize audio
     audioRef.current = new Audio("/sounds/message.mp3");
@@ -38,12 +48,63 @@ export function GameChat({ gameId }: { gameId: string }) {
     }
   }, [isMuted]);
 
+  const sendMutation = useMutation({
+    mutationFn: async (content: string) => {
+      await apiRequest("POST", `/api/games/${gameId}/chat`, {
+        walletAddress: address,
+        username: profile?.username || address?.slice(0, 8),
+        message: content,
+      });
+    },
+    onSuccess: () => {
+      setMessage("");
+      queryClient.invalidateQueries({ queryKey: ["/api/games", gameId, "chat"] });
+      setTimeout(() => scrollToBottom(), 100);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim() || sendMutation.isPending || !connected) return;
+    sendMutation.mutate(message.trim());
+  };
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: smooth ? "smooth" : "instant" 
+      });
+    }
+    setHasNewMessages(false);
+    setIsAtBottom(true);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const threshold = 50;
+    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+    setIsAtBottom(atBottom);
+
+    if (atBottom) {
+      setHasNewMessages(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (lastNotificationMsg) {
       const timer = setTimeout(() => setLastNotificationMsg(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [lastNotificationMsg]);
+
+  useEffect(() => {
+    if (messages.length > 0 && seenMessageIds.size === 0) {
+      setSeenMessageIds(new Set(messages.map(m => m.id)));
+      setTimeout(() => scrollToBottom(false), 100);
+    }
+  }, [messages, seenMessageIds.size, scrollToBottom]);
 
   useEffect(() => {
     const newMessageIds = messages.map(m => m.id);
@@ -67,13 +128,6 @@ export function GameChat({ gameId }: { gameId: string }) {
       }
     }
   }, [messages, isAtBottom, scrollToBottom, seenMessageIds, address, playNotification]);
-
-  useEffect(() => {
-    if (messages.length > 0 && seenMessageIds.size === 0) {
-      setSeenMessageIds(new Set(messages.map(m => m.id)));
-      setTimeout(() => scrollToBottom(false), 100);
-    }
-  }, [messages, seenMessageIds.size, scrollToBottom]);
 
   const addEmoji = (emoji: string) => {
     setMessage(prev => prev + emoji);
