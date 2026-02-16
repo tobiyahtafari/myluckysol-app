@@ -456,7 +456,7 @@ export class MemStorage implements IStorage {
         gamesWon: profile.gamesWon,
         gamesPlayed: profile.gamesPlayed,
         winRate: profile.gamesPlayed > 0 ? (profile.gamesWon / profile.gamesPlayed) * 100 : 0,
-        luckScore: profile.luckScore,
+        luckScore: profile.gamesPlayed > 0 ? Math.round((profile.gamesWon / profile.gamesPlayed) * 100) : 50,
         bestStreak: profile.bestStreak,
       }));
     }
