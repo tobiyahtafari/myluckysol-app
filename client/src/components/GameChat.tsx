@@ -19,6 +19,7 @@ export function GameChat({ gameId }: { gameId: string }) {
   const [hasNewMessages, setHasNewMessages] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [seenMessageIds, setSeenMessageIds] = useState<Set<string>>(new Set());
+  const [lastNotificationMsg, setLastNotificationMsg] = useState<ChatMessage | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -26,7 +27,7 @@ export function GameChat({ gameId }: { gameId: string }) {
 
   useEffect(() => {
     // Initialize audio
-    audioRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
+    audioRef.current = new Audio("/sounds/message.mp3");
     audioRef.current.volume = 0.3;
   }, []);
 
@@ -37,59 +38,12 @@ export function GameChat({ gameId }: { gameId: string }) {
     }
   }, [isMuted]);
 
-  const { data: profile } = useQuery<PlayerProfile>({
-    queryKey: ["/api/profile", address],
-    enabled: !!address,
-  });
-
-  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
-    queryKey: ["/api/games", gameId, "chat"],
-    refetchInterval: 2000,
-  });
-
-  const sendMutation = useMutation({
-    mutationFn: async (content: string) => {
-      await apiRequest("POST", `/api/games/${gameId}/chat`, {
-        walletAddress: address,
-        username: profile?.username || address?.slice(0, 8),
-        message: content,
-      });
-    },
-    onSuccess: () => {
-      setMessage("");
-      queryClient.invalidateQueries({ queryKey: ["/api/games", gameId, "chat"] });
-      setTimeout(() => scrollToBottom(), 100);
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || sendMutation.isPending || !connected) return;
-    sendMutation.mutate(message.trim());
-  };
-
-  const scrollToBottom = useCallback((smooth = true) => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: smooth ? "smooth" : "instant" 
-      });
+  useEffect(() => {
+    if (lastNotificationMsg) {
+      const timer = setTimeout(() => setLastNotificationMsg(null), 4000);
+      return () => clearTimeout(timer);
     }
-    setHasNewMessages(false);
-    setIsAtBottom(true);
-  }, []);
-
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const threshold = 50;
-    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
-    setIsAtBottom(atBottom);
-
-    if (atBottom) {
-      setHasNewMessages(false);
-    }
-  }, []);
+  }, [lastNotificationMsg]);
 
   useEffect(() => {
     const newMessageIds = messages.map(m => m.id);
@@ -97,9 +51,12 @@ export function GameChat({ gameId }: { gameId: string }) {
 
     if (newMessages.length > 0) {
       // Don't play sound for our own messages
-      const hasOthersMessages = newMessages.some(m => m.walletAddress !== address);
-      if (hasOthersMessages && seenMessageIds.size > 0) {
+      const lastMsg = newMessages[newMessages.length - 1];
+      const isOthersMessage = lastMsg.walletAddress !== address;
+      
+      if (isOthersMessage && seenMessageIds.size > 0) {
         playNotification();
+        setLastNotificationMsg(lastMsg);
       }
 
       if (isAtBottom) {
@@ -124,6 +81,31 @@ export function GameChat({ gameId }: { gameId: string }) {
 
   return (
     <div className="relative">
+      <AnimatePresence>
+        {lastNotificationMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+            className="absolute -top-16 left-0 right-0 z-50 px-4"
+          >
+            <div className="bg-card/95 backdrop-blur-xl border border-purple-500/40 p-3 rounded-xl shadow-2xl flex flex-col gap-1 max-w-[280px] mx-auto overflow-hidden">
+              <span className="text-[10px] font-bold text-gradient-solana uppercase tracking-wider">
+                New Message
+              </span>
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-white truncate">
+                  {lastNotificationMsg.username || lastNotificationMsg.walletAddress.slice(0, 8)}
+                </span>
+                <p className="text-xs text-muted-foreground truncate">
+                  {lastNotificationMsg.message}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-purple-500/20 via-transparent to-cyan-500/10 blur-xl -z-10" />
       <Card className="flex flex-col h-[400px] border-purple-500/30 bg-card/80 backdrop-blur-sm overflow-hidden">
         <div className="p-3 border-b border-purple-500/20 bg-gradient-to-r from-purple-500/10 via-transparent to-cyan-500/10 flex items-center justify-between">
