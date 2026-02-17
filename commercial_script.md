@@ -15,15 +15,15 @@
 **Action:** The left side fades into a "Powered by HMAC-SHA256" technical overlay on the right.
 **Voice-Over:** "No more black boxes. No more guessing. MyLuckySol brings high-stakes gaming to the Solana blockchain with total transparency."
 
-### Scene 3 (20-30s): The Modes
-**Visual:** Rapid, minimalist cards sliding in: "1v1", "2-Round", "3-Round", "4-Round". 
-**Action:** Icons for 2, 4, 8, and 16 players appear and disappear in sync with the beat.
-**Voice-Over:** "From head-to-head battles to sixteen-player tournaments. Choose your mode. Choose your wager."
+### Scene 3 (20-30s): The Multipliers & Speed
+**Visual:** Rapid, minimalist cards sliding in with bold numbers: "1.8x", "3.6x", "7.2x", "14.4x".
+**Action:** A progress bar zooms from 0 to 100% in under 2 seconds, labeled "90s to 360s".
+**Voice-Over:** "Turn your SOL into 1.8x, 3.6x, or even 14.4x rewards. Lightning-fast games, starting at just 90 seconds."
 
-### Scene 4 (30-40s): The Adrenaline
-**Visual:** A 10-second countdown timer appearing on screen, ticking down from 10 to 1. The background music intensifies.
-**Action:** The numbers glow with a Solana-gradient (Purple to Green).
-**Voice-Over:** "Simple mechanics. Intense moments. 90% of the pool goes straight to the winner. Automatically."
+### Scene 4 (30-40s): The Odds & Fairness
+**Visual:** An overlay showing "50% Win Chance" transitioning to "6.25% High Reward".
+**Action:** The HMAC-SHA256 signature glows in the background as the odds shift.
+**Voice-Over:** "Know your odds. From a 50% win chance to massive multipliers, every result is backed by provably fair math."
 
 ### Scene 5 (40-50s): WAGA Rewards
 **Visual:** A 3D gold WAGA token spinning. Text appears: "100x Entry Match" and "1000x Win Bonus".
