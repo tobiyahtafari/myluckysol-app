@@ -13,12 +13,17 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
   const [timeLeft, setTimeLeft] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const tickAudioRef = useRef<HTMLAudioElement | null>(null);
+  const bgMusicAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastTickedSecond = useRef<number>(-1);
 
   useEffect(() => {
     if (enableSound) {
       tickAudioRef.current = new Audio("/sounds/tick.wav");
       tickAudioRef.current.volume = 0.4;
+      
+      bgMusicAudioRef.current = new Audio("/sounds/bgmusic.mp3");
+      bgMusicAudioRef.current.loop = true;
+      bgMusicAudioRef.current.volume = 0.3;
     }
   }, [enableSound]);
 
@@ -37,6 +42,17 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
       const remaining = Math.max(0, Math.floor((targetTime - adjustedNow) / 1000));
       setTimeLeft(remaining);
 
+      // Handle background music at 1:30 (90 seconds)
+      if (enableSound && bgMusicAudioRef.current) {
+        if (!isMuted && remaining <= 90 && remaining > 0) {
+          if (bgMusicAudioRef.current.paused) {
+            bgMusicAudioRef.current.play().catch(() => {});
+          }
+        } else {
+          bgMusicAudioRef.current.pause();
+        }
+      }
+
       if (enableSound && remaining <= 10 && remaining > 0 && remaining !== lastTickedSecond.current) {
         lastTickedSecond.current = remaining;
         playTick();
@@ -52,6 +68,19 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
 
     return () => clearInterval(interval);
   }, [targetTime, serverTime, onComplete, enableSound, playTick]);
+
+  useEffect(() => {
+    return () => {
+      if (tickAudioRef.current) {
+        tickAudioRef.current.pause();
+        tickAudioRef.current = null;
+      }
+      if (bgMusicAudioRef.current) {
+        bgMusicAudioRef.current.pause();
+        bgMusicAudioRef.current = null;
+      }
+    };
+  }, []);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
