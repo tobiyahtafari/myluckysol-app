@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { WalletProvider } from "@/lib/wallet-context";
 import { Header } from "@/components/Header";
 import { MobileNav } from "@/components/MobileNav";
+import { Footer } from "@/components/Footer";
 import Home from "@/pages/Home";
 import Play from "@/pages/Play";
 import GameRoom from "@/pages/GameRoom";
@@ -13,6 +14,7 @@ import Profile from "@/pages/Profile";
 import Leaderboard from "@/pages/Leaderboard";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
+import HowToPlay from "@/pages/HowToPlay";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +27,7 @@ function Router() {
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
+      <Route path="/how-to-play" component={HowToPlay} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -38,11 +41,12 @@ function App() {
       <PriceProvider>
         <TooltipProvider>
           <WalletProvider>
-            <div className="min-h-screen bg-background pb-24 md:pb-0">
+            <div className="min-h-screen bg-background pb-24 md:pb-0 flex flex-col">
               <Header />
-              <main>
+              <main className="flex-1">
                 <Router />
               </main>
+              <Footer />
               <MobileNav />
             </div>
             <Toaster />
