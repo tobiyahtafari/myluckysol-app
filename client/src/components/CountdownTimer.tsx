@@ -42,9 +42,9 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
       const remaining = Math.max(0, Math.floor((targetTime - adjustedNow) / 1000));
       setTimeLeft(remaining);
 
-      // Handle background music at 1:30 (90 seconds)
+      // Handle background music
       if (enableSound && bgMusicAudioRef.current) {
-        if (!isMuted && remaining <= 90 && remaining > 0) {
+        if (!isMuted && remaining > 0) {
           if (bgMusicAudioRef.current.paused) {
             bgMusicAudioRef.current.play().catch(() => {});
           }
