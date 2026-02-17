@@ -81,6 +81,7 @@ export function Header() {
   const navItems = [
     { href: "/play", label: "Play", icon: Gamepad2 },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    { href: "/how-to-play", label: "How to Play", icon: ShieldCheck },
   ];
 
   const handleAirdrop = async () => {
@@ -218,7 +219,13 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link href="/terms" className="flex items-center gap-2 cursor-pointer">
                         <ShieldCheck className="h-4 w-4" />
-                        Terms & Privacy
+                        Terms & Conditions
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/privacy" className="flex items-center gap-2 cursor-pointer">
+                        <ShieldCheck className="h-4 w-4" />
+                        Privacy
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
