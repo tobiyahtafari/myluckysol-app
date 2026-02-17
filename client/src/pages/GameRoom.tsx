@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CountdownTimer } from "@/components/CountdownTimer";
@@ -21,11 +21,19 @@ export default function GameRoom() {
   const [, setLocation] = useLocation();
   const { address } = useWallet();
   const [showWinner, setShowWinner] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: game, isLoading, error } = useQuery<Game>({
     queryKey: ["/api/games", params.id],
     refetchInterval: 2000,
   });
+
+  useEffect(() => {
+    if (game?.status === "completed") {
+      // Force refresh leaderboard when game ends
+      queryClient.invalidateQueries({ queryKey: [/^\/api\/leaderboard/] });
+    }
+  }, [game?.status, queryClient]);
 
   useEffect(() => {
     if (game?.status === "completed" && game.winnerId) {

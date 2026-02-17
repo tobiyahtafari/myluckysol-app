@@ -87,6 +87,7 @@ export default function Leaderboard() {
 
   const { data: leaderboard, isLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: [`/api/leaderboard?sortBy=${activeTab}&period=${activePeriod}`],
+    refetchInterval: 5000, // Polling every 5 seconds for real-time updates
   });
 
   const displayLeaderboard = leaderboard || [];
