@@ -21,9 +21,9 @@
 **Voice-Over:** "Turn your SOL into 1.8x, 3.6x, or even 14.4x rewards. Lightning-fast games, starting at just 90 seconds."
 
 ### Scene 4 (30-40s): The Odds & Fairness
-**Visual:** An overlay showing "50% Win Chance" transitioning to "6.25% High Reward".
+**Visual:** An overlay showing "Win Chance: 50%" transitioning down to "Minimum: 6.25%".
 **Action:** The HMAC-SHA256 signature glows in the background as the odds shift.
-**Voice-Over:** "Know your odds. From a 50% win chance to massive multipliers, every result is backed by provably fair math."
+**Voice-Over:** "Know your odds. With a win chance as high as 50% and no less than 6.25%, every result is backed by provably fair math."
 
 ### Scene 5 (40-50s): WAGA Rewards
 **Visual:** A 3D gold WAGA token spinning. Text appears: "100x Entry Match" and "1000x Win Bonus".
