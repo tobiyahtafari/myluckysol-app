@@ -22,7 +22,7 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
       tickAudioRef.current.volume = 0.4;
       
       bgMusicAudioRef.current = new Audio("/sounds/bgmusic.mp3");
-      bgMusicAudioRef.current.loop = true;
+      bgMusicAudioRef.current.loop = false;
       bgMusicAudioRef.current.volume = 0.3;
     }
   }, [enableSound]);
