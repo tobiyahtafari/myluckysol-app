@@ -18,6 +18,26 @@ import avatar17 from "@assets/avatar_17_1771391899934.png";
 import avatar18 from "@assets/avatar_18_1771391899934.png";
 import avatar19 from "@assets/avatar_19_1771391899934.png";
 import avatar20 from "@assets/avatar_20_1771391899934.png";
+import avatar21 from "@assets/avatar_21_1771392004097.png";
+import avatar22 from "@assets/avatar_22_1771392004097.png";
+import avatar23 from "@assets/avatar_23_1771392004098.png";
+import avatar24 from "@assets/avatar_24_1771392004098.png";
+import avatar25 from "@assets/avatar_25_1771392004098.png";
+import avatar26 from "@assets/avatar_26_1771392004098.png";
+import avatar27 from "@assets/avatar_27_1771392004099.png";
+import avatar28 from "@assets/avatar_28_1771392004099.png";
+import avatar29 from "@assets/avatar_29_1771392004099.png";
+import avatar30 from "@assets/avatar_30_1771392004099.png";
+import avatar31 from "@assets/avatar_31_1771392004100.png";
+import avatar32 from "@assets/avatar_32_1771392004100.png";
+import avatar33 from "@assets/avatar_33_1771392004100.png";
+import avatar34 from "@assets/avatar_34_1771392004100.png";
+import avatar35 from "@assets/avatar_35_1771392004101.png";
+import avatar36 from "@assets/avatar_36_1771392004101.png";
+import avatar37 from "@assets/avatar_37_1771392004101.png";
+import avatar38 from "@assets/avatar_38_1771392004101.png";
+import avatar39 from "@assets/avatar_39_1771392004102.png";
+import avatar40 from "@assets/avatar_40_1771392004102.png";
 
 export const PRESET_AVATARS: string[] = [
   avatar01,
@@ -40,4 +60,24 @@ export const PRESET_AVATARS: string[] = [
   avatar18,
   avatar19,
   avatar20,
+  avatar21,
+  avatar22,
+  avatar23,
+  avatar24,
+  avatar25,
+  avatar26,
+  avatar27,
+  avatar28,
+  avatar29,
+  avatar30,
+  avatar31,
+  avatar32,
+  avatar33,
+  avatar34,
+  avatar35,
+  avatar36,
+  avatar37,
+  avatar38,
+  avatar39,
+  avatar40,
 ];
