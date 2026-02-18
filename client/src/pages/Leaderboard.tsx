@@ -170,17 +170,17 @@ export default function Leaderboard() {
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="space-y-6 mt-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="earnings" className="gap-2" data-testid="tab-earnings">
+            <TabsTrigger value="earnings" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 h-auto py-2" data-testid="tab-earnings">
               <Coins className="w-4 h-4" />
-              <span className="text-xs sm:text-sm">Earnings</span>
+              <span className="text-[10px] sm:text-sm">Earnings</span>
             </TabsTrigger>
-            <TabsTrigger value="luck" className="gap-2" data-testid="tab-luck">
+            <TabsTrigger value="luck" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 h-auto py-2" data-testid="tab-luck">
               <TrendingUp className="w-4 h-4" />
-              <span className="text-xs sm:text-sm">Luck Score</span>
+              <span className="text-[10px] sm:text-sm">Luck Score</span>
             </TabsTrigger>
-            <TabsTrigger value="streaks" className="gap-2" data-testid="tab-streaks">
+            <TabsTrigger value="streaks" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 h-auto py-2" data-testid="tab-streaks">
               <Flame className="w-4 h-4" />
-              <span className="text-xs sm:text-sm">Streaks</span>
+              <span className="text-[10px] sm:text-sm">Streaks</span>
             </TabsTrigger>
           </TabsList>
 

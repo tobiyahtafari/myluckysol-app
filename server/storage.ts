@@ -496,7 +496,7 @@ export class MemStorage implements IStorage {
       const profile = this.profiles.get(wallet);
       const winRate = stats.gamesPlayed > 0 ? (stats.gamesWon / stats.gamesPlayed) * 100 : 0;
       const actualWinRate = stats.gamesPlayed > 0 ? stats.gamesWon / stats.gamesPlayed : 0;
-      const luckScore = Math.round(actualWinRate * 100);
+      const luckScore = this.calculateLuckScore(stats.gamesWon, stats.gamesPlayed);
 
       entries.push({
         rank: 0,
