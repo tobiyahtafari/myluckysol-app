@@ -512,7 +512,7 @@ export async function registerRoutes(
           const base64Data = avatarUrl.split(",")[1];
           if (base64Data) {
             const buffer = Buffer.from(base64Data, "base64");
-            const maxSize = 500 * 1024;
+            const maxSize = 2 * 1024 * 1024; // Increased to 2MB for buffer check
             if (buffer.length > maxSize) {
               return res.status(400).json({ error: "Image too large. Please upload a smaller image." });
             }

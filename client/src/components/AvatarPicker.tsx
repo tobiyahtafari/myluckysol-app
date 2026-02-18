@@ -32,7 +32,11 @@ function scaleImage(file: File, maxSize: number): Promise<string> {
         const sx = (img.width - srcSize) / 2;
         const sy = (img.height - srcSize) / 2;
         ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, maxSize, maxSize);
-        resolve(canvas.toDataURL("image/png"));
+        
+        // Try to get a reasonably small string by using jpeg with quality compression
+        // if png is too large, but for 218x218, png should be fine.
+        // Let's use jpeg at 0.8 quality to ensure it's always small.
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
       };
       img.onerror = reject;
       img.src = reader.result as string;
