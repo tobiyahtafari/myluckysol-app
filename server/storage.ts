@@ -44,6 +44,8 @@ export interface IStorage {
   findAvailableGame(mode: GameModeKey, wager: WagerTier): Promise<Game | undefined>;
   joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined>;
   getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit?: number, period?: LeaderboardPeriod): Promise<LeaderboardEntry[]>;
+  storeAvatarImage(walletAddress: string, data: Buffer, contentType: string): void;
+  getAvatarImage(walletAddress: string): { data: Buffer; contentType: string } | null;
 }
 
 export class MemStorage implements IStorage {
@@ -51,10 +53,12 @@ export class MemStorage implements IStorage {
   private games: Map<string, Game>;
   private chatMessages: Map<string, ChatMessage[]>;
   private gameHistory: Map<string, GameHistory[]>;
+  private avatarImages: Map<string, { data: Buffer; contentType: string }>;
 
   constructor() {
     this.profiles = new Map();
     this.games = new Map();
+    this.avatarImages = new Map();
     this.chatMessages = new Map();
     this.gameHistory = new Map();
   }
@@ -801,6 +805,14 @@ export class MemStorage implements IStorage {
         }
       }
     }
+  }
+
+  storeAvatarImage(walletAddress: string, data: Buffer, contentType: string): void {
+    this.avatarImages.set(walletAddress, { data, contentType });
+  }
+
+  getAvatarImage(walletAddress: string): { data: Buffer; contentType: string } | null {
+    return this.avatarImages.get(walletAddress) || null;
   }
 }
 

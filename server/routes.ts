@@ -505,6 +505,23 @@ export async function registerRoutes(
       }
 
       if (avatarUrl) {
+        if (avatarUrl.startsWith("data:image/")) {
+          if ((profile.usernameUpdateCount || 0) < 1) {
+            return res.status(403).json({ error: "Custom avatar upload requires paying the username fee first." });
+          }
+          const base64Data = avatarUrl.split(",")[1];
+          if (base64Data) {
+            const buffer = Buffer.from(base64Data, "base64");
+            const maxSize = 500 * 1024;
+            if (buffer.length > maxSize) {
+              return res.status(400).json({ error: "Image too large. Please upload a smaller image." });
+            }
+            storage.storeAvatarImage(walletAddress, buffer, avatarUrl.split(";")[0].split(":")[1] || "image/png");
+            const storedUrl = `/api/avatar/${walletAddress}?t=${Date.now()}`;
+            const updated = await storage.updateProfile(walletAddress, { avatarUrl: storedUrl });
+            return res.json({ profile: updated });
+          }
+        }
         const updated = await storage.updateProfile(walletAddress, { avatarUrl });
         return res.json({ profile: updated });
       }
@@ -623,6 +640,16 @@ export async function registerRoutes(
       console.error("Error getting vesting status:", error);
       res.status(500).json({ error: "Internal server error" });
     }
+  });
+
+  app.get("/api/avatar/:walletAddress", (req, res) => {
+    const image = storage.getAvatarImage(req.params.walletAddress);
+    if (!image) {
+      return res.status(404).send("Not found");
+    }
+    res.set("Content-Type", image.contentType);
+    res.set("Cache-Control", "public, max-age=3600");
+    res.send(image.data);
   });
 
   // Get leaderboard

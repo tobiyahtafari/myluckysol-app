@@ -7,7 +7,8 @@ import { useWallet } from "@/lib/wallet-context";
 import { Link } from "wouter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
 import { VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT } from "@shared/schema";
-import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Camera, Copy, Check, Lock, Unlock, AlertTriangle } from "lucide-react";
+import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Copy, Check, Lock, Unlock, AlertTriangle } from "lucide-react";
+import { AvatarPicker } from "@/components/AvatarPicker";
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +28,7 @@ export default function Profile() {
   const [referrerAddress, setReferrerAddress] = useState("");
   const [copied, setCopy] = useState(false);
   const [isPayingForUsername, setIsPayingForUsername] = useState(false);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
   const { data: profile } = useQuery<PlayerProfile>({
     queryKey: ['/api/profile', address],
@@ -270,24 +272,31 @@ export default function Profile() {
           <Card className="p-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-4xl font-bold text-white overflow-hidden border-2 border-primary/20">
+                <button
+                  onClick={() => setAvatarPickerOpen(true)}
+                  className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-4xl font-bold text-white overflow-hidden border-2 border-primary/20 cursor-pointer"
+                  data-testid="button-open-avatar-picker"
+                >
                   {profile?.avatarUrl ? (
                     <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     (address || "W").charAt(0).toUpperCase()
                   )}
+                </button>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-full">
+                  <span className="text-xs font-medium text-white">Change</span>
                 </div>
-                <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
-                  <Camera className="w-6 h-6 text-white" />
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => updateAvatarMutation.mutate(reader.result as string);
-                      reader.readAsDataURL(file);
-                    }
-                  }} />
-                </label>
+                <AvatarPicker
+                  open={avatarPickerOpen}
+                  onOpenChange={setAvatarPickerOpen}
+                  currentAvatar={profile?.avatarUrl}
+                  canUpload={(profile?.usernameUpdateCount || 0) > 0}
+                  onSelect={(url) => {
+                    updateAvatarMutation.mutate(url);
+                    setAvatarPickerOpen(false);
+                  }}
+                  isLoading={updateAvatarMutation.isPending}
+                />
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h1 className="text-2xl font-bold mb-1" data-testid="text-username">{profile?.username || shortAddress}</h1>
