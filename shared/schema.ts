@@ -25,6 +25,8 @@ export const playerSchema = z.object({
   id: z.string(),
   walletAddress: z.string(),
   displayName: z.string().optional(),
+  username: z.string().optional(),
+  avatarUrl: z.string().optional(),
   joinedAt: z.number(),
   isEliminated: z.boolean().default(false),
   eliminatedRound: z.number().optional(),

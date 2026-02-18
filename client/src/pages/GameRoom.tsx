@@ -196,7 +196,7 @@ export default function GameRoom() {
                       <div>
                         <p className="text-sm text-muted-foreground">Winner</p>
                         <p className="text-xl font-bold">
-                          {winner.displayName || `${winner.walletAddress.slice(0, 4)}...${winner.walletAddress.slice(-4)}`}
+                          {winner.username || winner.displayName || `${winner.walletAddress.slice(0, 4)}...${winner.walletAddress.slice(-4)}`}
                         </p>
                       </div>
                     </div>

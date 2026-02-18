@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { User } from "lucide-react";
 import type { Player } from "@shared/schema";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface PlayerSlotProps {
   player: Player | null;
@@ -30,6 +31,8 @@ export function PlayerSlot({ player, index, isCurrentUser, isWinner, isEliminate
       </motion.div>
     );
   }
+
+  const displayName = player.username || player.displayName || shortAddress;
 
   return (
     <motion.div
@@ -61,23 +64,24 @@ export function PlayerSlot({ player, index, isCurrentUser, isWinner, isEliminate
         </motion.div>
       )}
 
-      <div
-        className={`w-12 h-12 rounded-full flex items-center justify-center ${
+      <Avatar className={`w-12 h-12 border-2 ${isWinner ? "border-primary" : isCurrentUser ? "border-accent" : "border-muted"}`}>
+        {player.avatarUrl ? (
+          <AvatarImage src={player.avatarUrl || undefined} alt={displayName || undefined} className="object-cover" />
+        ) : null}
+        <AvatarFallback className={
           isWinner
-            ? "bg-gradient-to-br from-amber-400 to-orange-500"
+            ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white"
             : isCurrentUser
-            ? "bg-gradient-to-br from-emerald-400 to-green-500"
-            : "bg-gradient-to-br from-purple-400 to-violet-500"
-        }`}
-      >
-        <span className="text-white font-bold text-lg">
-          {(player.displayName || player.walletAddress).charAt(0).toUpperCase()}
-        </span>
-      </div>
+            ? "bg-gradient-to-br from-emerald-400 to-green-500 text-white"
+            : "bg-gradient-to-br from-purple-400 to-violet-500 text-white"
+        }>
+          {displayName?.charAt(0).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
 
       <div className="text-center">
         <p className="text-sm font-medium truncate max-w-[100px]">
-          {player.displayName || (player as any).username || shortAddress}
+          {displayName}
         </p>
         {isCurrentUser && (
           <span className="text-xs text-accent">(You)</span>

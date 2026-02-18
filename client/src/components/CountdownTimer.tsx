@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Volume2, VolumeX } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CountdownTimerProps {
   targetTime: number;
@@ -137,13 +139,16 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
           {isUrgent ? "Final seconds!" : isWarning ? "Time running out..." : "Time remaining"}
         </p>
         {enableSound && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setIsMuted(!isMuted)}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             data-testid="button-mute-countdown"
           >
+            {isMuted ? <VolumeX className="w-3 h-3 mr-1" /> : <Volume2 className="w-3 h-3 mr-1" />}
             {isMuted ? "Unmute" : "Mute"}
-          </button>
+          </Button>
         )}
       </div>
     </div>

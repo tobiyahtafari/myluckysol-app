@@ -367,9 +367,14 @@ export class MemStorage implements IStorage {
       return game;
     }
 
+    const profile = await this.getOrCreateProfile(walletAddress);
+    const entryWagaReward = calculateWagaReward(game.wager, WAGA_ENTRY_MULTIPLIER);
+
     const player = {
       id: `player_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       walletAddress,
+      username: profile.username,
+      avatarUrl: profile.avatarUrl,
       joinedAt: Date.now(),
       isEliminated: false,
       txSignature,
@@ -378,15 +383,9 @@ export class MemStorage implements IStorage {
     game.players.push(player);
     game.poolAmount += game.wager;
 
-    const entryWagaReward = calculateWagaReward(game.wager, WAGA_ENTRY_MULTIPLIER);
-    
-    const profile = await this.getOrCreateProfile(walletAddress);
     await this.updateProfile(walletAddress, {
       wagaEarned: (profile.wagaEarned || 0) + entryWagaReward,
     });
-    
-    console.log(`[DEVNET] Player ${walletAddress.slice(0, 8)}... joined game ${gameId} with ${game.wager} SOL wager.`);
-    console.log(`[DEVNET] Entry WAGA Reward: ${entryWagaReward} WAGA (${WAGA_ENTRY_MULTIPLIER}x match on ${game.wager} SOL)`);
 
     // Transfer WAGA entry reward on-chain immediately
     if (entryWagaReward > 0) {
