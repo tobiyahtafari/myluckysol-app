@@ -228,6 +228,12 @@ export function Header() {
                         Privacy
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/docs" className="flex items-center gap-2 cursor-pointer">
+                        <ShieldCheck className="h-4 w-4" />
+                        Docs
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={disconnect}

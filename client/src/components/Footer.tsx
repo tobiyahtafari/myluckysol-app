@@ -21,9 +21,9 @@ export function Footer() {
             <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Privacy
             </Link>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Docs
-            </a>
+            </Link>
           </div>
         </div>
       </div>
