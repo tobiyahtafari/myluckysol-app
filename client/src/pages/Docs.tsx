@@ -12,15 +12,15 @@ const CONTRACTS = [
     icon: Gamepad2
   },
   {
-    name: "WAGA Token Mint",
-    address: "WAGAtkn...placeholder...mint",
-    description: "The official utility and reward token",
+    name: "WAGA Token (WAGA)",
+    address: "WAGAtkn...placeholder...address",
+    description: "Utility token bridged from BSC (Fixed Supply)",
     icon: Coins
   },
   {
-    name: "Rewards Vault",
-    address: "RWDSvlt...placeholder...vault",
-    description: "Escrow for player rewards and vesting",
+    name: "WAGA Rewards Escrow",
+    address: "ESCRWvlt...placeholder...escrow",
+    description: "Distribution point for wager and win bonuses",
     icon: Landmark
   },
   {
@@ -113,11 +113,11 @@ export default function Docs() {
             </h3>
             <div className="prose prose-invert text-muted-foreground">
               <p>
-                WAGA is the native utility token of MyLuckySol. It is designed to incentivize participation and long-term ecosystem growth.
+                WAGA is a fixed-supply utility token bridged from BSC. It is distributed via a dedicated rewards escrow to incentivize participation.
               </p>
               <ul className="list-disc list-inside space-y-2">
-                <li>100x SOL wager match reward</li>
-                <li>1000x SOL win bonus (vested)</li>
+                <li>100x SOL wager match reward (Escrow-paid)</li>
+                <li>1000x SOL win bonus (Escrow-paid, Vested)</li>
                 <li>10% daily vesting for win rewards</li>
               </ul>
             </div>
