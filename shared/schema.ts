@@ -57,6 +57,7 @@ export const gameSchema = z.object({
   currentRound: z.number(),
   poolAmount: z.number(),
   serverSeed: z.string().optional(),
+  serverSeedReveal: z.string().optional(), // Added for fairness verification
   serverSeedHash: z.string().optional(),
   clientSeed: z.string().optional(),
   winnerId: z.string().optional(),
