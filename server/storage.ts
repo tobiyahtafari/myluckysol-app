@@ -46,6 +46,9 @@ export interface IStorage {
   getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit?: number, period?: LeaderboardPeriod): Promise<LeaderboardEntry[]>;
   storeAvatarImage(walletAddress: string, data: Buffer, contentType: string): void;
   getAvatarImage(walletAddress: string): { data: Buffer; contentType: string } | null;
+  getGlobalStats(): Promise<{ gamesPlayed: number; solWon: number; playersCount: number; wagaRewarded: number }>;
+  getCompletedGames(limit?: number): Promise<Game[]>;
+  verifyGame(serverSeedHash: string): Promise<Game | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -812,6 +815,35 @@ export class MemStorage implements IStorage {
 
   getAvatarImage(walletAddress: string): { data: Buffer; contentType: string } | null {
     return this.avatarImages.get(walletAddress) || null;
+  }
+
+  async getGlobalStats(): Promise<{ gamesPlayed: number; solWon: number; playersCount: number; wagaRewarded: number }> {
+    const games = Array.from(this.games.values());
+    const profiles = Array.from(this.profiles.values());
+
+    const completedGames = games.filter(g => g.status === "completed");
+    const solWon = completedGames.reduce((acc, g) => acc + (g.winnerPayout || 0), 0);
+    const wagaRewarded = profiles.reduce((acc, p) => acc + (p.wagaEarned || 0) + (p.wagaVestingTotal || 0), 0);
+
+    return {
+      gamesPlayed: completedGames.length,
+      solWon,
+      playersCount: profiles.filter(p => p.gamesPlayed > 0).length,
+      wagaRewarded,
+    };
+  }
+
+  async getCompletedGames(limit: number = 50): Promise<Game[]> {
+    return Array.from(this.games.values())
+      .filter(g => g.status === "completed")
+      .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0))
+      .slice(0, limit);
+  }
+
+  async verifyGame(serverSeedHash: string): Promise<Game | undefined> {
+    return Array.from(this.games.values()).find(
+      g => g.status === "completed" && g.serverSeedHash === serverSeedHash
+    );
   }
 }
 

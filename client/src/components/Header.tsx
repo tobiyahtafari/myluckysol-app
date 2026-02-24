@@ -82,6 +82,7 @@ export function Header() {
     { href: "/play", label: "Play", icon: Gamepad2 },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
     { href: "/how-to-play", label: "How to Play", icon: ShieldCheck },
+    { href: "/fairness", label: "Fairness", icon: ShieldCheck },
   ];
 
   const handleAirdrop = async () => {

@@ -21,6 +21,9 @@ export function Footer() {
             <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Privacy
             </Link>
+            <Link href="/fairness" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Fairness
+            </Link>
             <Link href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Docs
             </Link>

@@ -679,5 +679,75 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/stats", async (req, res) => {
+    try {
+      const stats = await storage.getGlobalStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting global stats:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/games/completed", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const games = await storage.getCompletedGames(limit);
+      const safeGames = games.map(g => ({
+        id: g.id,
+        mode: g.mode,
+        wager: g.wager,
+        poolAmount: g.poolAmount,
+        winnerId: g.winnerId,
+        winnerPayout: g.winnerPayout,
+        serverSeedHash: g.serverSeedHash,
+        serverSeed: g.serverSeed,
+        clientSeed: g.clientSeed,
+        players: g.players.map(p => ({
+          walletAddress: p.walletAddress,
+          username: p.username,
+        })),
+        completedAt: g.completedAt,
+        createdAt: g.createdAt,
+      }));
+      res.json(safeGames);
+    } catch (error) {
+      console.error("Error getting completed games:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/verify", async (req, res) => {
+    try {
+      const { serverSeedHash } = req.query;
+      if (!serverSeedHash || typeof serverSeedHash !== "string") {
+        return res.status(400).json({ error: "serverSeedHash query parameter required" });
+      }
+      const game = await storage.verifyGame(serverSeedHash);
+      if (!game) {
+        return res.status(404).json({ error: "No completed game found with that server seed hash" });
+      }
+      res.json({
+        id: game.id,
+        mode: game.mode,
+        wager: game.wager,
+        poolAmount: game.poolAmount,
+        winnerId: game.winnerId,
+        winnerPayout: game.winnerPayout,
+        serverSeed: game.serverSeed,
+        serverSeedHash: game.serverSeedHash,
+        clientSeed: game.clientSeed,
+        players: game.players.map(p => ({
+          walletAddress: p.walletAddress,
+          username: p.username,
+        })),
+        completedAt: game.completedAt,
+      });
+    } catch (error) {
+      console.error("Error verifying game:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   return httpServer;
 }

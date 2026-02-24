@@ -35,9 +35,20 @@ MyLuckySol is a casino-grade, provably fair decentralized application (DApp) on 
 - **Profile Management**: Players can set usernames (with a small SOL fee), track game history, manage referrals, and claim vested WAGA.
 
 ### Backend & Blockchain Interaction
-- **API Endpoints**: Facilitate game preparation, joining, claiming winnings, profile management (including username updates and WAGA vesting), and leaderboard queries.
+- **API Endpoints**: Facilitate game preparation, joining, claiming winnings, profile management (including username updates and WAGA vesting), leaderboard queries, global stats (`/api/stats`), completed games feed (`/api/games/completed`), and game verification (`/api/verify`).
 - **Solana Integration**: Handles SOL transfers (wagers, payouts, username fees), WAGA token transfers from a central Rewards Vault, and on-chain program interactions.
 - **Fallback Mode**: Currently operates in a fallback mode using direct SOL transfers to an authority wallet due to an un-deployed Solana program. The full on-chain mode will use PDA-based escrow after program deployment.
+
+### Pages
+- **Home** (`/`): Hero section with real-time global stats (Games Played, SOL Won, Players, WAGA Rewarded), embedded YouTube video with play/replay overlays, feature cards, game modes, earnings calculator, how it works, and CTA.
+- **Fairness** (`/fairness`): Provably fair explanation, full algorithm source code display, game verification search by Server Seed Hash, and real-time completed games feed.
+- **Play** (`/play`): Game mode selection and wager picker.
+- **Game Room** (`/game/:id`): Live game view with player slots, countdown timer, chat.
+- **Leaderboard** (`/leaderboard`): Sortable by earnings/luck/streaks with period filters.
+- **Profile** (`/profile`): Username/avatar management, game history, referral system, WAGA vesting claims.
+- **Docs** (`/docs`): Contract addresses and ecosystem info (WAGA Rewards Escrow model).
+- **How to Play** (`/how-to-play`): Step-by-step guide.
+- **Terms** (`/terms`), **Privacy** (`/privacy`): Legal pages.
 
 ### Anti-Abuse Mechanisms
 - **Referral Program Gating**: Referral rewards are activated only after a user sets a username, which incurs a small SOL fee.

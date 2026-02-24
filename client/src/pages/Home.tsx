@@ -7,7 +7,22 @@ import { useWallet } from "@/lib/wallet-context";
 import { Gamepad2, Shield, Zap, Users, Trophy, Coins, Play, RotateCcw } from "lucide-react";
 import { WalletModal } from "@/components/WalletModal";
 import { EarningsCalculator } from "@/components/EarningsCalculator";
+import { useQuery } from "@tanstack/react-query";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
+
+function formatCompact(value: number): string {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(value >= 10_000_000_000 ? 0 : value >= 1_000_000_000 ? 1 : 0).replace(/\.0$/, "")}B+`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 100_000_000 ? 0 : value >= 10_000_000 ? 0 : 1).replace(/\.0$/, "")}M+`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 100_000 ? 0 : value >= 10_000 ? 0 : 1).replace(/\.0$/, "")}K+`;
+  return value.toString();
+}
+
+function formatSolCompact(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M+`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, "")}K+`;
+  if (value >= 1) return value.toFixed(1).replace(/\.0$/, "");
+  return value.toFixed(2);
+}
 
 export default function Home() {
   const { connected } = useWallet();
@@ -69,6 +84,11 @@ export default function Home() {
     }
   };
 
+  const { data: globalStats } = useQuery<{ gamesPlayed: number; solWon: number; playersCount: number; wagaRewarded: number }>({
+    queryKey: ["/api/stats"],
+    refetchInterval: 10000,
+  });
+
   const features = [
     {
       icon: Shield,
@@ -97,10 +117,10 @@ export default function Home() {
   ];
 
   const stats = [
-    { value: "10K+", label: "Games Played" },
-    { value: "500+", label: "SOL Won" },
-    { value: "2K+", label: "Players" },
-    { value: "99.9%", label: "Uptime" },
+    { value: globalStats ? formatCompact(globalStats.gamesPlayed) : "0", label: "Games Played" },
+    { value: globalStats ? formatSolCompact(globalStats.solWon) : "0", label: "SOL Won" },
+    { value: globalStats ? formatCompact(globalStats.playersCount) : "0", label: "Players" },
+    { value: globalStats ? formatCompact(globalStats.wagaRewarded) : "0", label: "WAGA Rewarded" },
   ];
 
   return (

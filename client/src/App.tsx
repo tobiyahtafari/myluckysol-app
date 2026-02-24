@@ -16,6 +16,7 @@ import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import HowToPlay from "@/pages/HowToPlay";
 import Docs from "@/pages/Docs";
+import Fairness from "@/pages/Fairness";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/privacy" component={Privacy} />
       <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/docs" component={Docs} />
+      <Route path="/fairness" component={Fairness} />
       <Route component={NotFound} />
     </Switch>
   );
