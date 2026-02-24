@@ -178,7 +178,7 @@ export default function Home() {
 
                     {/* Thumbnail Placeholder/Image */}
                     <img 
-                      src="https://img.youtube.com/vi/bO69FwGZyLA/maxresdefault.jpg" 
+                      src="https://img.youtube.com/vi/yIlkKu7jFr4/maxresdefault.jpg" 
                       alt="Video Thumbnail"
                       className="w-full h-full object-cover"
                     />
@@ -192,7 +192,7 @@ export default function Home() {
                     <iframe 
                       width="100%" 
                       height="100%" 
-                      src="https://www.youtube.com/embed/bO69FwGZyLA?autoplay=1&si=GB02YeQG9ERbqFhS" 
+                      src="https://www.youtube.com/embed/yIlkKu7jFr4?autoplay=1&si=GB02YeQG9ERbqFhS" 
                       title="YouTube video player" 
                       frameBorder="0" 
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
