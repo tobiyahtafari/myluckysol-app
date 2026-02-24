@@ -40,6 +40,7 @@ MyLuckySol is a casino-grade, provably fair decentralized application (DApp) on 
 - **Fallback Mode**: Currently operates in a fallback mode using direct SOL transfers to an authority wallet due to an un-deployed Solana program. The full on-chain mode will use PDA-based escrow after program deployment.
 
 ### Pages
+- **Game Notifications**: Site-wide animated pop-up notifications with sound when a new game is created. Clicking navigates to Play page with pre-selected mode/wager. Auto-dismisses after 7 seconds.
 - **Home** (`/`): Hero section with real-time global stats (Games Played, SOL Won, Players, WAGA Rewarded), embedded YouTube video with play/replay overlays, feature cards, game modes, earnings calculator, how it works, and CTA.
 - **Fairness** (`/fairness`): Provably fair explanation, full algorithm source code display, game verification search by Server Seed Hash, and real-time completed games feed.
 - **Play** (`/play`): Game mode selection and wager picker.

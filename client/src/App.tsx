@@ -18,6 +18,7 @@ import HowToPlay from "@/pages/HowToPlay";
 import Docs from "@/pages/Docs";
 import Fairness from "@/pages/Fairness";
 import NotFound from "@/pages/not-found";
+import { GameNotificationManager } from "@/components/GameNotification";
 
 function Router() {
   return (
@@ -53,6 +54,7 @@ function App() {
               <Footer />
               <MobileNav />
             </div>
+            <GameNotificationManager />
             <Toaster />
           </WalletProvider>
         </TooltipProvider>
