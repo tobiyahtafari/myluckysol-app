@@ -74,6 +74,10 @@ export default function Home() {
     // Give a small delay for iframe to mount before initializing YT Player if needed
     setTimeout(() => {
       initPlayer('youtube-player');
+      // Force play on mobile/touch devices
+      if (playerRef.current && playerRef.current.playVideo) {
+        playerRef.current.playVideo();
+      }
     }, 500);
   };
 
