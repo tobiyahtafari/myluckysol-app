@@ -177,7 +177,7 @@ export default function Fairness() {
                 Copy
               </Button>
             </div>
-            <pre className="p-4 overflow-x-auto text-[10px] md:text-sm font-mono text-muted-foreground leading-relaxed">
+            <pre className="p-4 overflow-x-auto text-[8px] sm:text-[10px] md:text-sm font-mono text-muted-foreground leading-relaxed whitespace-pre-wrap break-all md:whitespace-pre md:break-normal">
               <code>{FAIRNESS_CODE}</code>
             </pre>
           </Card>
