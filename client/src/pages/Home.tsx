@@ -44,12 +44,27 @@ export default function Home() {
       // API is ready
     };
 
+    // Add a global listener for the play button to ensure it works on all devices
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-testid="video-overlay"]')) {
+        handlePlayClick();
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick);
+
     return () => {
+      document.removeEventListener('click', handleGlobalClick);
       if (playerRef.current) {
         playerRef.current.destroy();
       }
     };
   }, []);
+
+  const onPlayerReady = (event: any) => {
+    event.target.playVideo();
+  };
 
   const onPlayerStateChange = (event: any) => {
     // YT.PlayerState.ENDED is 0
@@ -62,6 +77,7 @@ export default function Home() {
     if (window.YT && window.YT.Player) {
       playerRef.current = new window.YT.Player(elementId, {
         events: {
+          'onReady': onPlayerReady,
           'onStateChange': onPlayerStateChange
         }
       });
@@ -71,14 +87,11 @@ export default function Home() {
   const handlePlayClick = () => {
     setShowVideo(true);
     setVideoEnded(false);
-    // Give a small delay for iframe to mount before initializing YT Player if needed
+    // On mobile, the player might need to be initialized immediately
+    // and the first user gesture (the click) must be associated with the play() call
     setTimeout(() => {
       initPlayer('youtube-player');
-      // Force play on mobile/touch devices
-      if (playerRef.current && playerRef.current.playVideo) {
-        playerRef.current.playVideo();
-      }
-    }, 500);
+    }, 100);
   };
 
   const handleReplayClick = () => {
@@ -247,7 +260,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-16 max-w-4xl mx-auto"
           >
-            <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showVideo ? handlePlayClick : undefined}>
+            <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showVideo ? handlePlayClick : undefined} data-testid="video-overlay">
               <AnimatePresence mode="wait">
                 {!showVideo ? (
                   <motion.div 
