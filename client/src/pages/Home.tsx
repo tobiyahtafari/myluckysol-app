@@ -226,6 +226,21 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Why Choose <span className="text-gradient-gold">MyLuckySol</span>?
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Built on Solana for lightning-fast transactions and powered by VRF for 
+              truly random, provably fair outcomes.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             className="mb-16 max-w-4xl mx-auto"
           >
             <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showVideo ? handlePlayClick : undefined}>
@@ -302,21 +317,6 @@ export default function Home() {
                 )}
               </AnimatePresence>
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why Choose <span className="text-gradient-gold">MyLuckySol</span>?
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Built on Solana for lightning-fast transactions and powered by VRF for 
-              truly random, provably fair outcomes.
-            </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
