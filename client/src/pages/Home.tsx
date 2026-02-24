@@ -91,7 +91,7 @@ export default function Home() {
     // and the first user gesture (the click) must be associated with the play() call
     setTimeout(() => {
       initPlayer('youtube-player');
-    }, 100);
+    }, 50);
   };
 
   const handleReplayClick = () => {
