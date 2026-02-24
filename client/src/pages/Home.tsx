@@ -285,7 +285,7 @@ export default function Home() {
                       id="youtube-player"
                       width="100%" 
                       height="100%" 
-                      src="https://www.youtube.com/embed/yIlkKu7jFr4?autoplay=1&enablejsapi=1&si=GB02YeQG9ERbqFhS" 
+                      src="https://www.youtube.com/embed/yIlkKu7jFr4?autoplay=1&enablejsapi=1&si=GB02YeQG9ERbqFhS&controls=0&modestbranding=1&rel=0&iv_load_policy=3" 
                       title="YouTube video player" 
                       frameBorder="0" 
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
