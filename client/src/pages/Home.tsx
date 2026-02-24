@@ -1,10 +1,10 @@
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useWallet } from "@/lib/wallet-context";
-import { Gamepad2, Shield, Zap, Users, Trophy, Coins, Play } from "lucide-react";
+import { Gamepad2, Shield, Zap, Users, Trophy, Coins, Play, RotateCcw } from "lucide-react";
 import { WalletModal } from "@/components/WalletModal";
 import { EarningsCalculator } from "@/components/EarningsCalculator";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
@@ -13,6 +13,61 @@ export default function Home() {
   const { connected } = useWallet();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
+  const playerRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Load YouTube IFrame API
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+
+    (window as any).onYouTubeIframeAPIReady = () => {
+      // API is ready
+    };
+
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.destroy();
+      }
+    };
+  }, []);
+
+  const onPlayerStateChange = (event: any) => {
+    // YT.PlayerState.ENDED is 0
+    if (event.data === 0) {
+      setVideoEnded(true);
+    }
+  };
+
+  const initPlayer = (elementId: string) => {
+    if (window.YT && window.YT.Player) {
+      playerRef.current = new window.YT.Player(elementId, {
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+  };
+
+  const handlePlayClick = () => {
+    setShowVideo(true);
+    setVideoEnded(false);
+    // Give a small delay for iframe to mount before initializing YT Player if needed
+    setTimeout(() => {
+      initPlayer('youtube-player');
+    }, 500);
+  };
+
+  const handleReplayClick = () => {
+    setVideoEnded(false);
+    if (playerRef.current && playerRef.current.playVideo) {
+      playerRef.current.playVideo();
+    }
+  };
 
   const features = [
     {
@@ -153,10 +208,11 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-16 max-w-4xl mx-auto"
           >
-            <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={() => setShowVideo(true)}>
-              <AnimatePresence>
+            <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showVideo ? handlePlayClick : undefined}>
+              <AnimatePresence mode="wait">
                 {!showVideo ? (
                   <motion.div 
+                    key="initial-overlay"
                     initial={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="absolute inset-0 z-10"
@@ -185,20 +241,43 @@ export default function Home() {
                   </motion.div>
                 ) : (
                   <motion.div 
+                    key="video-container"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="absolute inset-0 z-20"
                   >
                     <iframe 
+                      id="youtube-player"
                       width="100%" 
                       height="100%" 
-                      src="https://www.youtube.com/embed/yIlkKu7jFr4?autoplay=1&si=GB02YeQG9ERbqFhS" 
+                      src="https://www.youtube.com/embed/yIlkKu7jFr4?autoplay=1&enablejsapi=1&si=GB02YeQG9ERbqFhS" 
                       title="YouTube video player" 
                       frameBorder="0" 
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                       referrerPolicy="strict-origin-when-cross-origin" 
                       allowFullScreen
                     ></iframe>
+
+                    <AnimatePresence>
+                      {videoEnded && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-4 cursor-pointer"
+                          onClick={handleReplayClick}
+                        >
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_30px_rgba(245,184,0,0.6)]"
+                          >
+                            <RotateCcw className="w-8 h-8 text-black" />
+                          </motion.div>
+                          <span className="text-2xl font-bold text-white uppercase tracking-wider drop-shadow-lg">Watch Again</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 )}
               </AnimatePresence>
