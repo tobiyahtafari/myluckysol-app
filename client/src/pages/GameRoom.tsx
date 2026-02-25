@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ import { Link } from "wouter";
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 
 import { GameChat } from "@/components/GameChat";
+import countdownAudio from "@assets/countdownmusic_1771993635834.MP3";
 
 export default function GameRoom() {
   const params = useParams<{ id: string }>();
@@ -22,11 +23,27 @@ export default function GameRoom() {
   const { address } = useWallet();
   const [showWinner, setShowWinner] = useState(false);
   const queryClient = useQueryClient();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const { data: game, isLoading, error } = useQuery<Game>({
     queryKey: ["/api/games", params.id],
     refetchInterval: 2000,
   });
+
+  // Handle countdown music
+  useEffect(() => {
+    if (game?.status === "in_progress") {
+      if (!audioRef.current) {
+        audioRef.current = new Audio(countdownAudio);
+      }
+      audioRef.current.play().catch(err => console.error("Audio play failed:", err));
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [game?.status, game?.currentRound]);
 
   useEffect(() => {
     if (game?.status === "completed") {
