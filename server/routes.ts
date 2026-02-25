@@ -670,8 +670,8 @@ export async function registerRoutes(
       const remaining = totalVesting - claimed;
       const lastClaim = profile.wagaVestingLastClaim || 0;
       const nextClaimTime = lastClaim > 0 ? lastClaim + VESTING_PERIOD_MS : 0;
-      // Ceil so small balances always yield at least 1 WAGA per day
-      const dailyAmount = Math.ceil(totalVesting * (VESTING_DAILY_PERCENT / 100));
+      // 10% of remaining balance (exponential decay), ceil so small balances yield at least 1
+      const dailyAmount = Math.ceil(remaining * (VESTING_DAILY_PERCENT / 100));
       const canClaim = remaining > 0 && dailyAmount > 0 && (lastClaim === 0 || Date.now() >= nextClaimTime);
 
       res.json({

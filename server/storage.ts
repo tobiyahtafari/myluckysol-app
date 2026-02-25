@@ -209,9 +209,9 @@ export class MemStorage implements IStorage {
       return { canClaim: false, claimAmount: 0, remainingVesting: 0, nextClaimTime: 0 };
     }
 
-    // Calculate daily release — ceil so small balances always yield at least 1 WAGA
-    const dailyAmount = Math.ceil(totalVesting * (VESTING_DAILY_PERCENT / 100));
-    const claimAmount = Math.min(dailyAmount, remainingVesting);
+    // Calculate daily release as 10% of what's remaining (exponential decay)
+    // Using ceil so small balances always yield at least 1 WAGA
+    const claimAmount = Math.ceil(remainingVesting * (VESTING_DAILY_PERCENT / 100));
 
     if (claimAmount <= 0) {
       return { canClaim: false, claimAmount: 0, remainingVesting, nextClaimTime: 0 };
