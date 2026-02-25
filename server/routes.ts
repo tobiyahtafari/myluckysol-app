@@ -331,6 +331,35 @@ export async function registerRoutes(
     }
   });
 
+  // Get completed games (must come before /api/games/:id)
+  app.get("/api/games/completed", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const games = await storage.getCompletedGames(limit);
+      const safeGames = games.map(g => ({
+        id: g.id,
+        mode: g.mode,
+        wager: g.wager,
+        poolAmount: g.poolAmount,
+        winnerId: g.winnerId,
+        winnerPayout: g.winnerPayout,
+        serverSeedHash: g.serverSeedHash,
+        serverSeed: g.serverSeed,
+        clientSeed: g.clientSeed,
+        players: g.players.map(p => ({
+          walletAddress: p.walletAddress,
+          username: p.username,
+        })),
+        completedAt: g.completedAt,
+        createdAt: g.createdAt,
+      }));
+      res.json(safeGames);
+    } catch (error) {
+      console.error("Error getting completed games:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Get game by ID
   app.get("/api/games/:id", async (req, res) => {
     try {
@@ -685,34 +714,6 @@ export async function registerRoutes(
       res.json(stats);
     } catch (error) {
       console.error("Error getting global stats:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  app.get("/api/games/completed", async (req, res) => {
-    try {
-      const limit = parseInt(req.query.limit as string) || 50;
-      const games = await storage.getCompletedGames(limit);
-      const safeGames = games.map(g => ({
-        id: g.id,
-        mode: g.mode,
-        wager: g.wager,
-        poolAmount: g.poolAmount,
-        winnerId: g.winnerId,
-        winnerPayout: g.winnerPayout,
-        serverSeedHash: g.serverSeedHash,
-        serverSeed: g.serverSeed,
-        clientSeed: g.clientSeed,
-        players: g.players.map(p => ({
-          walletAddress: p.walletAddress,
-          username: p.username,
-        })),
-        completedAt: g.completedAt,
-        createdAt: g.createdAt,
-      }));
-      res.json(safeGames);
-    } catch (error) {
-      console.error("Error getting completed games:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

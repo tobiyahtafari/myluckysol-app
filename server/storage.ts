@@ -680,7 +680,7 @@ export class MemStorage implements IStorage {
 
     finalGame.status = "completed";
     finalGame.completedAt = Date.now();
-    finalGame.winnerId = winner.id;
+    finalGame.winnerId = winner.walletAddress;
     finalGame.winnerPayout = payout;
     finalGame.wagaRewards = winWagaReward;
 
