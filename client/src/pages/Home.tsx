@@ -9,7 +9,7 @@ import { WalletModal } from "@/components/WalletModal";
 import { EarningsCalculator } from "@/components/EarningsCalculator";
 import { useQuery } from "@tanstack/react-query";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
-import heroBgGif from "@assets/myluckysolbg_1771977606358.gif";
+import heroBgGif from "@assets/myluckysolbg_(1)_1771978388066.gif";
 
 function formatCompact(value: number): string {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(value >= 10_000_000_000 ? 0 : value >= 1_000_000_000 ? 1 : 0).replace(/\.0$/, "")}B+`;
@@ -145,7 +145,7 @@ export default function Home() {
     <div className="min-h-screen">
       <div className="relative">
         {/* Combined Hero and Why Choose Section with Shared Background */}
-        <div className="absolute inset-0 z-0 overflow-hidden flex items-start justify-center pt-[35rem] md:pt-[30rem] lg:pt-[25rem]">
+        <div className="absolute inset-0 z-0 overflow-hidden flex items-start justify-center pt-[45rem] md:pt-[38rem] lg:pt-[35rem]">
           <img 
             src={heroBgGif} 
             alt="" 
