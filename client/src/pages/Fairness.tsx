@@ -188,6 +188,7 @@ export default function Fairness() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="mb-12"
+          id="verify-section"
         >
           <h2 className="text-2xl font-bold mb-4">Verify a Game</h2>
           <Card className="p-6 border-primary/20">
@@ -348,7 +349,10 @@ export default function Fairness() {
                           onClick={() => {
                             setSearchHash(game.serverSeedHash || "");
                             handleVerify();
-                            window.scrollTo({ top: 0, behavior: "smooth" });
+                            const verifySection = document.getElementById("verify-section");
+                            if (verifySection) {
+                              verifySection.scrollIntoView({ behavior: "smooth" });
+                            }
                           }}
                           data-testid={`button-verify-game-${game.id}`}
                         >

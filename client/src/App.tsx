@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -20,21 +21,34 @@ import Fairness from "@/pages/Fairness";
 import NotFound from "@/pages/not-found";
 import { GameNotificationManager } from "@/components/GameNotification";
 
+function ScrollToTop() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+
+  return null;
+}
+
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/play" component={Play} />
-      <Route path="/game/:id" component={GameRoom} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/leaderboard" component={Leaderboard} />
-      <Route path="/terms" component={Terms} />
-      <Route path="/privacy" component={Privacy} />
-      <Route path="/how-to-play" component={HowToPlay} />
-      <Route path="/docs" component={Docs} />
-      <Route path="/fairness" component={Fairness} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <ScrollToTop />
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/play" component={Play} />
+        <Route path="/game/:id" component={GameRoom} />
+        <Route path="/profile" component={Profile} />
+        <Route path="/leaderboard" component={Leaderboard} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/how-to-play" component={HowToPlay} />
+        <Route path="/docs" component={Docs} />
+        <Route path="/fairness" component={Fairness} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 
