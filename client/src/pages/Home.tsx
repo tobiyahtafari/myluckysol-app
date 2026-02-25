@@ -531,15 +531,15 @@ export default function Home() {
           <img 
             src={footerBgGif} 
             alt="" 
-            className="w-full h-full object-cover opacity-50"
+            className="w-full h-full object-cover opacity-75"
           />
           {/* Diamond Mesh Grid Overlay */}
-          <div className="absolute inset-0 bg-mesh-grid opacity-30" />
+          <div className="absolute inset-0 bg-mesh-grid opacity-50 z-10" />
           {/* Fades to blend with surrounding sections */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background z-20" />
         </div>
 
-        <div className="container mx-auto px-4 text-center relative z-10">
+        <div className="container mx-auto px-4 text-center relative z-30">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -548,7 +548,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">
               Ready to Test Your Luck?
             </h2>
-            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl font-bold text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
               Join thousands of players winning SOL every day on the most trusted 
               Solana gaming platform.
             </p>
