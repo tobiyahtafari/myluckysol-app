@@ -145,12 +145,12 @@ export default function Home() {
     <div className="min-h-screen">
       <div className="relative">
         {/* Combined Hero and Why Choose Section with Shared Background */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 z-0 overflow-hidden flex items-center justify-center">
           <img 
             src={heroBgGif} 
             alt="" 
-            className="w-full h-auto opacity-20 block mx-auto"
-            style={{ minWidth: '100%', maxWidth: '100%' }}
+            className="w-full min-w-full h-auto opacity-20 block"
+            style={{ objectFit: 'contain' }}
           />
           <div className="absolute inset-0 home-hero-grid" />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
