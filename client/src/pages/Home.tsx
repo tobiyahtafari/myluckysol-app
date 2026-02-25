@@ -10,6 +10,7 @@ import { EarningsCalculator } from "@/components/EarningsCalculator";
 import { useQuery } from "@tanstack/react-query";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
 import heroBgGif from "@assets/myluckysolbg_(1)_1771978388066.gif";
+import footerBgGif from "@assets/bg2_(1)_1772062359228.gif";
 
 function formatCompact(value: number): string {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(value >= 10_000_000_000 ? 0 : value >= 1_000_000_000 ? 1 : 0).replace(/\.0$/, "")}B+`;
@@ -524,17 +525,30 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 bg-gradient-to-b from-primary/10 to-secondary/10">
-        <div className="container mx-auto px-4 text-center">
+      <section className="py-24 relative overflow-hidden">
+        {/* Background GIF with 50% opacity */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={footerBgGif} 
+            alt="" 
+            className="w-full h-full object-cover opacity-50"
+          />
+          {/* Diamond Mesh Grid Overlay */}
+          <div className="absolute inset-0 bg-mesh-grid opacity-30" />
+          {/* Fades to blend with surrounding sections */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+        </div>
+
+        <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">
               Ready to Test Your Luck?
             </h2>
-            <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
               Join thousands of players winning SOL every day on the most trusted 
               Solana gaming platform.
             </p>
