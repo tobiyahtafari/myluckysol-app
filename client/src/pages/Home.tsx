@@ -230,8 +230,8 @@ export default function Home() {
                       transition={{ delay: 0.2 + i * 0.1 }}
                       className="text-center"
                     >
-                      <p className="text-2xl md:text-3xl font-bold text-gradient-gold">{stat.value}</p>
-                      <p className="text-sm font-bold text-[#00FFA3] drop-shadow-[0_0_10px_rgba(0,255,163,0.8)] uppercase tracking-wider">{stat.label}</p>
+                      <p className="text-2xl md:text-3xl font-bold text-[#00FFA3] drop-shadow-[0_0_10px_rgba(0,255,163,0.8)]">{stat.value}</p>
+                      <p className="text-sm font-bold text-gradient-gold uppercase tracking-wider">{stat.label}</p>
                     </motion.div>
                   ))}
                   {stats.slice(2).map((stat, i) => (
@@ -242,8 +242,8 @@ export default function Home() {
                       transition={{ delay: 0.4 + i * 0.1 }}
                       className="text-center"
                     >
-                      <p className="text-2xl md:text-3xl font-bold text-gradient-gold">{stat.value}</p>
-                      <p className="text-sm font-bold text-[#00FFA3] drop-shadow-[0_0_10px_rgba(0,255,163,0.8)] uppercase tracking-wider">{stat.label}</p>
+                      <p className="text-2xl md:text-3xl font-bold text-[#00FFA3] drop-shadow-[0_0_10px_rgba(0,255,163,0.8)]">{stat.value}</p>
+                      <p className="text-sm font-bold text-gradient-gold uppercase tracking-wider">{stat.label}</p>
                     </motion.div>
                   ))}
                 </div>
