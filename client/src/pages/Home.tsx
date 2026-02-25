@@ -548,7 +548,10 @@ export default function Home() {
             <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">
               Ready to Test Your Luck?
             </h2>
-            <p className="text-xl font-bold text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p 
+              className="text-xl font-bold mb-10 max-w-2xl mx-auto leading-relaxed text-[#ffffff]"
+              style={{ textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000" }}
+            >
               Join thousands of players winning SOL every day on the most trusted 
               Solana gaming platform.
             </p>
