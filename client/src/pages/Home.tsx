@@ -145,19 +145,13 @@ export default function Home() {
     <div className="min-h-screen">
       <div className="relative">
         {/* Combined Hero and Why Choose Section with Shared Background */}
-        <div className="absolute inset-0 z-0 overflow-hidden flex items-start justify-center pt-[48rem] md:pt-[42rem] lg:pt-[35rem]">
-          <div className="relative w-full h-full flex justify-center">
-            <img 
-              src={heroBgGif} 
-              alt="" 
-              className="w-full min-w-full h-auto opacity-20 block"
-              style={{ 
-                objectFit: 'contain',
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%)'
-              }}
-            />
-          </div>
+        <div className="absolute inset-0 z-0 overflow-hidden flex items-start justify-center pt-[45rem] md:pt-[38rem] lg:pt-[35rem]">
+          <img 
+            src={heroBgGif} 
+            alt="" 
+            className="w-full min-w-full h-auto opacity-20 block"
+            style={{ objectFit: 'contain' }}
+          />
           <div className="absolute inset-0 home-hero-grid" />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
         </div>
