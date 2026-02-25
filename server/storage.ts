@@ -209,8 +209,8 @@ export class MemStorage implements IStorage {
       return { canClaim: false, claimAmount: 0, remainingVesting: 0, nextClaimTime: 0 };
     }
 
-    // Calculate 10% of total vesting per day
-    const dailyAmount = Math.floor(totalVesting * (VESTING_DAILY_PERCENT / 100));
+    // Calculate daily release — ceil so small balances always yield at least 1 WAGA
+    const dailyAmount = Math.ceil(totalVesting * (VESTING_DAILY_PERCENT / 100));
     const claimAmount = Math.min(dailyAmount, remainingVesting);
 
     if (claimAmount <= 0) {
@@ -232,7 +232,7 @@ export class MemStorage implements IStorage {
 
     const totalVesting = profile.wagaVestingTotal || 0;
     const remaining = totalVesting - profile.wagaVestingClaimed;
-    console.log(`[VESTING] ${walletAddress.slice(0, 8)}... claimed ${claimAmount} WAGA (${VESTING_DAILY_PERCENT}% of ${totalVesting})`);
+    console.log(`[VESTING] ${walletAddress.slice(0, 8)}... claimed ${claimAmount} WAGA (${VESTING_DAILY_PERCENT}% daily of ${totalVesting} total, ceiled)`);
     console.log(`[VESTING] Remaining: ${remaining} WAGA`);
   }
 

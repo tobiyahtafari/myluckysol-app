@@ -670,7 +670,9 @@ export async function registerRoutes(
       const remaining = totalVesting - claimed;
       const lastClaim = profile.wagaVestingLastClaim || 0;
       const nextClaimTime = lastClaim > 0 ? lastClaim + VESTING_PERIOD_MS : 0;
-      const canClaim = remaining > 0 && (lastClaim === 0 || Date.now() >= nextClaimTime);
+      // Ceil so small balances always yield at least 1 WAGA per day
+      const dailyAmount = Math.ceil(totalVesting * (VESTING_DAILY_PERCENT / 100));
+      const canClaim = remaining > 0 && dailyAmount > 0 && (lastClaim === 0 || Date.now() >= nextClaimTime);
 
       res.json({
         totalVesting,
@@ -678,7 +680,7 @@ export async function registerRoutes(
         remaining,
         nextClaimTime: remaining > 0 ? nextClaimTime : 0,
         canClaim,
-        dailyAmount: Math.floor(totalVesting * (VESTING_DAILY_PERCENT / 100)),
+        dailyAmount,
       });
     } catch (error) {
       console.error("Error getting vesting status:", error);
