@@ -149,7 +149,7 @@ export default function Home() {
           <img 
             src={heroBgGif} 
             alt="" 
-            className="w-full h-full object-cover opacity-20"
+            className="w-full h-auto min-h-full object-cover lg:object-contain opacity-20"
           />
           <div className="absolute inset-0 home-hero-grid" />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
