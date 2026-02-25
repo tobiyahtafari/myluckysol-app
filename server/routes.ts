@@ -598,42 +598,48 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid wallet address" });
       }
 
-      const result = await storage.claimVestedWaga(walletAddress);
+      // Step 1: Preview — calculate what can be claimed without touching storage
+      const preview = await storage.previewVestedClaim(walletAddress);
       
-      if (!result) {
+      if (!preview) {
         return res.status(404).json({ error: "Profile not found" });
       }
 
-      if (result.claimedAmount === 0 && result.remainingVesting > 0) {
-        const hoursRemaining = Math.ceil((result.nextClaimTime - Date.now()) / (1000 * 60 * 60));
-        return res.status(400).json({ 
-          error: `Must wait 24 hours between claims. Next claim available in ${hoursRemaining} hours.`,
-          nextClaimTime: result.nextClaimTime,
-          remainingVesting: result.remainingVesting,
-        });
+      if (!preview.canClaim) {
+        if (preview.nextClaimTime > 0) {
+          const hoursRemaining = Math.ceil((preview.nextClaimTime - Date.now()) / (1000 * 60 * 60));
+          return res.status(400).json({ 
+            error: `Must wait 24 hours between claims. Next claim available in ${hoursRemaining} hours.`,
+            nextClaimTime: preview.nextClaimTime,
+            remainingVesting: preview.remainingVesting,
+          });
+        }
+        return res.status(400).json({ error: "No vested tokens available to claim" });
       }
 
-      // On-chain transfer from Vault to user
+      // Step 2: Attempt on-chain transfer BEFORE committing to storage
       let txSig;
-      if (solanaClient.hasAuthority() && result.claimedAmount > 0) {
-        const transferResult = await solanaClient.transferWagaFromVault(walletAddress, result.claimedAmount);
+      if (solanaClient.hasAuthority()) {
+        const transferResult = await solanaClient.transferWagaFromVault(walletAddress, preview.claimAmount);
         if (!transferResult.success) {
-          // If on-chain fails, we should probably rollback the storage claim or log it heavily
+          // Transfer failed — storage is NOT updated, user can retry freely
           console.error(`[WAGA] On-chain claim transfer failed for ${walletAddress}: ${transferResult.error}`);
           return res.status(500).json({ error: "On-chain transfer failed: " + transferResult.error });
         }
         txSig = transferResult.txSig;
       }
 
+      // Step 3: Only commit to storage after on-chain success (or no on-chain required)
+      await storage.commitVestedClaim(walletAddress, preview.claimAmount);
+      const remainingAfterClaim = preview.remainingVesting - preview.claimAmount;
+
       res.json({
         success: true,
-        claimedAmount: result.claimedAmount,
-        remainingVesting: result.remainingVesting,
-        nextClaimTime: result.nextClaimTime,
+        claimedAmount: preview.claimAmount,
+        remainingVesting: remainingAfterClaim,
+        nextClaimTime: preview.nextClaimTime,
         txSig,
-        message: result.claimedAmount > 0 
-          ? `Successfully claimed ${result.claimedAmount.toLocaleString()} WAGA tokens!`
-          : "No vested tokens available to claim",
+        message: `Successfully claimed ${preview.claimAmount.toLocaleString()} WAGA tokens!`,
       });
     } catch (error) {
       console.error("Error claiming vested WAGA:", error);

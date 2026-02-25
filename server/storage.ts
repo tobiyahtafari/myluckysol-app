@@ -31,7 +31,8 @@ export interface IStorage {
   checkUsernameUnique(username: string): Promise<boolean>;
   grantPendingReferralRewards(walletAddress: string): Promise<{ granted: boolean; referrerWallet?: string } | null>;
   rollbackReferralRewards(walletAddress: string): Promise<void>;
-  claimVestedWaga(walletAddress: string): Promise<{ claimedAmount: number; remainingVesting: number; nextClaimTime: number } | null>;
+  previewVestedClaim(walletAddress: string): Promise<{ canClaim: boolean; claimAmount: number; remainingVesting: number; nextClaimTime: number } | null>;
+  commitVestedClaim(walletAddress: string, claimAmount: number): Promise<void>;
   getChatMessages(gameId: string): Promise<ChatMessage[]>;
   addChatMessage(data: ChatMessage): Promise<ChatMessage>;
   getGameHistory(walletAddress: string, limit: number): Promise<GameHistory[]>;
@@ -183,21 +184,20 @@ export class MemStorage implements IStorage {
     return !profiles.some(p => p.username === username);
   }
 
-  async claimVestedWaga(walletAddress: string): Promise<{ claimedAmount: number; remainingVesting: number; nextClaimTime: number } | null> {
+  async previewVestedClaim(walletAddress: string): Promise<{ canClaim: boolean; claimAmount: number; remainingVesting: number; nextClaimTime: number } | null> {
     const profile = this.profiles.get(walletAddress);
     if (!profile) return null;
 
     const now = Date.now();
     const lastClaim = profile.wagaVestingLastClaim || 0;
-    const timeSinceLastClaim = now - lastClaim;
 
     // Check if 24 hours have passed since last claim
-    if (lastClaim > 0 && timeSinceLastClaim < VESTING_PERIOD_MS) {
-      const nextClaimTime = lastClaim + VESTING_PERIOD_MS;
+    if (lastClaim > 0 && (now - lastClaim) < VESTING_PERIOD_MS) {
       return {
-        claimedAmount: 0,
+        canClaim: false,
+        claimAmount: 0,
         remainingVesting: (profile.wagaVestingTotal || 0) - (profile.wagaVestingClaimed || 0),
-        nextClaimTime,
+        nextClaimTime: lastClaim + VESTING_PERIOD_MS,
       };
     }
 
@@ -206,31 +206,34 @@ export class MemStorage implements IStorage {
     const remainingVesting = totalVesting - alreadyClaimed;
 
     if (remainingVesting <= 0) {
-      return {
-        claimedAmount: 0,
-        remainingVesting: 0,
-        nextClaimTime: 0,
-      };
+      return { canClaim: false, claimAmount: 0, remainingVesting: 0, nextClaimTime: 0 };
     }
 
-    // Calculate 10% of total vesting (not remaining) per day
+    // Calculate 10% of total vesting per day
     const dailyAmount = Math.floor(totalVesting * (VESTING_DAILY_PERCENT / 100));
     const claimAmount = Math.min(dailyAmount, remainingVesting);
 
-    // Update profile
-    profile.wagaVestingClaimed = alreadyClaimed + claimAmount;
+    if (claimAmount <= 0) {
+      return { canClaim: false, claimAmount: 0, remainingVesting, nextClaimTime: 0 };
+    }
+
+    return { canClaim: true, claimAmount, remainingVesting, nextClaimTime: now + VESTING_PERIOD_MS };
+  }
+
+  async commitVestedClaim(walletAddress: string, claimAmount: number): Promise<void> {
+    const profile = this.profiles.get(walletAddress);
+    if (!profile || claimAmount <= 0) return;
+
+    const now = Date.now();
+    profile.wagaVestingClaimed = (profile.wagaVestingClaimed || 0) + claimAmount;
     profile.wagaVestingLastClaim = now;
     profile.wagaEarned = (profile.wagaEarned || 0) + claimAmount;
     this.profiles.set(walletAddress, profile);
 
+    const totalVesting = profile.wagaVestingTotal || 0;
+    const remaining = totalVesting - profile.wagaVestingClaimed;
     console.log(`[VESTING] ${walletAddress.slice(0, 8)}... claimed ${claimAmount} WAGA (${VESTING_DAILY_PERCENT}% of ${totalVesting})`);
-    console.log(`[VESTING] Remaining: ${remainingVesting - claimAmount} WAGA`);
-
-    return {
-      claimedAmount: claimAmount,
-      remainingVesting: remainingVesting - claimAmount,
-      nextClaimTime: now + VESTING_PERIOD_MS,
-    };
+    console.log(`[VESTING] Remaining: ${remaining} WAGA`);
   }
 
   async getChatMessages(gameId: string): Promise<ChatMessage[]> {
