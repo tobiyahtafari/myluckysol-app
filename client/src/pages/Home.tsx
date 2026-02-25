@@ -534,7 +534,7 @@ export default function Home() {
             className="w-full h-full object-cover opacity-75"
           />
           {/* Diamond Mesh Grid Overlay */}
-          <div className="absolute inset-0 bg-mesh-grid opacity-50 z-10" />
+          <div className="absolute inset-0 bg-mesh-grid z-10" />
           {/* Fades to blend with surrounding sections */}
           <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background z-20" />
         </div>
