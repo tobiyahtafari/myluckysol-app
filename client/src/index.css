@@ -387,6 +387,13 @@
     animation: bg-shift-alt 25s ease-in-out infinite;
   }
 
+  .home-hero-grid {
+    background-size: 40px 40px;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  }
+
   @keyframes bg-shift {
     0%, 100% {
       transform: translate(0, 0) rotate(0deg);
