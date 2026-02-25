@@ -15,11 +15,12 @@ interface CountdownTimerProps {
 
 export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md", enableSound = false, playMusic = false }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const tickAudioRef = useRef<HTMLAudioElement | null>(null);
   const bgMusicAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastTickedSecond = useRef<number>(-1);
   const pendingPlayRef = useRef(false);
+  const hasStartedRef = useRef(false);
 
   // Unlock audio on first user interaction
   useEffect(() => {
@@ -47,7 +48,7 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
     if (playMusic) {
       bgMusicAudioRef.current = new Audio(newCountdownAudio);
       bgMusicAudioRef.current.loop = false;
-      bgMusicAudioRef.current.volume = 0.6;
+      bgMusicAudioRef.current.volume = 0.65;
     }
 
     return () => {
@@ -68,7 +69,6 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
       const playPromise = bgMusicAudioRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          // Autoplay blocked — will play on next user interaction
           pendingPlayRef.current = true;
         });
       }
@@ -90,12 +90,10 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
       const remaining = Math.max(0, Math.floor((targetTime - adjustedNow) / 1000));
       setTimeLeft(remaining);
 
-      if (playMusic && bgMusicAudioRef.current) {
-        if (!isMuted && remaining > 0) {
-          tryPlayMusic();
-        } else if (isMuted || remaining === 0) {
-          bgMusicAudioRef.current.pause();
-        }
+      // Start music when timer begins, never pause it due to timer ending
+      if (playMusic && bgMusicAudioRef.current && !isMuted && !hasStartedRef.current && remaining > 0) {
+        hasStartedRef.current = true;
+        tryPlayMusic();
       }
 
       if (enableSound && remaining <= 10 && remaining > 0 && remaining !== lastTickedSecond.current) {
@@ -114,16 +112,17 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
     return () => clearInterval(interval);
   }, [targetTime, serverTime, onComplete, enableSound, playMusic, playTick, tryPlayMusic, isMuted]);
 
-  // Sync mute state with music
+  // Sync mute/unmute with music
   useEffect(() => {
     if (bgMusicAudioRef.current) {
       if (isMuted) {
         bgMusicAudioRef.current.pause();
-      } else if (timeLeft > 0) {
+      } else {
+        hasStartedRef.current = true;
         tryPlayMusic();
       }
     }
-  }, [isMuted, timeLeft, tryPlayMusic]);
+  }, [isMuted, tryPlayMusic]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;

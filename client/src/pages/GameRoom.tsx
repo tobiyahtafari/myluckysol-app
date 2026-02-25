@@ -338,6 +338,7 @@ export default function GameRoom() {
       {showWinner && winner && (
         <WinnerReveal
           winnerAddress={winner.walletAddress}
+          winnerUsername={winner.username || winner.displayName}
           payout={game.winnerPayout || 0}
           wagaReward={game.wagaRewards || 0}
           isCurrentUserWinner={isCurrentUserWinner}
