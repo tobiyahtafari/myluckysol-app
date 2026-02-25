@@ -247,7 +247,7 @@ export default function Fairness() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Payout</span>
-                    <p className="font-semibold text-accent">{verifyResult.winnerPayout} SOL</p>
+                    <p className="font-semibold text-accent">{verifyResult.winnerPayout?.toFixed(4)} SOL</p>
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
