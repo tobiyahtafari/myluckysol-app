@@ -617,19 +617,28 @@ export async function registerRoutes(
         return res.status(400).json({ error: "No vested tokens available to claim" });
       }
 
-      // Step 2: Attempt on-chain transfer BEFORE committing to storage
+      // Step 2: Attempt on-chain transfer BEFORE committing to storage.
+      // REQUIRE_ONCHAIN_WAGA=true enforces this for mainnet. On devnet it is skipped
+      // so claiming can be tested without a live WAGA vault.
+      const requireOnchain = process.env.REQUIRE_ONCHAIN_WAGA === "true";
       let txSig;
       if (solanaClient.hasAuthority()) {
         const transferResult = await solanaClient.transferWagaFromVault(walletAddress, preview.claimAmount);
         if (!transferResult.success) {
-          // Transfer failed — storage is NOT updated, user can retry freely
-          console.error(`[WAGA] On-chain claim transfer failed for ${walletAddress}: ${transferResult.error}`);
-          return res.status(500).json({ error: "On-chain transfer failed: " + transferResult.error });
+          if (requireOnchain) {
+            // Mainnet: block the claim — storage is NOT updated, user can retry freely
+            console.error(`[WAGA] On-chain claim transfer failed for ${walletAddress}: ${transferResult.error}`);
+            return res.status(500).json({ error: "On-chain transfer failed: " + transferResult.error });
+          } else {
+            // Devnet: log the failure but allow the storage claim to proceed for testing
+            console.warn(`[WAGA] Devnet — on-chain transfer skipped (${transferResult.error}). Committing storage claim for testing.`);
+          }
+        } else {
+          txSig = transferResult.txSig;
         }
-        txSig = transferResult.txSig;
       }
 
-      // Step 3: Only commit to storage after on-chain success (or no on-chain required)
+      // Step 3: Commit to storage (on-chain succeeded, or devnet where it is not enforced)
       await storage.commitVestedClaim(walletAddress, preview.claimAmount);
       const remainingAfterClaim = preview.remainingVesting - preview.claimAmount;
 

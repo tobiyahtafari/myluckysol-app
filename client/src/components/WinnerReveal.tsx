@@ -147,7 +147,7 @@ export function WinnerReveal({
             initial={{ scale: 0, rotate: -20 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.15, type: "spring", damping: 10 }}
-            className="absolute -top-7 left-1/2 -translate-x-1/2"
+            className="absolute -top-7 left-0 right-0 flex justify-center"
           >
             {isCurrentUserWinner ? (
               <div className="w-14 h-14 rounded-full gradient-gold flex items-center justify-center glow-gold">
