@@ -15,7 +15,7 @@ interface CountdownTimerProps {
 
 export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md", enableSound = false, playMusic = false }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState(0);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const tickAudioRef = useRef<HTMLAudioElement | null>(null);
   const bgMusicAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastTickedSecond = useRef<number>(-1);
