@@ -125,7 +125,7 @@ export default function Profile() {
     } catch (err: any) {
       toast({
         title: "Invalid username",
-        description: err.errors?.[0]?.message || "Between 3-20 chars, letters, numbers, ._- only",
+        description: (err.errors?.[0]?.message || "Between 3-20 chars, letters, numbers, ._- only") + " (no spaces)",
         variant: "destructive",
       });
       return;

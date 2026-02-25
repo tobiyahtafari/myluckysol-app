@@ -48,7 +48,7 @@ function PriceWidget() {
         ) : (
           <>
             <img src={wagaLogo} alt="WAGA" className="w-5 h-5 object-contain" />
-            <span className="text-sm font-mono font-medium text-gradient-gold">
+            <span className="text-sm font-mono font-medium" style={{ color: "#c1ff72" }}>
               ${wagaPrice.toFixed(4)}
             </span>
           </>
