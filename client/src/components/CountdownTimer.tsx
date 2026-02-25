@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import newCountdownAudio from "@assets/countdownmusic_1771993635834.MP3";
 
 interface CountdownTimerProps {
   targetTime: number;
@@ -9,25 +10,70 @@ interface CountdownTimerProps {
   onComplete?: () => void;
   size?: "sm" | "md" | "lg";
   enableSound?: boolean;
+  playMusic?: boolean;
 }
 
-export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md", enableSound = false }: CountdownTimerProps) {
+export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md", enableSound = false, playMusic = false }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const tickAudioRef = useRef<HTMLAudioElement | null>(null);
   const bgMusicAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastTickedSecond = useRef<number>(-1);
+  const pendingPlayRef = useRef(false);
+
+  // Unlock audio on first user interaction
+  useEffect(() => {
+    const unlock = () => {
+      if (pendingPlayRef.current && bgMusicAudioRef.current && !isMuted) {
+        bgMusicAudioRef.current.play().catch(() => {});
+        pendingPlayRef.current = false;
+      }
+      document.removeEventListener("click", unlock);
+      document.removeEventListener("touchstart", unlock);
+    };
+    document.addEventListener("click", unlock);
+    document.addEventListener("touchstart", unlock);
+    return () => {
+      document.removeEventListener("click", unlock);
+      document.removeEventListener("touchstart", unlock);
+    };
+  }, [isMuted]);
 
   useEffect(() => {
     if (enableSound) {
       tickAudioRef.current = new Audio("/sounds/tick.wav");
       tickAudioRef.current.volume = 0.4;
-      
-      bgMusicAudioRef.current = new Audio("/sounds/bgmusic.mp3");
-      bgMusicAudioRef.current.loop = false;
-      bgMusicAudioRef.current.volume = 0.3;
     }
-  }, [enableSound]);
+    if (playMusic) {
+      bgMusicAudioRef.current = new Audio(newCountdownAudio);
+      bgMusicAudioRef.current.loop = false;
+      bgMusicAudioRef.current.volume = 0.6;
+    }
+
+    return () => {
+      if (tickAudioRef.current) {
+        tickAudioRef.current.pause();
+        tickAudioRef.current = null;
+      }
+      if (bgMusicAudioRef.current) {
+        bgMusicAudioRef.current.pause();
+        bgMusicAudioRef.current = null;
+      }
+    };
+  }, [enableSound, playMusic]);
+
+  const tryPlayMusic = useCallback(() => {
+    if (!bgMusicAudioRef.current || isMuted) return;
+    if (bgMusicAudioRef.current.paused) {
+      const playPromise = bgMusicAudioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay blocked — will play on next user interaction
+          pendingPlayRef.current = true;
+        });
+      }
+    }
+  }, [isMuted]);
 
   const playTick = useCallback(() => {
     if (!isMuted && enableSound && tickAudioRef.current) {
@@ -38,19 +84,16 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
 
   useEffect(() => {
     const clockOffset = serverTime ? (serverTime - Date.now()) : 0;
-    
+
     const updateTimer = () => {
       const adjustedNow = Date.now() + clockOffset;
       const remaining = Math.max(0, Math.floor((targetTime - adjustedNow) / 1000));
       setTimeLeft(remaining);
 
-      // Handle background music
-      if (enableSound && bgMusicAudioRef.current) {
+      if (playMusic && bgMusicAudioRef.current) {
         if (!isMuted && remaining > 0) {
-          if (bgMusicAudioRef.current.paused) {
-            bgMusicAudioRef.current.play().catch(() => {});
-          }
-        } else {
+          tryPlayMusic();
+        } else if (isMuted || remaining === 0) {
           bgMusicAudioRef.current.pause();
         }
       }
@@ -69,20 +112,18 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
     const interval = setInterval(updateTimer, 200);
 
     return () => clearInterval(interval);
-  }, [targetTime, serverTime, onComplete, enableSound, playTick]);
+  }, [targetTime, serverTime, onComplete, enableSound, playMusic, playTick, tryPlayMusic, isMuted]);
 
+  // Sync mute state with music
   useEffect(() => {
-    return () => {
-      if (tickAudioRef.current) {
-        tickAudioRef.current.pause();
-        tickAudioRef.current = null;
-      }
-      if (bgMusicAudioRef.current) {
+    if (bgMusicAudioRef.current) {
+      if (isMuted) {
         bgMusicAudioRef.current.pause();
-        bgMusicAudioRef.current = null;
+      } else if (timeLeft > 0) {
+        tryPlayMusic();
       }
-    };
-  }, []);
+    }
+  }, [isMuted, timeLeft, tryPlayMusic]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -93,8 +134,8 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
     lg: { container: "w-36 h-36", text: "text-5xl", ring: "p-[5px]" },
   };
 
-  const isUrgent = timeLeft <= 10;
-  const isWarning = timeLeft <= 30 && !isUrgent;
+  const isUrgent = timeLeft <= 5;
+  const isWarning = timeLeft <= 10 && !isUrgent;
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -105,24 +146,24 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3 }}
           className={`${sizeClasses[size].ring} rounded-full ${
-            isUrgent 
-              ? "bg-gradient-to-br from-red-500 via-orange-500 to-red-600 timer-urgent-glow animate-countdown" 
+            isUrgent
+              ? "bg-gradient-to-br from-red-500 via-orange-500 to-red-600 timer-urgent-glow animate-countdown"
               : "timer-ring-gradient timer-glow"
           }`}
         >
-          <div 
+          <div
             className={`${sizeClasses[size].container} rounded-full bg-background flex items-center justify-center relative overflow-hidden`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-500/10" />
-            <motion.span 
+            <motion.span
               key={timeLeft}
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className={`font-mono font-bold relative z-10 ${sizeClasses[size].text} ${
-                isUrgent 
-                  ? "text-red-400" 
-                  : isWarning 
-                  ? "text-amber-400" 
+                isUrgent
+                  ? "text-red-400"
+                  : isWarning
+                  ? "text-amber-400"
                   : "text-gradient-solana"
               }`}
             >
@@ -138,7 +179,7 @@ export function CountdownTimer({ targetTime, serverTime, onComplete, size = "md"
         }`}>
           {isUrgent ? "Final seconds!" : isWarning ? "Time running out..." : "Time remaining"}
         </p>
-        {enableSound && (
+        {(enableSound || playMusic) && (
           <Button
             variant="ghost"
             size="sm"
