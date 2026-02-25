@@ -145,7 +145,7 @@ export default function Home() {
     <div className="min-h-screen">
       <div className="relative">
         {/* Combined Hero and Why Choose Section with Shared Background */}
-        <div className="absolute inset-0 z-0 overflow-hidden flex items-center justify-center">
+        <div className="absolute inset-0 z-0 overflow-hidden flex items-start justify-center pt-[35rem] md:pt-[30rem] lg:pt-[25rem]">
           <img 
             src={heroBgGif} 
             alt="" 
