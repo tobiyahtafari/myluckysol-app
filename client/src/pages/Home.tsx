@@ -150,7 +150,7 @@ export default function Home() {
             <img 
               src={heroBgGif} 
               alt="" 
-              className="w-full min-w-full h-auto opacity-[0.77] md:opacity-20 block"
+              className="w-full min-w-[133%] md:min-w-full h-auto opacity-[0.77] md:opacity-20 block"
               style={{ objectFit: 'contain' }}
             />
             {/* Top and Bottom Fades for the GIF */}
