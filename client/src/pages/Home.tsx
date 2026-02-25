@@ -233,13 +233,13 @@ export default function Home() {
                     >
                       <p 
                         className="text-2xl md:text-3xl font-bold text-[#55C200] drop-shadow-[0_0_10px_rgba(85,194,0,0.8)]"
-                        style={{ textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000" }}
+                        style={{ WebkitTextStroke: "0.5px black" }}
                       >
                         {stat.value}
                       </p>
                       <p 
                         className="text-sm font-bold text-gradient-gold uppercase tracking-wider"
-                        style={{ textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000" }}
+                        style={{ WebkitTextStroke: "0.5px black" }}
                       >
                         {stat.label}
                       </p>
@@ -255,13 +255,13 @@ export default function Home() {
                     >
                       <p 
                         className="text-2xl md:text-3xl font-bold text-[#55C200] drop-shadow-[0_0_10px_rgba(85,194,0,0.8)]"
-                        style={{ textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000" }}
+                        style={{ WebkitTextStroke: "0.5px black" }}
                       >
                         {stat.value}
                       </p>
                       <p 
                         className="text-sm font-bold text-gradient-gold uppercase tracking-wider"
-                        style={{ textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000" }}
+                        style={{ WebkitTextStroke: "0.5px black" }}
                       >
                         {stat.label}
                       </p>
@@ -570,7 +570,7 @@ export default function Home() {
             </h2>
             <p 
               className="text-xl font-bold mb-10 max-w-2xl mx-auto leading-relaxed text-[#ffffff]"
-              style={{ textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000" }}
+              style={{ WebkitTextStroke: "0.5px black" }}
             >
               Join thousands of players winning SOL every day on the most trusted 
               Solana gaming platform.
