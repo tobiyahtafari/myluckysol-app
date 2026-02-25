@@ -146,12 +146,17 @@ export default function Home() {
       <div className="relative">
         {/* Combined Hero and Why Choose Section with Shared Background */}
         <div className="absolute inset-0 z-0 overflow-hidden flex items-start justify-center pt-[45rem] md:pt-[38rem] lg:pt-[35rem]">
-          <img 
-            src={heroBgGif} 
-            alt="" 
-            className="w-full min-w-full h-auto opacity-20 block"
-            style={{ objectFit: 'contain' }}
-          />
+          <div className="relative w-full h-auto">
+            <img 
+              src={heroBgGif} 
+              alt="" 
+              className="w-full min-w-full h-auto opacity-20 block"
+              style={{ objectFit: 'contain' }}
+            />
+            {/* Top and Bottom Fades for the GIF */}
+            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent z-10" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
+          </div>
           <div className="absolute inset-0 home-hero-grid" />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
         </div>
