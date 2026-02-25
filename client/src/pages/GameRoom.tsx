@@ -74,7 +74,7 @@ export default function GameRoom() {
 
   const config = GAME_MODES[game.mode];
   const currentPlayer = game.players.find((p) => p.walletAddress === address);
-  const winner = game.players.find((p) => p.id === game.winnerId);
+  const winner = game.players.find((p) => p.walletAddress === game.winnerId);
   
   // Check if the current user is the winner - compare wallet addresses
   const isCurrentUserWinner = !!(
@@ -226,7 +226,7 @@ export default function GameRoom() {
                     player={player}
                     index={i}
                     isCurrentUser={player.walletAddress === address}
-                    isWinner={player.id === game.winnerId}
+                    isWinner={player.walletAddress === game.winnerId}
                     isEliminated={player.isEliminated}
                   />
                 ))}
