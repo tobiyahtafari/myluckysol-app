@@ -155,7 +155,7 @@ export default function Home() {
             />
             {/* Top and Bottom Fades for the GIF */}
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent z-10" />
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
+            <div className="absolute inset-x-0 bottom-0 h-32 md:h-32 lg:h-32 bg-gradient-to-t from-background to-transparent z-10" />
           </div>
           <div className="absolute inset-0 home-hero-grid" />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
@@ -231,7 +231,7 @@ export default function Home() {
                       className="text-center"
                     >
                       <p className="text-2xl md:text-3xl font-bold text-gradient-gold">{stat.value}</p>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-sm font-medium text-accent brightness-150 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)] uppercase tracking-wide">{stat.label}</p>
                     </motion.div>
                   ))}
                   {stats.slice(2).map((stat, i) => (
@@ -243,7 +243,7 @@ export default function Home() {
                       className="text-center"
                     >
                       <p className="text-2xl md:text-3xl font-bold text-gradient-gold">{stat.value}</p>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-sm font-medium text-accent brightness-150 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)] uppercase tracking-wide">{stat.label}</p>
                     </motion.div>
                   ))}
                 </div>
