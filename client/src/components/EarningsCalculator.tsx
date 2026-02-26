@@ -109,7 +109,7 @@ export function EarningsCalculator() {
                   <Clock className="w-3 h-3" /> Duration
                 </p>
                 <p className="text-lg font-bold text-primary">
-                  {mode === "1v1" ? "90s" : mode === "2-round" ? "180s" : mode === "3-round" ? "360s" : "720s"}
+                  {mode === "1v1" ? "15s" : mode === "2-round" ? "30s" : mode === "3-round" ? "45s" : "60s"}
                 </p>
               </div>
             </div>
