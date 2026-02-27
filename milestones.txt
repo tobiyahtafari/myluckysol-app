@@ -1,35 +1,79 @@
-MYLUCKYSOL TREASURY MILESTONE ESTIMATES
-Target: 250 SOL per game mode
-Treasury Fee: 10% of total pool
+MYLUCKYSOL TREASURY MILESTONE & AIRDROP PLAN
+Milestones: 100 SOL & 200 SOL per game mode combination
+Airdrop: 10% of milestone amount distributed to top players
 
 ================================================================================
 
+### MILESTONE: 100 SOL TARGET ###
+Airdrop Amount: 10 SOL total
+========================================
 MODE: 1v1 (2 players)
+Reward: Top 10 players split 10.0 SOL
 ----------------------------------------
-  > 0.01 SOL Wager:    125,000 games
-  >  0.1 SOL Wager:     12,500 games
-  >    1 SOL Wager:      1,250 games
-  >   10 SOL Wager:        125 games
+  > 0.01 SOL Wager:     50,000 games
+  >  0.1 SOL Wager:      5,000 games
+  >    1 SOL Wager:        500 games
+  >   10 SOL Wager:         50 games
 
 MODE: 2-Round (4 players)
+Reward: Top 10 players split 10.0 SOL
 ----------------------------------------
-  > 0.01 SOL Wager:     62,500 games
-  >  0.1 SOL Wager:      6,250 games
-  >    1 SOL Wager:        625 games
-  >   10 SOL Wager:         63 games
+  > 0.01 SOL Wager:     25,000 games
+  >  0.1 SOL Wager:      2,500 games
+  >    1 SOL Wager:        250 games
+  >   10 SOL Wager:         25 games
 
 MODE: 3-Round (8 players)
+Reward: Top 5 players split 10.0 SOL
 ----------------------------------------
-  > 0.01 SOL Wager:     31,250 games
-  >  0.1 SOL Wager:      3,125 games
-  >    1 SOL Wager:        313 games
-  >   10 SOL Wager:         32 games
+  > 0.01 SOL Wager:     12,500 games
+  >  0.1 SOL Wager:      1,250 games
+  >    1 SOL Wager:        125 games
+  >   10 SOL Wager:         13 games
 
 MODE: 4-Round (16 players)
+Reward: Top 5 players split 10.0 SOL
 ----------------------------------------
-  > 0.01 SOL Wager:     15,625 games
-  >  0.1 SOL Wager:      1,563 games
-  >    1 SOL Wager:        157 games
-  >   10 SOL Wager:         16 games
+  > 0.01 SOL Wager:      6,250 games
+  >  0.1 SOL Wager:        625 games
+  >    1 SOL Wager:         63 games
+  >   10 SOL Wager:          7 games
+
+================================================================================
+
+### MILESTONE: 200 SOL TARGET ###
+Airdrop Amount: 20 SOL total
+========================================
+MODE: 1v1 (2 players)
+Reward: Top 10 players split 20.0 SOL
+----------------------------------------
+  > 0.01 SOL Wager:    100,000 games
+  >  0.1 SOL Wager:     10,000 games
+  >    1 SOL Wager:      1,000 games
+  >   10 SOL Wager:        100 games
+
+MODE: 2-Round (4 players)
+Reward: Top 10 players split 20.0 SOL
+----------------------------------------
+  > 0.01 SOL Wager:     50,000 games
+  >  0.1 SOL Wager:      5,000 games
+  >    1 SOL Wager:        500 games
+  >   10 SOL Wager:         50 games
+
+MODE: 3-Round (8 players)
+Reward: Top 5 players split 20.0 SOL
+----------------------------------------
+  > 0.01 SOL Wager:     25,000 games
+  >  0.1 SOL Wager:      2,500 games
+  >    1 SOL Wager:        250 games
+  >   10 SOL Wager:         25 games
+
+MODE: 4-Round (16 players)
+Reward: Top 5 players split 20.0 SOL
+----------------------------------------
+  > 0.01 SOL Wager:     12,500 games
+  >  0.1 SOL Wager:      1,250 games
+  >    1 SOL Wager:        125 games
+  >   10 SOL Wager:         13 games
 
 ================================================================================
