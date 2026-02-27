@@ -1,5 +1,5 @@
-MYLUCKYSOL TREASURY MILESTONE & AIRDROP PLAN (ADJUSTED)
-Milestones: 100/200 SOL (Standard) | 1000/2000 SOL (10 SOL Tiers)
+MYLUCKYSOL TREASURY MILESTONE & AIRDROP PLAN (REFINED)
+Milestones: 100/200 SOL (Standard) | 2500/5000 SOL (10 SOL Tiers)
 Airdrop: 10% of milestone amount distributed to top players
 
 ================================================================================
@@ -12,7 +12,7 @@ Reward: Top 10 players split reward
   > 0.01 SOL Wager:     50,000 games | Target:   100 SOL | Reward:   10 SOL
   >  0.1 SOL Wager:      5,000 games | Target:   100 SOL | Reward:   10 SOL
   >    1 SOL Wager:        500 games | Target:   100 SOL | Reward:   10 SOL
-  >   10 SOL Wager:        500 games | Target: 1,000 SOL | Reward:  100 SOL
+  >   10 SOL Wager:      1,250 games | Target: 2,500 SOL | Reward:  250 SOL
 
 MODE: 2-Round (4 players)
 Reward: Top 10 players split reward
@@ -20,7 +20,7 @@ Reward: Top 10 players split reward
   > 0.01 SOL Wager:     25,000 games | Target:   100 SOL | Reward:   10 SOL
   >  0.1 SOL Wager:      2,500 games | Target:   100 SOL | Reward:   10 SOL
   >    1 SOL Wager:        250 games | Target:   100 SOL | Reward:   10 SOL
-  >   10 SOL Wager:        250 games | Target: 1,000 SOL | Reward:  100 SOL
+  >   10 SOL Wager:        625 games | Target: 2,500 SOL | Reward:  250 SOL
 
 MODE: 3-Round (8 players)
 Reward: Top 5 players split reward
@@ -28,7 +28,7 @@ Reward: Top 5 players split reward
   > 0.01 SOL Wager:     12,500 games | Target:   100 SOL | Reward:   10 SOL
   >  0.1 SOL Wager:      1,250 games | Target:   100 SOL | Reward:   10 SOL
   >    1 SOL Wager:        125 games | Target:   100 SOL | Reward:   10 SOL
-  >   10 SOL Wager:        125 games | Target: 1,000 SOL | Reward:  100 SOL
+  >   10 SOL Wager:        313 games | Target: 2,500 SOL | Reward:  250 SOL
 
 MODE: 4-Round (16 players)
 Reward: Top 5 players split reward
@@ -36,7 +36,7 @@ Reward: Top 5 players split reward
   > 0.01 SOL Wager:      6,250 games | Target:   100 SOL | Reward:   10 SOL
   >  0.1 SOL Wager:        625 games | Target:   100 SOL | Reward:   10 SOL
   >    1 SOL Wager:         63 games | Target:   100 SOL | Reward:   10 SOL
-  >   10 SOL Wager:         63 games | Target: 1,000 SOL | Reward:  100 SOL
+  >   10 SOL Wager:        157 games | Target: 2,500 SOL | Reward:  250 SOL
 
 ================================================================================
 
@@ -48,7 +48,7 @@ Reward: Top 10 players split reward
   > 0.01 SOL Wager:    100,000 games | Target:   200 SOL | Reward:   20 SOL
   >  0.1 SOL Wager:     10,000 games | Target:   200 SOL | Reward:   20 SOL
   >    1 SOL Wager:      1,000 games | Target:   200 SOL | Reward:   20 SOL
-  >   10 SOL Wager:      1,000 games | Target: 2,000 SOL | Reward:  200 SOL
+  >   10 SOL Wager:      2,500 games | Target: 5,000 SOL | Reward:  500 SOL
 
 MODE: 2-Round (4 players)
 Reward: Top 10 players split reward
@@ -56,7 +56,7 @@ Reward: Top 10 players split reward
   > 0.01 SOL Wager:     50,000 games | Target:   200 SOL | Reward:   20 SOL
   >  0.1 SOL Wager:      5,000 games | Target:   200 SOL | Reward:   20 SOL
   >    1 SOL Wager:        500 games | Target:   200 SOL | Reward:   20 SOL
-  >   10 SOL Wager:        500 games | Target: 2,000 SOL | Reward:  200 SOL
+  >   10 SOL Wager:      1,250 games | Target: 5,000 SOL | Reward:  500 SOL
 
 MODE: 3-Round (8 players)
 Reward: Top 5 players split reward
@@ -64,7 +64,7 @@ Reward: Top 5 players split reward
   > 0.01 SOL Wager:     25,000 games | Target:   200 SOL | Reward:   20 SOL
   >  0.1 SOL Wager:      2,500 games | Target:   200 SOL | Reward:   20 SOL
   >    1 SOL Wager:        250 games | Target:   200 SOL | Reward:   20 SOL
-  >   10 SOL Wager:        250 games | Target: 2,000 SOL | Reward:  200 SOL
+  >   10 SOL Wager:        625 games | Target: 5,000 SOL | Reward:  500 SOL
 
 MODE: 4-Round (16 players)
 Reward: Top 5 players split reward
@@ -72,6 +72,6 @@ Reward: Top 5 players split reward
   > 0.01 SOL Wager:     12,500 games | Target:   200 SOL | Reward:   20 SOL
   >  0.1 SOL Wager:      1,250 games | Target:   200 SOL | Reward:   20 SOL
   >    1 SOL Wager:        125 games | Target:   200 SOL | Reward:   20 SOL
-  >   10 SOL Wager:        125 games | Target: 2,000 SOL | Reward:  200 SOL
+  >   10 SOL Wager:        313 games | Target: 5,000 SOL | Reward:  500 SOL
 
 ================================================================================
