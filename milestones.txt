@@ -1,173 +1,35 @@
 MYLUCKYSOL TREASURY MILESTONE ESTIMATES
-SOL Price Assumption: $85 USD
+Target: 250 SOL per game mode
 Treasury Fee: 10% of total pool
 
 ================================================================================
 
-MILESTONE: $1,000 USD
+MODE: 1v1 (2 players)
 ----------------------------------------
-Mode: 1v1      ( 2 players)
-  > 0.01 SOL Wager:      5,883 games
-  >  0.1 SOL Wager:        589 games
-  >    1 SOL Wager:         59 games
-  >   10 SOL Wager:          6 games
+  > 0.01 SOL Wager:    125,000 games
+  >  0.1 SOL Wager:     12,500 games
+  >    1 SOL Wager:      1,250 games
+  >   10 SOL Wager:        125 games
 
-Mode: 2-Round  ( 4 players)
-  > 0.01 SOL Wager:      2,942 games
-  >  0.1 SOL Wager:        295 games
-  >    1 SOL Wager:         30 games
-  >   10 SOL Wager:          3 games
-
-Mode: 3-Round  ( 8 players)
-  > 0.01 SOL Wager:      1,471 games
-  >  0.1 SOL Wager:        148 games
-  >    1 SOL Wager:         15 games
-  >   10 SOL Wager:          2 games
-
-Mode: 4-Round  (16 players)
-  > 0.01 SOL Wager:        736 games
-  >  0.1 SOL Wager:         74 games
-  >    1 SOL Wager:          8 games
-  >   10 SOL Wager:          1 games
-
-================================================================================
-
-MILESTONE: $5,000 USD
+MODE: 2-Round (4 players)
 ----------------------------------------
-Mode: 1v1      ( 2 players)
-  > 0.01 SOL Wager:     29,412 games
-  >  0.1 SOL Wager:      2,942 games
-  >    1 SOL Wager:        295 games
-  >   10 SOL Wager:         30 games
+  > 0.01 SOL Wager:     62,500 games
+  >  0.1 SOL Wager:      6,250 games
+  >    1 SOL Wager:        625 games
+  >   10 SOL Wager:         63 games
 
-Mode: 2-Round  ( 4 players)
-  > 0.01 SOL Wager:     14,706 games
-  >  0.1 SOL Wager:      1,471 games
-  >    1 SOL Wager:        148 games
-  >   10 SOL Wager:         15 games
-
-Mode: 3-Round  ( 8 players)
-  > 0.01 SOL Wager:      7,353 games
-  >  0.1 SOL Wager:        736 games
-  >    1 SOL Wager:         74 games
-  >   10 SOL Wager:          8 games
-
-Mode: 4-Round  (16 players)
-  > 0.01 SOL Wager:      3,677 games
-  >  0.1 SOL Wager:        368 games
-  >    1 SOL Wager:         37 games
-  >   10 SOL Wager:          4 games
-
-================================================================================
-
-MILESTONE: $10,000 USD
+MODE: 3-Round (8 players)
 ----------------------------------------
-Mode: 1v1      ( 2 players)
-  > 0.01 SOL Wager:     58,824 games
-  >  0.1 SOL Wager:      5,883 games
-  >    1 SOL Wager:        589 games
-  >   10 SOL Wager:         59 games
+  > 0.01 SOL Wager:     31,250 games
+  >  0.1 SOL Wager:      3,125 games
+  >    1 SOL Wager:        313 games
+  >   10 SOL Wager:         32 games
 
-Mode: 2-Round  ( 4 players)
-  > 0.01 SOL Wager:     29,412 games
-  >  0.1 SOL Wager:      2,942 games
-  >    1 SOL Wager:        295 games
-  >   10 SOL Wager:         30 games
-
-Mode: 3-Round  ( 8 players)
-  > 0.01 SOL Wager:     14,706 games
-  >  0.1 SOL Wager:      1,471 games
-  >    1 SOL Wager:        148 games
-  >   10 SOL Wager:         15 games
-
-Mode: 4-Round  (16 players)
-  > 0.01 SOL Wager:      7,353 games
-  >  0.1 SOL Wager:        736 games
-  >    1 SOL Wager:         74 games
-  >   10 SOL Wager:          8 games
-
-================================================================================
-
-MILESTONE: $25,000 USD
+MODE: 4-Round (16 players)
 ----------------------------------------
-Mode: 1v1      ( 2 players)
-  > 0.01 SOL Wager:    147,059 games
-  >  0.1 SOL Wager:     14,706 games
-  >    1 SOL Wager:      1,471 games
-  >   10 SOL Wager:        148 games
-
-Mode: 2-Round  ( 4 players)
-  > 0.01 SOL Wager:     73,530 games
-  >  0.1 SOL Wager:      7,353 games
-  >    1 SOL Wager:        736 games
-  >   10 SOL Wager:         74 games
-
-Mode: 3-Round  ( 8 players)
-  > 0.01 SOL Wager:     36,765 games
-  >  0.1 SOL Wager:      3,677 games
-  >    1 SOL Wager:        368 games
-  >   10 SOL Wager:         37 games
-
-Mode: 4-Round  (16 players)
-  > 0.01 SOL Wager:     18,383 games
-  >  0.1 SOL Wager:      1,839 games
-  >    1 SOL Wager:        184 games
-  >   10 SOL Wager:         19 games
-
-================================================================================
-
-MILESTONE: $50,000 USD
-----------------------------------------
-Mode: 1v1      ( 2 players)
-  > 0.01 SOL Wager:    294,118 games
-  >  0.1 SOL Wager:     29,412 games
-  >    1 SOL Wager:      2,942 games
-  >   10 SOL Wager:        295 games
-
-Mode: 2-Round  ( 4 players)
-  > 0.01 SOL Wager:    147,059 games
-  >  0.1 SOL Wager:     14,706 games
-  >    1 SOL Wager:      1,471 games
-  >   10 SOL Wager:        148 games
-
-Mode: 3-Round  ( 8 players)
-  > 0.01 SOL Wager:     73,530 games
-  >  0.1 SOL Wager:      7,353 games
-  >    1 SOL Wager:        736 games
-  >   10 SOL Wager:         74 games
-
-Mode: 4-Round  (16 players)
-  > 0.01 SOL Wager:     36,765 games
-  >  0.1 SOL Wager:      3,677 games
-  >    1 SOL Wager:        368 games
-  >   10 SOL Wager:         37 games
-
-================================================================================
-
-MILESTONE: $100,000 USD
-----------------------------------------
-Mode: 1v1      ( 2 players)
-  > 0.01 SOL Wager:    588,236 games
-  >  0.1 SOL Wager:     58,824 games
-  >    1 SOL Wager:      5,883 games
-  >   10 SOL Wager:        589 games
-
-Mode: 2-Round  ( 4 players)
-  > 0.01 SOL Wager:    294,118 games
-  >  0.1 SOL Wager:     29,412 games
-  >    1 SOL Wager:      2,942 games
-  >   10 SOL Wager:        295 games
-
-Mode: 3-Round  ( 8 players)
-  > 0.01 SOL Wager:    147,059 games
-  >  0.1 SOL Wager:     14,706 games
-  >    1 SOL Wager:      1,471 games
-  >   10 SOL Wager:        148 games
-
-Mode: 4-Round  (16 players)
-  > 0.01 SOL Wager:     73,530 games
-  >  0.1 SOL Wager:      7,353 games
-  >    1 SOL Wager:        736 games
-  >   10 SOL Wager:         74 games
+  > 0.01 SOL Wager:     15,625 games
+  >  0.1 SOL Wager:      1,563 games
+  >    1 SOL Wager:        157 games
+  >   10 SOL Wager:         16 games
 
 ================================================================================
