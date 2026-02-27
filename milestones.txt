@@ -11,6 +11,7 @@ The giveaway will trigger once the Giveaway Wallet reaches 250 SOL.
 Based on the cheapest possible game (0.01 SOL 1v1):
 - **Giveaway Fee per Game**: 0.0002 SOL
 - **Total Games Needed**: 1,250,000 games
+- **Monthly Target Velocity**: ~1,736 games/hour (or ~29 games/minute)
 
 ### Acceleration Factors
 The pot will grow significantly faster when higher wagers and more players are involved:
