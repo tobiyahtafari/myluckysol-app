@@ -1,121 +1,129 @@
-MYLUCKYSOL MILESTONE & GIVEAWAY SYSTEM (ULTIMATE)
+MYLUCKYSOL MILESTONE & GIVEAWAY SYSTEM (FINAL)
 Milestones are based on TOTAL GAMES PLAYED per mode combination.
 Fee Structure: 9% Treasury | 1% Giveaway Wallet (10% Total)
 
-WINNER SELECTION:
-- 1v1 & 2-Round: Top 10 players split reward (Longest Streak & Luckiest Players).
-- 3-Round & 4-Round: Top 5 players split reward (Longest Streak & Luckiest Players).
+WINNER SELECTION LOGIC:
+- 0.01 & 0.1 SOL Games: Winners determined by LONGEST STREAK Leaderboard.
+- 1 & 10 SOL Games:    Winners determined by LUCKIEST PLAYER Leaderboard.
+
+DISTRIBUTION:
+- 1v1 & 2-Round: Top 10 players on the respective leaderboard split the reward.
+- 3-Round & 4-Round: Top 5 players on the respective leaderboard split the reward.
 
 ================================================================================
 
 ### WAGER TIER: 0.01 SOL | MILESTONE: 100,000 GAMES ###
+LEADERBOARD TYPE: LONGEST STREAK
 ============================================================
 MODE: 1v1      ( 2 players)
   > Total Volume:      2,000 SOL
   > Treasury (9%):        180 SOL
   > GIVEAWAY POT:         20 SOL
-  > REWARD: Split among top 10 (Streaks & Luck)
+  > REWARD: Split among top 10 on LONGEST STREAK
 ----------------------------------------
 MODE: 2-Round  ( 4 players)
   > Total Volume:      4,000 SOL
   > Treasury (9%):        360 SOL
   > GIVEAWAY POT:         40 SOL
-  > REWARD: Split among top 10 (Streaks & Luck)
+  > REWARD: Split among top 10 on LONGEST STREAK
 ----------------------------------------
 MODE: 3-Round  ( 8 players)
   > Total Volume:      8,000 SOL
   > Treasury (9%):        720 SOL
   > GIVEAWAY POT:         80 SOL
-  > REWARD: Split among top 5 (Streaks & Luck)
+  > REWARD: Split among top 5 on LONGEST STREAK
 ----------------------------------------
 MODE: 4-Round  (16 players)
   > Total Volume:     16,000 SOL
   > Treasury (9%):      1,440 SOL
   > GIVEAWAY POT:        160 SOL
-  > REWARD: Split among top 5 (Streaks & Luck)
+  > REWARD: Split among top 5 on LONGEST STREAK
 ----------------------------------------
 ================================================================================
 
 ### WAGER TIER: 0.1 SOL | MILESTONE: 100,000 GAMES ###
+LEADERBOARD TYPE: LONGEST STREAK
 ============================================================
 MODE: 1v1      ( 2 players)
   > Total Volume:     20,000 SOL
   > Treasury (9%):      1,800 SOL
   > GIVEAWAY POT:        200 SOL
-  > REWARD: Split among top 10 (Streaks & Luck)
+  > REWARD: Split among top 10 on LONGEST STREAK
 ----------------------------------------
 MODE: 2-Round  ( 4 players)
   > Total Volume:     40,000 SOL
   > Treasury (9%):      3,600 SOL
   > GIVEAWAY POT:        400 SOL
-  > REWARD: Split among top 10 (Streaks & Luck)
+  > REWARD: Split among top 10 on LONGEST STREAK
 ----------------------------------------
 MODE: 3-Round  ( 8 players)
   > Total Volume:     80,000 SOL
   > Treasury (9%):      7,200 SOL
   > GIVEAWAY POT:        800 SOL
-  > REWARD: Split among top 5 (Streaks & Luck)
+  > REWARD: Split among top 5 on LONGEST STREAK
 ----------------------------------------
 MODE: 4-Round  (16 players)
   > Total Volume:    160,000 SOL
   > Treasury (9%):     14,400 SOL
   > GIVEAWAY POT:      1,600 SOL
-  > REWARD: Split among top 5 (Streaks & Luck)
+  > REWARD: Split among top 5 on LONGEST STREAK
 ----------------------------------------
 ================================================================================
 
 ### WAGER TIER: 1 SOL | MILESTONE: 10,000 GAMES ###
+LEADERBOARD TYPE: LUCKIEST PLAYER
 ============================================================
 MODE: 1v1      ( 2 players)
   > Total Volume:     20,000 SOL
   > Treasury (9%):      1,800 SOL
   > GIVEAWAY POT:        200 SOL
-  > REWARD: Split among top 10 (Streaks & Luck)
+  > REWARD: Split among top 10 on LUCKIEST PLAYER
 ----------------------------------------
 MODE: 2-Round  ( 4 players)
   > Total Volume:     40,000 SOL
   > Treasury (9%):      3,600 SOL
   > GIVEAWAY POT:        400 SOL
-  > REWARD: Split among top 10 (Streaks & Luck)
+  > REWARD: Split among top 10 on LUCKIEST PLAYER
 ----------------------------------------
 MODE: 3-Round  ( 8 players)
   > Total Volume:     80,000 SOL
   > Treasury (9%):      7,200 SOL
   > GIVEAWAY POT:        800 SOL
-  > REWARD: Split among top 5 (Streaks & Luck)
+  > REWARD: Split among top 5 on LUCKIEST PLAYER
 ----------------------------------------
 MODE: 4-Round  (16 players)
   > Total Volume:    160,000 SOL
   > Treasury (9%):     14,400 SOL
   > GIVEAWAY POT:      1,600 SOL
-  > REWARD: Split among top 5 (Streaks & Luck)
+  > REWARD: Split among top 5 on LUCKIEST PLAYER
 ----------------------------------------
 ================================================================================
 
 ### WAGER TIER: 10 SOL | MILESTONE: 3,000 GAMES ###
+LEADERBOARD TYPE: LUCKIEST PLAYER
 ============================================================
 MODE: 1v1      ( 2 players)
   > Total Volume:     60,000 SOL
   > Treasury (9%):      5,400 SOL
   > GIVEAWAY POT:        600 SOL
-  > REWARD: Split among top 10 (Streaks & Luck)
+  > REWARD: Split among top 10 on LUCKIEST PLAYER
 ----------------------------------------
 MODE: 2-Round  ( 4 players)
   > Total Volume:    120,000 SOL
   > Treasury (9%):     10,800 SOL
   > GIVEAWAY POT:      1,200 SOL
-  > REWARD: Split among top 10 (Streaks & Luck)
+  > REWARD: Split among top 10 on LUCKIEST PLAYER
 ----------------------------------------
 MODE: 3-Round  ( 8 players)
   > Total Volume:    240,000 SOL
   > Treasury (9%):     21,600 SOL
   > GIVEAWAY POT:      2,400 SOL
-  > REWARD: Split among top 5 (Streaks & Luck)
+  > REWARD: Split among top 5 on LUCKIEST PLAYER
 ----------------------------------------
 MODE: 4-Round  (16 players)
   > Total Volume:    480,000 SOL
   > Treasury (9%):     43,200 SOL
   > GIVEAWAY POT:      4,800 SOL
-  > REWARD: Split among top 5 (Streaks & Luck)
+  > REWARD: Split among top 5 on LUCKIEST PLAYER
 ----------------------------------------
 ================================================================================
