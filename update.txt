@@ -1,0 +1,72 @@
+# UPDATES & REFINEMENTS: MYLUCKYSOL PHASE 2
+
+This document serves as the pre-implementation blueprint for the "God Mode" and "Million Game Jackpot" expansion.
+
+## 1. GOD STREAK & STREAK BREAKER LOGIC
+- **God Streak Trigger**: 50 in 1,000,000 chance (0.005%).
+- **God Streak Length**: Randomly predetermined between 26 and 333 games. 
+- **Hidden Length**: The remaining streak count is hidden from all users, including the God.
+- **God Power**: 95% weighted win chance in all games.
+- **Streak Breaker Trigger**: 300 in 1,000,000 chance (0.03%).
+- **Breaker Condition**: Can ONLY be triggered by a user when facing a player currently on a God Streak.
+- **Breaker Effect**: Strips the God's 95% advantage. The "Giant Slayer" gets a 75% win chance for that game.
+- **Normal Games**: All other games remain pure 1/N random selection based on seeds.
+
+## 2. 1 MILLION GAME LEADERBOARD
+- **Scope**: Tracks the top 10 Luck Scores and longest Streaks.
+- **Timeframes**:
+    - **All-Time**: 1 to 1,000,000 (Historical records).
+    - **Current Cycle**: Recent progress within the current 1M game block.
+- **Luck Score**: Winnings / Wager ratio.
+- **Streak**: Consecutive wins without a loss.
+
+## 3. CHAT & NOTIFICATIONS RESTRUCTURE
+- **Mobile Layout (Horizontal Split)**:
+    - Top: Chat Interface.
+    - Bottom: Live Notifications.
+- **Desktop Layout (Vertical Split)**:
+    - Left: Chat Interface.
+    - Right: Live Notifications.
+- **Notification Behavior**: On the Chat page, standard pop-up notifications are disabled and integrated directly into the split-view sections.
+- **Social Features**:
+    - **Tipping**: Users can tip other members using their Wallet Address or Username.
+
+## 4. MILLION GAME GIVEAWAY (THE JACKPOT)
+- **Contribution**: 9% Treasury | 1% Giveaway Wallet (10% Total Fee).
+- **Minimum Jackpot**: 200 SOL (Base calculation: 1,000,000 1v1 games at 0.01 SOL).
+- **Jackpot Growth**: Every game mode and wager (0.1, 1, 10 SOL) increases the pot significantly beyond the 200 SOL floor.
+- **Trigger**: Reaching the 1,000,000th game in the cycle.
+- **The Split**: The jackpot is split 50/50 between the Top 10 Luck Scores and Top 10 Streaks.
+- **Tiered Payouts (for both leaderboards)**:
+    1. 22%
+    2. 16%
+    3. 12%
+    4. 10%
+    5. 9%
+    6. 8%
+    7. 7%
+    8. 6%
+    9. 5%
+    10. 5%
+
+---
+
+## POTENTIAL FLAWS & RECOMMENDED FIXES
+
+### A. God Streak "Camping"
+- **Flaw**: A God might stop playing to "preserve" their streak for the leaderboard.
+- **Fix**: Implement a **72-hour Activity Requirement**. If a God doesn't play a game within 72 hours, their streak is naturally "broken" by the system.
+
+### B. Chat Spam / Tipping Abuse
+- **Flaw**: Bots or malicious users could spam the chat or use tipping for money laundering.
+- **Fix**: 
+    - Require a **minimum wager history** (e.g., 0.1 SOL total) to use Chat/Tipping.
+    - Implement a small fee (e.g., 1% or fixed 0.001 SOL) on tips to discourage micro-spam.
+
+### C. The 1M Game "Dead Zone"
+- **Flaw**: After the jackpot hits, activity might drop as the 1M counter resets.
+- **Fix**: Display the **Current Jackpot Value** prominently. Even at 1,000 games, if the pot is already at 50 SOL due to high-stakes play, people will stay engaged.
+
+### D. Provable Fairness Transparency
+- **Flaw**: God Streaks look like "rigging" to new users.
+- **Fix**: The Fairness page must explicitly explain the God/Breaker triggers and show how the hash derived the event.
