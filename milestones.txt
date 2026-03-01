@@ -32,4 +32,27 @@ Upon reaching the 250 SOL milestone, the pot will be distributed as follows:
 - **Distribution**: Top 10 players split 125 SOL (50% of the pot)
 
 ---
+
+## FUTURE EXPANSION: PHASE 2 "GOD MODE" (RESEARCH)
+
+This section outlines the planned advanced mechanics to be implemented in Phase 2 to create a legendary "Boss Battle" atmosphere.
+
+### 1. The God Streak (The "Marked" Player)
+- **Trigger**: 1 in 100,000 games (10 events per 1M games).
+- **Selection**: Provably derived from game seeds.
+- **Effect**: Recipient is "Marked" for a predetermined streak of 101–333 games.
+- **Power**: The marked player receives a 95% weighted win chance in every game.
+- **Mystery**: The exact length of the streak remains hidden from the public until it ends.
+
+### 2. The Streak Breaker (The "Giant Slayer")
+- **Trigger**: Any player facing a "God" has a 1% chance to activate a Breaker.
+- **Selection**: Provably derived from the current game's hash.
+- **Effect**: If activated, the God's 95% advantage is stripped.
+- **Win Chance**: The "Giant Slayer" gets a 75% win chance for that game.
+- **Bounty**: Breaking a God streak ends it immediately and may grant a special bonus from the Giveaway Wallet.
+
+### 3. Impact on Leaderboards (Simulated)
+With 10 God events per 1M games and Breaker mechanics, the Top 10 Streaks are projected to range from **10 to 50+ wins**, creating a highly competitive and dynamic leaderboard that blends "Natural Grinders" with "Mythical Legends."
+
+---
 *Note: This system scales automatically with platform activity. More high-stakes games mean faster milestones and larger frequent rewards.*
