@@ -7,7 +7,7 @@ This document serves as the pre-implementation blueprint for the "God Mode" and 
 - **God Streak Length**: Randomly predetermined between 26 and 333 games. 
 - **Hidden Length**: The remaining streak count is hidden from all users, including the God.
 - **God Power**: 95% weighted win chance in all games.
-- **Streak Breaker Trigger**: 300 in 1,000,000 chance (0.03%).
+- **Streak Breaker Trigger**: 10,000 in 1,000,000 chance (1%).
 - **Breaker Condition**: Can ONLY be triggered by a user when facing a player currently on a God Streak.
 - **Breaker Effect**: Strips the God's 95% advantage. The "Giant Slayer" gets a 75% win chance for that game.
 - **Normal Games**: All other games remain pure 1/N random selection based on seeds.
