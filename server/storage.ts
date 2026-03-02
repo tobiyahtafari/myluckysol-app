@@ -945,8 +945,7 @@ export class MemStorage implements IStorage {
 
     const winner = remainingPlayers[0];
     const payout = finalGame.poolAmount * WINNER_SHARE;
-    const totalFee = finalGame.poolAmount * (1 - WINNER_SHARE);
-    const treasuryFee = finalGame.poolAmount * 0.09;
+    const treasuryFee = finalGame.poolAmount * FOUNDATION_FEE;
     const giveawayFee = finalGame.poolAmount * GIVEAWAY_FEE;
 
     // Determine WAGA winner multiplier (may be boosted for streak breaking)
