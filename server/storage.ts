@@ -979,6 +979,20 @@ export class MemStorage implements IStorage {
       await this.triggerGiveawayPayout();
     }
 
+    // Transfer fees on devnet
+    if (solanaClient.isOnChainEnabled()) {
+      // Transfer to Foundation Treasury (9%)
+      solanaClient.transferSolToTreasury(treasuryFee).then(res => {
+        if (res.success) console.log(`[DEVNET] 9% Treasury fee transferred: ${res.txSig}`);
+      });
+      
+      // Transfer to Giveaway Treasury (1%)
+      const GIVEAWAY_WALLET = "FGY64g3Pt8wMrMR3A9abkVxSjwh2Yt4dT4BYkw6rU3yf";
+      solanaClient.transferSol(GIVEAWAY_WALLET, giveawayFee).then(res => {
+        if (res.success) console.log(`[DEVNET] 1% Giveaway fee transferred: ${res.txSig}`);
+      });
+    }
+
     console.log(`[GIVEAWAY] Game contribution: ${giveawayFee.toFixed(6)} SOL. Total pot: ${this.giveawayStats.giveawayWalletBalance.toFixed(4)} SOL`);
     console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}...`);
     console.log(`[DEVNET] Winner Payout: ${payout.toFixed(4)} SOL | Treasury: ${treasuryFee.toFixed(4)} SOL | Giveaway: ${giveawayFee.toFixed(6)} SOL`);

@@ -31,7 +31,7 @@ const CONTRACTS = [
   },
   {
     name: "Giveaway Treasury Wallet",
-    address: "GVWYwl...placeholder...wallet",
+    address: "FGY64g3Pt8wMrMR3A9abkVxSjwh2Yt4dT4BYkw6rU3yf",
     description: "Seasonal jackpot and lucky player rewards (1%)",
     icon: Landmark
   }
