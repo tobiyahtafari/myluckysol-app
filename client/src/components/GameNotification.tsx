@@ -62,8 +62,7 @@ export function GameNotificationManager() {
 
     const newGames = liveGames.filter(
       g => g.status === "waiting" && 
-           !seenGameIds.current.has(g.id) &&
-           g.players.some(p => p.txSignature)
+           !seenGameIds.current.has(g.id)
     );
 
     if (newGames.length > 0) {

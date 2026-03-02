@@ -150,12 +150,19 @@ export class MemStorage implements IStorage {
     
     if (updates.referredBy && !profile.referredBy && !profile.pendingReferralBy && updates.referredBy !== walletAddress) {
       const referrer = await this.getProfileByUsernameOrWallet(updates.referredBy);
+      
       if (referrer && referrer.walletAddress !== walletAddress) {
-        updates.pendingReferralBy = referrer.walletAddress;
-        // Store the referrer's username or wallet address
-        updates.referredBy = referrer.username || referrer.walletAddress;
-        updates.referralRewarded = false;
-        console.log(`[REFERRAL] Pending referral set: ${walletAddress.slice(0, 8)}... referred by ${referrer.walletAddress.slice(0, 8)}...`);
+        // ABUSE PREVENTION: Check if the referrer is already referred by the current user (cyclic referral)
+        if (referrer.pendingReferralBy === walletAddress) {
+          console.warn(`[REFERRAL] Cyclic referral blocked: ${walletAddress.slice(0, 8)}... tried to be referred by ${referrer.walletAddress.slice(0, 8)}...`);
+          delete updates.referredBy;
+        } else {
+          updates.pendingReferralBy = referrer.walletAddress;
+          // Store the referrer's username or wallet address
+          updates.referredBy = referrer.username || referrer.walletAddress;
+          updates.referralRewarded = false;
+          console.log(`[REFERRAL] Pending referral set: ${walletAddress.slice(0, 8)}... referred by ${referrer.walletAddress.slice(0, 8)}...`);
+        }
       } else {
         delete updates.referredBy;
       }

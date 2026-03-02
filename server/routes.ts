@@ -896,13 +896,25 @@ export async function registerRoutes(
       // Log the tip (on-chain transfer should be done client-side)
       console.log(`[TIP] ${fromWallet.slice(0, 8)}... tipped ${amount} SOL to ${recipient.walletAddress.slice(0, 8)}... (fee: ${TIP_FEE_SOL} SOL). Tx: ${txSignature}`);
 
+      // Add to global chat
+      const senderProfile = await storage.getProfile(fromWallet);
+      await storage.addGlobalChatMessage({
+        walletAddress: fromWallet,
+        username: senderProfile?.username,
+        message: `tipped ${recipient.username || recipient.walletAddress.slice(0, 8)} ${amount} SOL`,
+        isGodStreak: !!senderProfile?.godStreakActive,
+        isStreakBreaker: !!senderProfile?.isStreakBreakerActive,
+        tipAmount: Number(amount),
+        tipRecipient: recipient.walletAddress,
+      });
+
       res.json({
         success: true,
         recipient: {
           walletAddress: recipient.walletAddress,
           username: recipient.username,
         },
-        amount,
+        amount: Number(amount),
         fee: TIP_FEE_SOL,
         txSignature,
       });

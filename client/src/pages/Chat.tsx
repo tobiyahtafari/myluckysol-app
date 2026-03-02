@@ -9,6 +9,9 @@ import { useWallet } from "@/lib/wallet-context";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import { useGameStore } from "@/lib/game-store";
+import { type GameModeKey } from "@shared/schema";
+import { Link, useLocation } from "wouter";
 
 interface GlobalChatMessage {
   id: string;
@@ -105,16 +108,19 @@ function TipModal({
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("0.01");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const tipMutation = useMutation({
     mutationFn: async (data: { fromWallet: string; toIdentifier: string; amount: number }) => {
       return apiRequest("POST", "/api/tip", data);
     },
-    onSuccess: (data: any) => {
+    onSuccess: (response: any) => {
+      const data = response.data || response;
       toast({
         title: "Tip sent",
         description: `${data.amount} SOL sent to ${data.recipient?.username || formatAddress(data.recipient?.walletAddress || "")}`,
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
       onClose();
     },
     onError: (err: any) => {
@@ -207,7 +213,7 @@ function TipModal({
 
 interface LiveGame {
   id: string;
-  mode: string;
+  mode: GameModeKey;
   wager: number;
   status: string;
   players: { walletAddress: string; username?: string }[];
@@ -215,6 +221,8 @@ interface LiveGame {
 }
 
 function NotificationPanel() {
+  const { setSelectedMode, setSelectedWager, setPlayTab } = useGameStore();
+  const [, setLocation] = useLocation();
   const { data: liveGames = [] } = useQuery<LiveGame[]>({
     queryKey: ["/api/games/live"],
     refetchInterval: 5000,
@@ -253,8 +261,25 @@ function NotificationPanel() {
                   {game.wager} SOL
                 </Badge>
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {game.players.length} players — {game.status}
+              <div className="flex items-center justify-between mt-1">
+                <div className="text-xs text-muted-foreground">
+                  {game.players.length} players — {game.status}
+                </div>
+                {game.status === "waiting" && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-2 text-[10px] text-accent hover:text-accent hover:bg-accent/10"
+                    onClick={() => {
+                      setSelectedMode(game.mode);
+                      setSelectedWager(game.wager as any);
+                      setPlayTab("join");
+                      setLocation("/play");
+                    }}
+                  >
+                    Join Game
+                  </Button>
+                )}
               </div>
             </motion.div>
           ))}
@@ -318,9 +343,7 @@ export default function Chat() {
 
   return (
     <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Mobile: vertical stack. Desktop: horizontal split */}
       <div className="flex flex-col md:flex-row h-full">
-        {/* Chat Panel - top 60% on mobile, left 60% on desktop */}
         <div className="flex flex-col h-[60%] md:h-full md:w-3/5 border-b md:border-b-0 md:border-r border-border/50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 flex-shrink-0">
             <div className="flex items-center gap-2">
@@ -344,7 +367,6 @@ export default function Chat() {
             )}
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto py-2 space-y-0.5">
             {isLoading && (
               <div className="text-center text-muted-foreground text-sm py-8">Loading chat...</div>
@@ -360,7 +382,6 @@ export default function Chat() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="px-3 py-3 border-t border-border/50 flex-shrink-0">
             {!connected ? (
               <div className="text-center text-muted-foreground text-sm py-2">
@@ -403,7 +424,6 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Notifications Panel - bottom 40% on mobile, right 40% on desktop */}
         <div className="h-[40%] md:h-full md:w-2/5 overflow-hidden">
           <NotificationPanel />
         </div>
