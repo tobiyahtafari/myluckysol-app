@@ -423,6 +423,7 @@ export default function Giveaway() {
                       <div className="space-y-2">
                         {PAYOUT_PERCENTS.map((pct, i) => {
                           const payoutSol = (jackpot / 2) * (pct / 100);
+                          const payoutUsd = solPrice ? payoutSol * solPrice : null;
                           return (
                             <div key={i} className="flex items-center justify-between text-sm">
                               <span className="text-muted-foreground">#{i + 1}</span>
@@ -432,8 +433,13 @@ export default function Giveaway() {
                                   style={{ width: `${(pct / 22) * 100}%` }}
                                 />
                               </div>
-                              <span className="font-mono text-foreground w-20 text-right">
+                              <span className="font-mono text-foreground w-32 text-right">
                                 {pct}% → {payoutSol.toFixed(1)} SOL
+                                {payoutUsd && (
+                                  <span className="block text-[10px] text-[#c1ff72] font-bold">
+                                    ${payoutUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD
+                                  </span>
+                                )}
                               </span>
                             </div>
                           );
@@ -447,6 +453,7 @@ export default function Giveaway() {
                       <div className="space-y-2">
                         {PAYOUT_PERCENTS.map((pct, i) => {
                           const payoutSol = (jackpot / 2) * (pct / 100);
+                          const payoutUsd = solPrice ? payoutSol * solPrice : null;
                           return (
                             <div key={i} className="flex items-center justify-between text-sm">
                               <span className="text-muted-foreground">#{i + 1}</span>
@@ -456,8 +463,13 @@ export default function Giveaway() {
                                   style={{ width: `${(pct / 22) * 100}%` }}
                                 />
                               </div>
-                              <span className="font-mono text-foreground w-20 text-right">
+                              <span className="font-mono text-foreground w-32 text-right">
                                 {pct}% → {payoutSol.toFixed(1)} SOL
+                                {payoutUsd && (
+                                  <span className="block text-[10px] text-[#c1ff72] font-bold">
+                                    ${payoutUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD
+                                  </span>
+                                )}
                               </span>
                             </div>
                           );
