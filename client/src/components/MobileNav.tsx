@@ -1,3 +1,4 @@
+import type { ElementType } from "react";
 import { Link, useLocation } from "wouter";
 import { Home, Gamepad2, Trophy, User, Activity, Gift, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -7,7 +8,7 @@ export function MobileNav() {
   const [location, setLocation] = useLocation();
   const { setPlayTab } = useGameStore();
 
-  const navItems = [
+  const navItems: { href: string; label: string; icon: ElementType; tab?: "join" | "live" }[] = [
     { href: "/", label: "Home", icon: Home },
     { href: "/giveaway", label: "Giveaway", icon: Gift },
     { href: "/chat", label: "Chat", icon: MessageSquare },

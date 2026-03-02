@@ -108,14 +108,19 @@ export function WinnerReveal({
       setAutoCloseIn((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          onClose();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [onClose]);
+  }, []);
+
+  useEffect(() => {
+    if (autoCloseIn === 0) {
+      onClose();
+    }
+  }, [autoCloseIn, onClose]);
 
   return (
     <AnimatePresence>

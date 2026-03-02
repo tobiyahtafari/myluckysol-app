@@ -109,12 +109,6 @@ export class MemStorage implements IStorage {
     return profiles.find(p => p.username?.toLowerCase() === username.toLowerCase());
   }
 
-  async getProfileByUsernameOrWallet(identifier: string): Promise<PlayerProfile | undefined> {
-    const byWallet = this.profiles.get(identifier);
-    if (byWallet) return byWallet;
-    return this.getProfileByUsername(identifier);
-  }
-
   async createProfile(data: { walletAddress: string; displayName?: string }): Promise<PlayerProfile> {
     const profile: PlayerProfile = {
       walletAddress: data.walletAddress,
