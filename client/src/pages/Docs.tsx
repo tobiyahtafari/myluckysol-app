@@ -26,8 +26,14 @@ const CONTRACTS = [
   {
     name: "Treasury Wallet",
     address: "TRSRYwl...placeholder...wallet",
-    description: "Foundation and platform maintenance funds",
+    description: "Foundation and platform maintenance funds (9%)",
     icon: Shield
+  },
+  {
+    name: "Giveaway Treasury Wallet",
+    address: "GVWYwl...placeholder...wallet",
+    description: "Seasonal jackpot and lucky player rewards (1%)",
+    icon: Landmark
   }
 ];
 
@@ -132,7 +138,8 @@ export default function Docs() {
                 All games are provably fair using HMAC-SHA256 and server-side secret revelation.
               </p>
               <ul className="list-disc list-inside space-y-2">
-                <li>House edge: 10% (Treasury)</li>
+                <li>House edge: 9% (Treasury)</li>
+                <li>Giveaway fee: 1% (Jackpot Pool)</li>
                 <li>Player payout: 90% of pool</li>
                 <li>Verified Randomness (VRF integration pending)</li>
               </ul>
