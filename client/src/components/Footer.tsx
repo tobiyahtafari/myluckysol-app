@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import tryUnityLogo from "@assets/tryunity_1772463876592.png";
 
 export function Footer() {
   return (
@@ -11,10 +12,17 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             Powered by HMAC-SHA256 Provably Fair.
           </p>
-          <p className="text-sm font-semibold text-primary">
-            A TryUnity Foundation DApp
-          </p>
-          <div className="flex items-center gap-6">
+          <a 
+            href="http://tryunity.life" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-sm font-semibold text-primary hover:opacity-80 transition-opacity flex items-center gap-1.5"
+          >
+            A TryUnity 
+            <img src={tryUnityLogo} alt="TryUnity Logo" className="w-4 h-4 object-contain" />
+            Foundation DApp
+          </a>
+          <div className="flex items-center gap-6 mt-2">
             <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Terms
             </Link>
