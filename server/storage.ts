@@ -69,6 +69,7 @@ export interface IStorage {
   getGiveawayStats(): Promise<GiveawayStats>;
   getGiveawayLeaderboard(): Promise<{ luck: LeaderboardEntry[]; streaks: LeaderboardEntry[] }>;
   checkAndExpireGodStreak(walletAddress: string): Promise<void>;
+  getAllProfiles(): Promise<PlayerProfile[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -408,6 +409,10 @@ export class MemStorage implements IStorage {
     };
 
     console.log(`[GIVEAWAY] Season ${stats.currentSeason} completed! Payouts recorded for 20 winners.`);
+  }
+
+  async getAllProfiles(): Promise<PlayerProfile[]> {
+    return Array.from(this.profiles.values());
   }
 
   async getGame(id: string): Promise<Game | undefined> {

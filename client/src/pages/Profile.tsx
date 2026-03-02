@@ -7,7 +7,7 @@ import { useWallet } from "@/lib/wallet-context";
 import { Link, useLocation } from "wouter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
 import { VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT } from "@shared/schema";
-import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Copy, Check, Lock, Unlock, AlertTriangle, Smartphone, Gift } from "lucide-react";
+import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Copy, Check, Lock, Unlock, AlertTriangle, Smartphone, Gift, Users } from "lucide-react";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
 import { useState, useEffect } from "react";
@@ -450,11 +450,21 @@ export default function Profile() {
                 </div>
               </div>
             )}
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <LinkIcon className="w-5 h-5 text-accent" />
-              Referral Program
+            <h3 className="font-semibold mb-4 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <LinkIcon className="w-5 h-5 text-accent" />
+                Referral Program
+                {referralUnlocked && (
+                  <span className="text-xs text-accent font-normal ml-2">Unlocked</span>
+                )}
+              </div>
               {referralUnlocked && (
-                <span className="text-xs text-accent font-normal ml-2">Unlocked</span>
+                <Link href="/profile/referrals">
+                  <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1">
+                    <Users className="w-3 h-3" />
+                    Track Referrals
+                  </Button>
+                </Link>
               )}
             </h3>
             <div className="grid md:grid-cols-2 gap-6">

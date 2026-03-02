@@ -376,6 +376,26 @@ export async function registerRoutes(
   });
 
   // Get player profile
+  app.get("/api/profile/:walletAddress/referrals", async (req, res) => {
+    try {
+      const walletAddress = req.params.walletAddress;
+      const profiles = await storage.getAllProfiles();
+      const referrals = profiles.filter(p => p.pendingReferralBy === walletAddress);
+      
+      const referralData = referrals.map(p => ({
+        walletAddress: p.walletAddress,
+        username: p.username,
+        referralRewarded: p.referralRewarded,
+        createdAt: p.createdAt,
+      }));
+      
+      res.json(referralData);
+    } catch (error) {
+      console.error("Error getting referrals:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get("/api/profile/:walletAddress", async (req, res) => {
     try {
       const profile = await storage.getOrCreateProfile(req.params.walletAddress);
