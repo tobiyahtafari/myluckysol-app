@@ -228,6 +228,8 @@ export default function GameRoom() {
                     isCurrentUser={player.walletAddress === address}
                     isWinner={player.walletAddress === game.winnerId}
                     isEliminated={player.isEliminated}
+                    isGodStreak={(game as any).godStreakRecipient === player.walletAddress}
+                    isStreakBreaker={(game as any).breakerPlayerId === player.walletAddress}
                   />
                 ))}
                 {Array.from({ length: emptySlots }).map((_, i) => (

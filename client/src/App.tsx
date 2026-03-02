@@ -18,6 +18,8 @@ import Privacy from "@/pages/Privacy";
 import HowToPlay from "@/pages/HowToPlay";
 import Docs from "@/pages/Docs";
 import Fairness from "@/pages/Fairness";
+import Giveaway from "@/pages/Giveaway";
+import Chat from "@/pages/Chat";
 import NotFound from "@/pages/not-found";
 import { GameNotificationManager } from "@/components/GameNotification";
 
@@ -46,6 +48,8 @@ function Router() {
         <Route path="/how-to-play" component={HowToPlay} />
         <Route path="/docs" component={Docs} />
         <Route path="/fairness" component={Fairness} />
+        <Route path="/giveaway" component={Giveaway} />
+        <Route path="/chat" component={Chat} />
         <Route component={NotFound} />
       </Switch>
     </>

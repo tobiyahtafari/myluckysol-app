@@ -70,8 +70,8 @@ This document serves as the pre-implementation blueprint for the "God Mode" and 
 ### B. Chat Spam / Tipping Abuse
 - **Flaw**: Bots or malicious users could spam the chat or use tipping for money laundering.
 - **Fix**: 
-    - Require a **minimum wager history** (e.g., 0.1 SOL total) to use Chat/Tipping.
-    - Implement a small fee (e.g., 1% or fixed 0.001 SOL) on tips to discourage micro-spam.
+    - Require a **minimum wager history** (0.1 SOL total) to use Chat/Tipping.
+    - Implement a small fee (fixed 0.001 SOL) on tips to discourage micro-spam.
 
 ### C. The 1M Game Floor
 - **Practice**: Always display the **200 SOL Minimum** from Game 1. Even if the actual accumulation is lower early on, the 200 SOL floor is guaranteed by the 1M game cycle (based on 0.01 SOL 1v1).

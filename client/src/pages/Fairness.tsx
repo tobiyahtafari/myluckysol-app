@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Shield, Search, CheckCircle, XCircle, Loader2, Copy, ExternalLink } from "lucide-react";
+import { Shield, Search, CheckCircle, XCircle, Loader2, Copy, Flame, Droplets, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -179,6 +179,93 @@ export default function Fairness() {
             </div>
             <pre className="p-4 overflow-x-auto text-[8px] sm:text-[10px] md:text-sm font-mono text-muted-foreground leading-relaxed whitespace-pre-wrap break-all md:whitespace-pre md:break-normal">
               <code>{FAIRNESS_CODE}</code>
+            </pre>
+          </Card>
+        </motion.div>
+
+        {/* God Mode Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-12"
+        >
+          <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+            <Flame className="h-6 w-6 text-orange-400" />
+            God Mode — Provably Fair Special Events
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            God Streaks and Streak Breakers are rare on-chain events derived from the same provably fair hash system. No player or server can predict or manipulate them.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <Card className="p-5 border-orange-500/20 bg-orange-500/5">
+              <div className="flex items-center gap-2 mb-3">
+                <Flame className="h-5 w-5 text-orange-400" />
+                <span className="font-semibold text-orange-400">God Streak</span>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li><span className="text-foreground font-medium">Trigger:</span> 50 in 1,000,000 chance per game (~0.005%)</li>
+                <li><span className="text-foreground font-medium">Duration:</span> 26–333 games (hidden from all players)</li>
+                <li><span className="text-foreground font-medium">Win Weight:</span> 95% win chance in every matchup</li>
+                <li><span className="text-foreground font-medium">Camping Rule:</span> Expires after 72 hours of inactivity</li>
+                <li><span className="text-foreground font-medium">Recipient:</span> Randomly assigned from the game's players</li>
+              </ul>
+            </Card>
+
+            <Card className="p-5 border-blue-500/20 bg-blue-500/5">
+              <div className="flex items-center gap-2 mb-3">
+                <Droplets className="h-5 w-5 text-blue-400" />
+                <span className="font-semibold text-blue-400">Streak Breaker</span>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li><span className="text-foreground font-medium">Trigger:</span> 25% chance when matched against a God (250,000 in 1M)</li>
+                <li><span className="text-foreground font-medium">Effect:</span> Strips God's advantage — 75% win to the challenger</li>
+                <li><span className="text-foreground font-medium">Natural Break:</span> If God loses without a breaker — 5x WAGA bonus</li>
+                <li><span className="text-foreground font-medium">Triggered Break:</span> If breaker is activated — 3x WAGA bonus</li>
+                <li><span className="text-foreground font-medium">Visual:</span> Water droplet icon shown on the breaker player</li>
+              </ul>
+            </Card>
+          </div>
+
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" />
+            God Mode Algorithm
+          </h3>
+          <Card className="p-0 overflow-hidden border-orange-500/20">
+            <div className="flex items-center justify-between px-4 py-2 bg-orange-500/5 border-b border-border/50">
+              <span className="text-xs font-mono text-muted-foreground">god-mode-algorithm.js</span>
+            </div>
+            <pre className="p-4 overflow-x-auto text-[8px] sm:text-[10px] md:text-sm font-mono text-muted-foreground leading-relaxed whitespace-pre-wrap break-all md:whitespace-pre md:break-normal">
+              <code>{`// God Streak Trigger — same provably fair hash system
+function deriveSpecialEventRoll(serverSeed, clientSeed, nonce) {
+  const hmac = crypto.createHmac('sha256', serverSeed);
+  hmac.update(\`special-\${clientSeed}-\${nonce}\`);
+  const hash = hmac.digest('hex');
+  return parseInt(hash.substring(0, 5), 16) % 1000000;
+}
+
+// After each game resolves:
+const godRoll = deriveSpecialEventRoll(serverSeed, clientSeed, 'god-trigger');
+if (godRoll < 50) {           // 50 in 1,000,000 = 0.005% chance
+  // Award God Streak to a random player
+  // Length (26-333) is derived from the hash — hidden from all
+  const streakLength = 26 + (hashDerivedValue % 308);
+  player.godStreakActive = true;
+  player.godStreakGamesRemaining = streakLength;  // NOT shown publicly
+}
+
+// God vs Normal matchup weight check:
+if (opponent.godStreakActive) {
+  const breakerRoll = deriveSpecialEventRoll(serverSeed, clientSeed, \`breaker-\${round}-\${i}\`);
+  if (breakerRoll < 250000) { // 25% chance
+    godWinWeight = 0.25;      // Breaker activated: God loses 95% → 25%
+    challengerWinWeight = 0.75;
+  } else {
+    godWinWeight = 0.95;      // Normal: God has 95% win chance
+    challengerWinWeight = 0.05;
+  }
+}`}</code>
             </pre>
           </Card>
         </motion.div>

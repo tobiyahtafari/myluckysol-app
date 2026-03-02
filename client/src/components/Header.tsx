@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet-context";
-import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2, Coins, Repeat, Menu, X, ShieldCheck } from "lucide-react";
+import { Wallet, LogOut, User, Trophy, Gamepad2, Droplets, Loader2, Coins, Repeat, Menu, X, ShieldCheck, Gift, MessageSquare } from "lucide-react";
 import headerLogo from "@assets/myluckysol-header-logo_1768586127704.png";
 import { WalletModal } from "./WalletModal";
 import { useSolPrice } from "@/lib/price-context";
@@ -81,7 +81,8 @@ export function Header() {
   const navItems = [
     { href: "/play", label: "Play", icon: Gamepad2 },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-    { href: "/how-to-play", label: "How to Play", icon: ShieldCheck },
+    { href: "/giveaway", label: "Giveaway", icon: Gift },
+    { href: "/chat", label: "Chat", icon: MessageSquare },
     { href: "/fairness", label: "Fairness", icon: ShieldCheck },
   ];
 

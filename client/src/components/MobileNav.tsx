@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Gamepad2, Trophy, User, Activity } from "lucide-react";
+import { Home, Gamepad2, Trophy, User, Activity, Gift, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/lib/game-store";
 
@@ -9,8 +9,8 @@ export function MobileNav() {
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/play", label: "Live", icon: Activity, tab: "live" as const },
-    { href: "/profile", label: "Profile", icon: User },
+    { href: "/giveaway", label: "Giveaway", icon: Gift },
+    { href: "/chat", label: "Chat", icon: MessageSquare },
     { href: "/leaderboard", label: "Rankings", icon: Trophy },
   ];
 

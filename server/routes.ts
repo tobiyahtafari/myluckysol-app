@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT, type WagerTier, type GameModeKey } from "@shared/schema";
+import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT, CHAT_MIN_TOTAL_WAGERED, TIP_FEE_SOL, GIVEAWAY_MIN_SOL_FLOOR, GIVEAWAY_MILESTONE_GAMES, GIVEAWAY_PAYOUT_PERCENTS, type WagerTier, type GameModeKey } from "@shared/schema";
 import { calculateWagaReward, getUsernameUpdateCostSol } from "./price-service";
 import { solanaClient } from "./solana-client";
 import { z } from "zod";
@@ -763,6 +763,158 @@ export async function registerRoutes(
       });
     } catch (error) {
       console.error("Error verifying game:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Global chat - GET messages
+  app.get("/api/chat", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const messages = await storage.getGlobalChatMessages(limit);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error getting global chat:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Global chat - POST message (gated by min 0.1 SOL wagered)
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { walletAddress, message } = req.body;
+
+      if (!walletAddress || !message) {
+        return res.status(400).json({ error: "walletAddress and message are required" });
+      }
+
+      if (typeof message !== "string" || message.trim().length === 0 || message.length > 280) {
+        return res.status(400).json({ error: "Message must be 1-280 characters" });
+      }
+
+      const profile = await storage.getProfile(walletAddress);
+      if (!profile) {
+        return res.status(403).json({ error: "Profile not found. Play a game first." });
+      }
+
+      if ((profile.totalWagered || 0) < CHAT_MIN_TOTAL_WAGERED) {
+        return res.status(403).json({ 
+          error: `You must wager at least ${CHAT_MIN_TOTAL_WAGERED} SOL in total to chat.`,
+          required: CHAT_MIN_TOTAL_WAGERED,
+          current: profile.totalWagered || 0,
+        });
+      }
+
+      const chatMessage = await storage.addGlobalChatMessage({
+        walletAddress,
+        username: profile.username,
+        message: message.trim(),
+        isGodStreak: profile.godStreakActive || false,
+        isStreakBreaker: profile.isStreakBreakerActive || false,
+      });
+
+      res.json(chatMessage);
+    } catch (error) {
+      console.error("Error posting global chat:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Tip endpoint - send SOL tip to another player
+  app.post("/api/tip", async (req, res) => {
+    try {
+      const { fromWallet, toIdentifier, amount, txSignature } = req.body;
+
+      if (!fromWallet || !toIdentifier || !amount) {
+        return res.status(400).json({ error: "fromWallet, toIdentifier, and amount are required" });
+      }
+
+      if (typeof amount !== "number" || amount <= 0) {
+        return res.status(400).json({ error: "Amount must be a positive number" });
+      }
+
+      const recipient = await storage.getProfileByUsernameOrWallet(toIdentifier);
+      if (!recipient) {
+        return res.status(404).json({ error: "Recipient not found" });
+      }
+
+      if (recipient.walletAddress === fromWallet) {
+        return res.status(400).json({ error: "Cannot tip yourself" });
+      }
+
+      // Log the tip (on-chain transfer should be done client-side)
+      console.log(`[TIP] ${fromWallet.slice(0, 8)}... tipped ${amount} SOL to ${recipient.walletAddress.slice(0, 8)}... (fee: ${TIP_FEE_SOL} SOL). Tx: ${txSignature}`);
+
+      res.json({
+        success: true,
+        recipient: {
+          walletAddress: recipient.walletAddress,
+          username: recipient.username,
+        },
+        amount,
+        fee: TIP_FEE_SOL,
+        txSignature,
+      });
+    } catch (error) {
+      console.error("Error processing tip:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Giveaway stats
+  app.get("/api/giveaway/stats", async (req, res) => {
+    try {
+      const stats = await storage.getGiveawayStats();
+      const displayBalance = Math.max(GIVEAWAY_MIN_SOL_FLOOR, stats.giveawayWalletBalance);
+      const gamesInCycle = stats.totalGamesPlayed - stats.cycleStartGameCount;
+      const progressPercent = Math.min(100, (gamesInCycle / GIVEAWAY_MILESTONE_GAMES) * 100);
+
+      res.json({
+        ...stats,
+        displayBalance,
+        gamesInCycle,
+        progressPercent,
+        milestoneGames: GIVEAWAY_MILESTONE_GAMES,
+        gamesRemaining: Math.max(0, GIVEAWAY_MILESTONE_GAMES - gamesInCycle),
+        payoutPercents: GIVEAWAY_PAYOUT_PERCENTS,
+      });
+    } catch (error) {
+      console.error("Error getting giveaway stats:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Giveaway leaderboard (top 10 luck + top 10 streaks)
+  app.get("/api/giveaway/leaderboard", async (req, res) => {
+    try {
+      const leaderboard = await storage.getGiveawayLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error getting giveaway leaderboard:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // God streak status check for a player
+  app.get("/api/profile/:walletAddress/god-streak", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+      await storage.checkAndExpireGodStreak(walletAddress);
+      const profile = await storage.getProfile(walletAddress);
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+      res.json({
+        godStreakActive: profile.godStreakActive || false,
+        godStreakGamesRemaining: profile.godStreakGamesRemaining || 0,
+        godStreakStartedAt: profile.godStreakStartedAt,
+        godStreakLastPlayedAt: profile.godStreakLastPlayedAt,
+        isStreakBreakerActive: profile.isStreakBreakerActive || false,
+        godStreaksAchieved: profile.godStreaksAchieved || 0,
+        streaksBeaten: profile.streaksBeaten || 0,
+      });
+    } catch (error) {
+      console.error("Error getting god streak status:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

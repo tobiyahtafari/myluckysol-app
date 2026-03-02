@@ -20,8 +20,14 @@ MyLuckySol is a casino-grade, provably fair decentralized application (DApp) on 
 ### Game Mechanics
 - **Game Modes**: Supports 1v1, 2-round (4 players), 3-round (8 players), and 4-round (16 players) formats.
 - **Wager Tiers**: Fixed SOL wager amounts (0.01, 0.1, 1, 10 SOL).
-- **Payouts**: 90% of the pool goes to the winner(s), 10% to the Foundation Treasury.
+- **Payouts**: 90% to winner, 9% to Foundation Treasury, 1% to Giveaway wallet.
 - **Provably Fair System**: Utilizes Server Seed, Server Seed Hash, Client Seed (derived from player wallet addresses), and HMAC-SHA256 for verifiable random winner selection. The server seed is revealed post-game for verification.
+
+### Phase 2 — God Mode Mechanics
+- **God Streak**: 50 in 1,000,000 chance per game to trigger. Winner plays with 95% win weight for a hidden 26-333 game streak. Streak expires after 72 hours of inactivity (anti-camping).
+- **Streak Breaker**: 25% chance when a normal player faces a God. Strips God's advantage — 75% win to the challenger. Natural breaker = 5x WAGA bonus, triggered breaker = 3x WAGA bonus.
+- **God Mode Visuals**: Fire animation (orange glow pulse) on God player icons; water animation (blue ripple) on Streak Breaker icons.
+- **God Mode Transparency**: Full algorithm code displayed on /fairness page with hash derivation pseudocode.
 
 ### WAGA Token Economy
 - **Entry Reward**: 100x SOL wager match (immediate transfer).
@@ -35,17 +41,19 @@ MyLuckySol is a casino-grade, provably fair decentralized application (DApp) on 
 - **Profile Management**: Players can set usernames (with a small SOL fee), track game history, manage referrals, and claim vested WAGA.
 
 ### Backend & Blockchain Interaction
-- **API Endpoints**: Facilitate game preparation, joining, claiming winnings, profile management (including username updates and WAGA vesting), leaderboard queries, global stats (`/api/stats`), completed games feed (`/api/games/completed`), and game verification (`/api/verify`).
-- **Solana Integration**: Handles SOL transfers (wagers, payouts, username fees), WAGA token transfers from a central Rewards Vault, and on-chain program interactions.
+- **API Endpoints**: Facilitate game preparation, joining, claiming winnings, profile management (including username updates and WAGA vesting), leaderboard queries, global stats (`/api/stats`), completed games feed (`/api/games/completed`), game verification (`/api/verify`), global chat (`/api/chat`), tipping (`/api/tip`), giveaway stats (`/api/giveaway/stats`), giveaway leaderboard (`/api/giveaway/leaderboard`), and god streak status (`/api/profile/:wallet/god-streak`).
+- **Solana Integration**: Handles SOL transfers (wagers, payouts, username fees, tips), WAGA token transfers from a central Rewards Vault, and on-chain program interactions.
 - **Fallback Mode**: Currently operates in a fallback mode using direct SOL transfers to an authority wallet due to an un-deployed Solana program. The full on-chain mode will use PDA-based escrow after program deployment.
 
 ### Pages
 - **Game Notifications**: Site-wide animated pop-up notifications with sound when a new game is created. Clicking navigates to Play page with pre-selected mode/wager. Auto-dismisses after 7 seconds.
 - **Home** (`/`): Hero section with real-time global stats (Games Played, SOL Won, Players, WAGA Rewarded), embedded YouTube video with play/replay overlays, feature cards, game modes, earnings calculator, how it works, and CTA.
-- **Fairness** (`/fairness`): Provably fair explanation, full algorithm source code display, game verification search by Server Seed Hash, and real-time completed games feed.
+- **Fairness** (`/fairness`): Provably fair explanation, full algorithm source code display, God Mode algorithm section, game verification search by Server Seed Hash, and real-time completed games feed.
 - **Play** (`/play`): Game mode selection and wager picker.
-- **Game Room** (`/game/:id`): Live game view with player slots, countdown timer, chat.
+- **Game Room** (`/game/:id`): Live game view with player slots (fire/water animations for God/Breaker), countdown timer, chat.
 - **Leaderboard** (`/leaderboard`): Sortable by earnings/luck/streaks with period filters.
+- **Giveaway** (`/giveaway`): Million game jackpot tracker (200 SOL floor), progress bar, top 10 luck and streak leaderboards with payout % breakdown.
+- **Chat** (`/chat`): Global chat (gated by 0.1 SOL wager history) with split layout — live games panel on right. Tipping modal (0.001 SOL fee). Fire/water badge indicators for God/Breaker users.
 - **Profile** (`/profile`): Username/avatar management, game history, referral system, WAGA vesting claims.
 - **Docs** (`/docs`): Contract addresses and ecosystem info (WAGA Rewards Escrow model).
 - **How to Play** (`/how-to-play`): Step-by-step guide.

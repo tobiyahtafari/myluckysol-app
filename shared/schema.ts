@@ -12,12 +12,35 @@ export const GAME_MODES = {
 
 export type GameModeKey = keyof typeof GAME_MODES;
 
-export const FOUNDATION_FEE = 0.1;
+export const FOUNDATION_FEE = 0.09; // 9% to treasury
+export const GIVEAWAY_FEE = 0.01;   // 1% to giveaway wallet
 export const WINNER_SHARE = 0.9;
 
 // WAGA reward multipliers (SOL amount * multiplier = WAGA tokens)
-export const WAGA_ENTRY_MULTIPLIER = 100;   // 100x match: 0.01 SOL = 1 WAGA, 1 SOL = 100 WAGA
-export const WAGA_WINNER_MULTIPLIER = 1000; // 1000x match: 0.018 SOL won = 18 WAGA
+export const WAGA_ENTRY_MULTIPLIER = 100;
+export const WAGA_WINNER_MULTIPLIER = 1000;
+
+// God Streak / Streak Breaker constants
+export const GOD_STREAK_CHANCE = 50;           // 50 in 1,000,000 games
+export const GOD_STREAK_MIN_LENGTH = 26;
+export const GOD_STREAK_MAX_LENGTH = 333;
+export const GOD_STREAK_WIN_WEIGHT = 0.95;     // 95% win chance for God
+export const BREAKER_CHANCE = 250000;          // 250,000 in 1,000,000 (25%)
+export const BREAKER_WIN_WEIGHT = 0.75;        // 75% win for Giant Slayer if breaker
+export const GOD_CAMPING_TIMEOUT_MS = 72 * 60 * 60 * 1000; // 72 hours
+
+// God breaker WAGA bonus multipliers
+export const NATURAL_BREAKER_WAGA_MULTIPLIER = 5;   // 5x on top of 1000x
+export const TRIGGERED_BREAKER_WAGA_MULTIPLIER = 3; // 3x on top of 1000x
+
+// Giveaway constants
+export const GIVEAWAY_MILESTONE_GAMES = 1_000_000;
+export const GIVEAWAY_MIN_SOL_FLOOR = 200; // Always show minimum 200 SOL
+export const GIVEAWAY_PAYOUT_PERCENTS = [22, 16, 12, 10, 9, 8, 7, 6, 5, 5] as const;
+
+// Chat constants
+export const CHAT_MIN_TOTAL_WAGERED = 0.1; // Min 0.1 SOL wager history to chat
+export const TIP_FEE_SOL = 0.001;          // Fixed fee per tip
 
 export type GameStatus = "waiting" | "countdown" | "in_progress" | "resolving" | "completed";
 
@@ -30,7 +53,7 @@ export const playerSchema = z.object({
   joinedAt: z.number(),
   isEliminated: z.boolean().default(false),
   eliminatedRound: z.number().optional(),
-  txSignature: z.string().optional(), // Wager transfer transaction signature
+  txSignature: z.string().optional(),
 });
 
 export type Player = z.infer<typeof playerSchema>;
@@ -47,8 +70,8 @@ export type Round = z.infer<typeof roundSchema>;
 
 export const gameSchema = z.object({
   id: z.string(),
-  onChainGameId: z.string().optional(), // On-chain game ID (bigint as string)
-  escrowPDA: z.string().optional(), // Game pool PDA address for escrow
+  onChainGameId: z.string().optional(),
+  escrowPDA: z.string().optional(),
   mode: z.enum(["1v1", "2-round", "3-round", "4-round"]),
   wager: z.number(),
   status: z.enum(["waiting", "countdown", "in_progress", "resolving", "completed"]),
@@ -57,14 +80,20 @@ export const gameSchema = z.object({
   currentRound: z.number(),
   poolAmount: z.number(),
   serverSeed: z.string().optional(),
-  serverSeedReveal: z.string().optional(), // Added for fairness verification
+  serverSeedReveal: z.string().optional(),
   serverSeedHash: z.string().optional(),
   clientSeed: z.string().optional(),
   winnerId: z.string().optional(),
   winnerPayout: z.number().optional(),
-  winnerPayoutTxSig: z.string().optional(), // Transaction signature for winner payout
-  treasuryFeeTxSig: z.string().optional(), // Transaction signature for treasury fee
+  winnerPayoutTxSig: z.string().optional(),
+  treasuryFeeTxSig: z.string().optional(),
+  giveawayFeeTxSig: z.string().optional(),
   wagaRewards: z.number().optional(),
+  godStreakTriggered: z.boolean().optional(),
+  godStreakRecipient: z.string().optional(),
+  breakerTriggered: z.boolean().optional(),
+  breakerPlayerId: z.string().optional(),
+  naturalBreakerBonus: z.boolean().optional(),
   startedAt: z.number().optional(),
   completedAt: z.number().optional(),
   countdownEndsAt: z.number().optional(),
@@ -104,6 +133,15 @@ export const playerProfileSchema = z.object({
   currentStreak: z.number().default(0),
   bestStreak: z.number().default(0),
   luckScore: z.number().default(50),
+  // God Streak fields
+  godStreakActive: z.boolean().default(false),
+  godStreakLength: z.number().default(0),
+  godStreakGamesRemaining: z.number().default(0),
+  godStreakStartedAt: z.number().optional(),
+  godStreakLastPlayedAt: z.number().optional(),
+  isStreakBreakerActive: z.boolean().default(false),
+  godStreaksAchieved: z.number().default(0),
+  streaksBeaten: z.number().default(0),
   createdAt: z.number(),
   lastPlayedAt: z.number().optional(),
 });
@@ -131,6 +169,32 @@ export type ChatMessage = z.infer<typeof chatMessageSchema>;
 export const insertChatMessageSchema = chatMessageSchema.omit({ id: true, timestamp: true });
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
+// Global chat (separate from game-specific chat)
+export const globalChatMessageSchema = z.object({
+  id: z.string(),
+  walletAddress: z.string(),
+  username: z.string().optional(),
+  message: z.string(),
+  timestamp: z.number(),
+  isGodStreak: z.boolean().default(false),
+  isStreakBreaker: z.boolean().default(false),
+  tipAmount: z.number().optional(),
+  tipRecipient: z.string().optional(),
+});
+
+export type GlobalChatMessage = z.infer<typeof globalChatMessageSchema>;
+
+// Giveaway stats
+export const giveawayStatsSchema = z.object({
+  totalGamesPlayed: z.number().default(0),
+  cycleStartGameCount: z.number().default(0),
+  giveawayWalletBalance: z.number().default(0),
+  lastUpdatedAt: z.number().default(0),
+  currentCycleStart: z.number().default(0),
+});
+
+export type GiveawayStats = z.infer<typeof giveawayStatsSchema>;
+
 export const usernameSchema = z.string()
   .min(3)
   .max(20)
@@ -146,6 +210,8 @@ export const leaderboardEntrySchema = z.object({
   winRate: z.number(),
   luckScore: z.number(),
   bestStreak: z.number(),
+  godStreakActive: z.boolean().optional(),
+  isStreakBreakerActive: z.boolean().optional(),
 });
 
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
@@ -163,6 +229,8 @@ export const gameHistorySchema = z.object({
   totalPlayers: z.number().optional(),
   poolAmount: z.number().optional(),
   roundsSurvived: z.number().optional(),
+  godStreakGame: z.boolean().optional(),
+  brokeGodStreak: z.boolean().optional(),
   opponents: z.array(z.object({
     walletAddress: z.string(),
     displayName: z.string().optional(),

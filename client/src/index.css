@@ -467,4 +467,35 @@
     scrollbar-width: thin;
     scrollbar-color: #9945FF rgba(153, 69, 255, 0.1);
   }
+
+  /* God Streak — fire glow animation */
+  @keyframes god-fire-pulse {
+    0%, 100% {
+      box-shadow: 0 0 8px 2px rgba(249, 115, 22, 0.7), 0 0 20px 4px rgba(239, 68, 68, 0.35);
+    }
+    33% {
+      box-shadow: 0 0 14px 5px rgba(251, 146, 60, 0.9), 0 0 32px 8px rgba(249, 115, 22, 0.5);
+    }
+    66% {
+      box-shadow: 0 0 6px 2px rgba(239, 68, 68, 0.8), 0 0 18px 4px rgba(220, 38, 38, 0.4);
+    }
+  }
+
+  /* Streak Breaker — water ripple animation */
+  @keyframes streak-water-pulse {
+    0%, 100% {
+      box-shadow: 0 0 8px 2px rgba(59, 130, 246, 0.7), 0 0 22px 5px rgba(6, 182, 212, 0.35);
+    }
+    50% {
+      box-shadow: 0 0 16px 5px rgba(6, 182, 212, 0.9), 0 0 34px 10px rgba(59, 130, 246, 0.45);
+    }
+  }
+
+  .god-fire-border {
+    animation: god-fire-pulse 1.8s ease-in-out infinite;
+  }
+
+  .streak-water-border {
+    animation: streak-water-pulse 2.4s ease-in-out infinite;
+  }
 }
