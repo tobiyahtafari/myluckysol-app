@@ -87,6 +87,7 @@ export class MemStorage implements IStorage {
     this.avatarImages = new Map();
     this.chatMessages = new Map();
     this.globalChatMessages = [];
+    this.gameHistory = new Map();
     this.giveawayWinners = [];
     this.giveawayStats = {
       totalGamesPlayed: 0,

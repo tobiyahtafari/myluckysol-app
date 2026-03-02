@@ -70,11 +70,12 @@ export default function Profile() {
     toast({ title: "Referral link copied!" });
   };
 
-  const { data: history } = useQuery<GameHistory[]>({
+  const { data: history = [] } = useQuery<GameHistory[]>({
     queryKey: ['/api/profile', address, 'history'],
     queryFn: async () => {
       const res = await fetch(`/api/profile/${address}/history`);
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: connected && !!address,
   });
