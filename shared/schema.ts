@@ -191,9 +191,23 @@ export const giveawayStatsSchema = z.object({
   giveawayWalletBalance: z.number().default(0),
   lastUpdatedAt: z.number().default(0),
   currentCycleStart: z.number().default(0),
+  currentSeason: z.number().default(1),
 });
 
 export type GiveawayStats = z.infer<typeof giveawayStatsSchema>;
+
+export const giveawayWinnerSchema = z.object({
+  id: z.string(),
+  season: z.number(),
+  walletAddress: z.string(),
+  username: z.string().optional(),
+  payoutSol: z.number(),
+  type: z.enum(["luck", "streak"]),
+  rank: z.number(),
+  wonAt: z.number(),
+});
+
+export type GiveawayWinner = z.infer<typeof giveawayWinnerSchema>;
 
 export const usernameSchema = z.string()
   .min(3)

@@ -79,6 +79,7 @@ export class MemStorage implements IStorage {
   private gameHistory: Map<string, GameHistory[]>;
   private avatarImages: Map<string, { data: Buffer; contentType: string }>;
   private giveawayStats: GiveawayStats;
+  private giveawayWinners: GiveawayWinner[];
 
   constructor() {
     this.profiles = new Map();
@@ -86,12 +87,14 @@ export class MemStorage implements IStorage {
     this.avatarImages = new Map();
     this.chatMessages = new Map();
     this.globalChatMessages = [];
+    this.giveawayWinners = [];
     this.giveawayStats = {
       totalGamesPlayed: 0,
       cycleStartGameCount: 0,
       giveawayWalletBalance: 0,
       lastUpdatedAt: Date.now(),
       currentCycleStart: Date.now(),
+      currentSeason: 1,
     };
   }
 
@@ -333,6 +336,64 @@ export class MemStorage implements IStorage {
     const luck = await this.getLeaderboard("luck", 10, "all");
     const streaks = await this.getLeaderboard("streaks", 10, "all");
     return { luck, streaks };
+  }
+
+  async getGiveawayWinners(season?: number): Promise<GiveawayWinner[]> {
+    if (season) {
+      return this.giveawayWinners.filter(w => w.season === season);
+    }
+    return this.giveawayWinners;
+  }
+
+  private async triggerGiveawayPayout(): Promise<void> {
+    const stats = this.giveawayStats;
+    const jackpot = Math.max(GIVEAWAY_MIN_SOL_FLOOR, stats.giveawayWalletBalance);
+    const luckWinners = await this.getLeaderboard("luck", 10, "all");
+    const streakWinners = await this.getLeaderboard("streaks", 10, "all");
+
+    const winnerEntries: GiveawayWinner[] = [];
+
+    // Process Luck winners
+    luckWinners.forEach((w, i) => {
+      winnerEntries.push({
+        id: `win_luck_${stats.currentSeason}_${i}`,
+        season: stats.currentSeason,
+        walletAddress: w.walletAddress,
+        username: w.displayName,
+        payoutSol: (jackpot * 0.5 * (GIVEAWAY_PAYOUT_PERCENTS[i] / 100)),
+        type: "luck",
+        rank: i + 1,
+        wonAt: Date.now(),
+      });
+    });
+
+    // Process Streak winners
+    streakWinners.forEach((w, i) => {
+      winnerEntries.push({
+        id: `win_streak_${stats.currentSeason}_${i}`,
+        season: stats.currentSeason,
+        walletAddress: w.walletAddress,
+        username: w.displayName,
+        payoutSol: (jackpot * 0.5 * (GIVEAWAY_PAYOUT_PERCENTS[i] / 100)),
+        type: "streak",
+        rank: i + 1,
+        wonAt: Date.now(),
+      });
+    });
+
+    this.giveawayWinners.push(...winnerEntries);
+
+    // Reset for next season
+    this.giveawayStats = {
+      ...stats,
+      cycleStartGameCount: stats.totalGamesPlayed,
+      giveawayWalletBalance: 0,
+      currentCycleStart: Date.now(),
+      currentSeason: stats.currentSeason + 1,
+      lastUpdatedAt: Date.now(),
+    };
+
+    console.log(`[GIVEAWAY] Season ${stats.currentSeason} completed! Payouts recorded for 20 winners.`);
   }
 
   async getGame(id: string): Promise<Game | undefined> {
@@ -893,6 +954,11 @@ export class MemStorage implements IStorage {
     this.giveawayStats.totalGamesPlayed += 1;
     this.giveawayStats.giveawayWalletBalance += giveawayFee;
     this.giveawayStats.lastUpdatedAt = Date.now();
+
+    const gamesInCycle = this.giveawayStats.totalGamesPlayed - this.giveawayStats.cycleStartGameCount;
+    if (gamesInCycle >= GIVEAWAY_MILESTONE_GAMES) {
+      await this.triggerGiveawayPayout();
+    }
 
     console.log(`[GIVEAWAY] Game contribution: ${giveawayFee.toFixed(6)} SOL. Total pot: ${this.giveawayStats.giveawayWalletBalance.toFixed(4)} SOL`);
     console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}...`);

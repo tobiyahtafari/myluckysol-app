@@ -895,6 +895,18 @@ export async function registerRoutes(
     }
   });
 
+  // Previous winners
+  app.get("/api/giveaway/winners", async (req, res) => {
+    try {
+      const season = req.query.season ? parseInt(req.query.season as string) : undefined;
+      const winners = await (storage as any).getGiveawayWinners(season);
+      res.json(winners);
+    } catch (error) {
+      console.error("Error getting giveaway winners:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // God streak status check for a player
   app.get("/api/profile/:walletAddress/god-streak", async (req, res) => {
     try {
