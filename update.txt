@@ -13,6 +13,10 @@ This document serves as the pre-implementation blueprint for the "God Mode" and 
 - **Normal Games**: All other games remain pure 1/N random selection based on seeds.
 
 ## 2. 1 MILLION GAME LEADERBOARD
+- **Location**: Dedicated page "Million Game Giveaway".
+- **Content**: 
+    - Real-time Jackpot breakdown in SOL and USD.
+    - Reward calculations for all top 10 positions (Luck & Streaks) based on current % split.
 - **Scope**: Tracks the top 10 Luck Scores and longest Streaks.
 - **Timeframes**:
     - **All-Time**: 1 to 1,000,000 (Historical records).
@@ -30,10 +34,13 @@ This document serves as the pre-implementation blueprint for the "God Mode" and 
 - **Notification Behavior**: On the Chat page, standard pop-up notifications are disabled and integrated directly into the split-view sections.
 - **Social Features**:
     - **Tipping**: Users can tip other members using their Wallet Address or Username.
+- **Visuals**:
+    - **God Streak**: Special fire animation around the user's icon.
+    - **Streak Breaker**: Special water animation around the user's icon when triggered.
 
 ## 4. MILLION GAME GIVEAWAY (THE JACKPOT)
 - **Contribution**: 9% Treasury | 1% Giveaway Wallet (10% Total Fee).
-- **Minimum Jackpot**: 200 SOL (Base calculation: 1,000,000 1v1 games at 0.01 SOL).
+- **Minimum Jackpot**: Always display **200 SOL** as the floor (even at game 1).
 - **Jackpot Growth**: Every game mode and wager (0.1, 1, 10 SOL) increases the pot significantly beyond the 200 SOL floor.
 - **Trigger**: Reaching the 1,000,000th game in the cycle.
 - **The Split**: The jackpot is split 50/50 between the Top 10 Luck Scores and Top 10 Streaks.
@@ -48,6 +55,9 @@ This document serves as the pre-implementation blueprint for the "God Mode" and 
     8. 6%
     9. 5%
     10. 5%
+- **Bonus Rewards**:
+    - **Natural Breaker**: If a normal user (no breaker triggered) breaks a God Streak, they receive **5x** the 1000x WAGA win bonus.
+    - **Triggered Breaker**: If a user wins after triggering a Streak Breaker, they receive **3x** the 1000x WAGA win bonus.
 
 ---
 
@@ -63,9 +73,9 @@ This document serves as the pre-implementation blueprint for the "God Mode" and 
     - Require a **minimum wager history** (e.g., 0.1 SOL total) to use Chat/Tipping.
     - Implement a small fee (e.g., 1% or fixed 0.001 SOL) on tips to discourage micro-spam.
 
-### C. The 1M Game "Dead Zone"
-- **Flaw**: After the jackpot hits, activity might drop as the 1M counter resets.
-- **Fix**: Display the **Current Jackpot Value** prominently. Even at 1,000 games, if the pot is already at 50 SOL due to high-stakes play, people will stay engaged.
+### C. The 1M Game Floor
+- **Practice**: Always display the **200 SOL Minimum** from Game 1. Even if the actual accumulation is lower early on, the 200 SOL floor is guaranteed by the 1M game cycle (based on 0.01 SOL 1v1).
+- **Growth**: Display the real-time value once it exceeds 200 SOL due to higher-stakes play.
 
 ### D. Provable Fairness Transparency
 - **Flaw**: God Streaks look like "rigging" to new users.
