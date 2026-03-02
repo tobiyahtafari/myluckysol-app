@@ -363,7 +363,7 @@ export default function Giveaway() {
             <motion.div
               key="current"
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: 20 }}
               className="space-y-10"
             >
@@ -511,14 +511,6 @@ export default function Giveaway() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <p className="text-center text-xs text-muted-foreground pb-4">
-          Leaderboard positions are tracked across all games. Rankings update after every game. The jackpot triggers automatically at 1,000,000 games played.
-        </p>
-      </div>
-    </div>
-  );
-}
 
         <p className="text-center text-xs text-muted-foreground pb-4">
           Leaderboard positions are tracked across all games. Rankings update after every game. The jackpot triggers automatically at 1,000,000 games played.
