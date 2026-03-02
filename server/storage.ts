@@ -151,10 +151,11 @@ export class MemStorage implements IStorage {
       const referrer = await this.getProfileByUsernameOrWallet(updates.referredBy);
       if (referrer && referrer.walletAddress !== walletAddress) {
         updates.pendingReferralBy = referrer.walletAddress;
-        updates.referredBy = referrer.walletAddress;
+        // Store the referrer's username or wallet address
+        updates.referredBy = referrer.username || referrer.walletAddress;
         updates.referralRewarded = false;
         console.log(`[REFERRAL] Pending referral set: ${walletAddress.slice(0, 8)}... referred by ${referrer.walletAddress.slice(0, 8)}...`);
-      } else if (!referrer) {
+      } else {
         delete updates.referredBy;
       }
     }
@@ -188,6 +189,18 @@ export class MemStorage implements IStorage {
     console.log(`[REFERRAL] Rewards granted! ${walletAddress.slice(0, 8)}... and ${referrer.walletAddress.slice(0, 8)}... each received ${REFERRAL_REWARD_AMOUNT} WAGA`);
 
     return { granted: true, referrerWallet: referrer.walletAddress };
+  }
+
+  async getProfileByUsernameOrWallet(input: string): Promise<PlayerProfile | undefined> {
+    const profile = this.profiles.get(input);
+    if (profile) return profile;
+
+    for (const p of this.profiles.values()) {
+      if (p.username?.toLowerCase() === input.toLowerCase()) {
+        return p;
+      }
+    }
+    return undefined;
   }
 
   async rollbackReferralRewards(walletAddress: string): Promise<void> {

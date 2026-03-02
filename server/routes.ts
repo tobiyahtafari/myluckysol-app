@@ -465,6 +465,14 @@ export async function registerRoutes(
           return res.status(400).json({ error: `Payment validation failed: ${transferValid.error}` });
         }
 
+        // Apply referrer if provided during username update
+        if (referredBy && !profile.referredBy) {
+          const referrer = await storage.getProfileByUsernameOrWallet(referredBy);
+          if (referrer && referrer.walletAddress !== walletAddress) {
+            await storage.updateProfile(walletAddress, { referredBy: referrer.username || referrer.walletAddress });
+          }
+        }
+
         req.body.usernameUpdatedAt = now;
         req.body.usernameUpdateCount = updateCount + 1;
 
@@ -526,10 +534,33 @@ export async function registerRoutes(
       }
 
       if (referredBy && !profile.referredBy) {
-        if (profile.username) {
-          return res.status(400).json({ error: "Referral code can only be applied before setting a username" });
+        const referrer = await storage.getProfileByUsernameOrWallet(referredBy);
+        if (!referrer) {
+          return res.status(404).json({ error: "Referrer username or wallet not found" });
         }
-        const updated = await storage.updateProfile(walletAddress, { referredBy });
+        if (referrer.walletAddress === walletAddress) {
+          return res.status(400).json({ error: "You cannot refer yourself" });
+        }
+        
+        const updated = await storage.updateProfile(walletAddress, { 
+          referredBy: referrer.username || referrer.walletAddress 
+        });
+
+        // If user already has a username, trigger rewards immediately
+        if (profile.username && updated) {
+          const rewardResult = await storage.grantPendingReferralRewards(walletAddress);
+          if (rewardResult?.granted) {
+             // Attempt on-chain transfers if authority available
+             if (solanaClient.hasAuthority()) {
+               await solanaClient.transferWagaFromVault(walletAddress, REFERRAL_REWARD_AMOUNT);
+               if (rewardResult.referrerWallet) {
+                 await solanaClient.transferWagaFromVault(rewardResult.referrerWallet, REFERRAL_REWARD_AMOUNT);
+               }
+             }
+             return res.json({ profile: await storage.getProfile(walletAddress), referralGranted: true });
+          }
+        }
+        
         return res.json({ profile: updated });
       }
 

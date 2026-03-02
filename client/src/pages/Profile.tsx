@@ -1,16 +1,16 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LuckBar } from "@/components/LuckBar";
 import { useWallet } from "@/lib/wallet-context";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
 import { VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT } from "@shared/schema";
-import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Copy, Check, Lock, Unlock, AlertTriangle } from "lucide-react";
+import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Copy, Check, Lock, Unlock, AlertTriangle, Smartphone, Gift } from "lucide-react";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { useSolPrice, SolToUsd } from "@/lib/price-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { usernameSchema } from "@shared/schema";
@@ -22,6 +22,7 @@ import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana
 
 export default function Profile() {
   const { connected, connect, address, shortAddress, balance, wagaBalance, adapter, connection, publicKey } = useWallet();
+  const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [newUsername, setNewUsername] = useState("");
@@ -29,6 +30,25 @@ export default function Profile() {
   const [copied, setCopy] = useState(false);
   const [isPayingForUsername, setIsPayingForUsername] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [showReferralPopup, setShowReferralPopup] = useState(false);
+  const [isWeb3Browser, setIsWeb3Browser] = useState(true);
+
+  // Check for Web3 browser on mobile
+  useEffect(() => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      const hasSolana = !!(window as any).solana || !!(window as any).phantom || !!(window as any).solflare;
+      setIsWeb3Browser(hasSolana);
+    }
+
+    // Check for referral in URL
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      setReferrerAddress(ref);
+      setShowReferralPopup(true);
+    }
+  }, []);
 
   const { data: profile } = useQuery<PlayerProfile>({
     queryKey: ['/api/profile', address],
@@ -59,7 +79,7 @@ export default function Profile() {
   const referralUnlocked = hasUsername;
 
   const referralLink = profile?.username 
-    ? `${window.location.origin}/play?ref=${encodeURIComponent(profile.username)}`
+    ? `${window.location.origin}/profile?ref=${encodeURIComponent(profile.username)}`
     : "";
 
   const copyReferral = () => {
@@ -165,12 +185,14 @@ export default function Profile() {
       const res = await apiRequest("PATCH", `/api/profile/${address}`, {
         username: newUsername,
         txSignature: signature,
+        referredBy: referrerAddress || undefined,
       });
       const data = await res.json();
 
       queryClient.invalidateQueries({ queryKey: ['/api/profile', address] });
       refetchCost();
       setNewUsername("");
+      setShowReferralPopup(false);
 
       if (data.referralGranted) {
         toast({ 
@@ -220,6 +242,35 @@ export default function Profile() {
     },
   });
 
+  if (!isWeb3Browser) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+            <Smartphone className="w-10 h-10 text-destructive" />
+          </div>
+          <h1 className="text-3xl font-bold mb-4">Web3 Browser Required</h1>
+          <p className="text-muted-foreground mb-8">
+            You are using a standard mobile browser. To access MyLuckySol and use the referral program, please copy this link and paste it into a Web3-enabled browser like Phantom, Solflare, or OKX Wallet app.
+          </p>
+          <div className="flex gap-2 mb-8">
+            <Input readOnly value={window.location.href} className="text-xs" />
+            <Button size="icon" variant="outline" onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast({ title: "Link copied!" });
+            }}>
+              <Copy className="w-4 h-4" />
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!connected) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
@@ -259,6 +310,42 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen py-8 px-4 relative overflow-hidden">
+      <AnimatePresence>
+        {showReferralPopup && !hasUsername && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+          >
+            <Card className="max-w-md p-8 border-primary/30 shadow-[0_0_50px_rgba(245,184,0,0.2)]">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+                  <Gift className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold">Referral Bonus Waiting!</h2>
+                <p className="text-muted-foreground">
+                  You've been referred by <span className="text-primary font-bold">{referrerAddress}</span>. 
+                  Pay $1 to set your username now to unlock <span className="text-primary font-bold">100 WAGA</span> for both of you!
+                </p>
+                <div className="pt-4 flex flex-col gap-2">
+                  <Button size="lg" onClick={() => {
+                    const el = document.getElementById('username-input');
+                    el?.focus();
+                    setShowReferralPopup(false);
+                  }}>
+                    Set Username Now
+                  </Button>
+                  <Button variant="ghost" onClick={() => setShowReferralPopup(false)}>
+                    Maybe Later
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent" />
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#9945FF]/15 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-1/3 left-0 w-80 h-80 bg-[#00FFA3]/12 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
@@ -305,6 +392,7 @@ export default function Profile() {
                 <form onSubmit={handleUpdateUsername} className="mt-4 space-y-2 max-w-sm mx-auto md:mx-0">
                   <div className="flex gap-2">
                     <Input
+                      id="username-input"
                       placeholder={hasUsername ? "Change username" : "Set username to unlock referrals"}
                       value={newUsername}
                       onChange={(e) => setNewUsername(e.target.value)}
@@ -384,7 +472,7 @@ export default function Profile() {
               </div>
               
               <div className="space-y-3">
-                {!profile?.referredBy && !hasUsername ? (
+                {!profile?.referredBy ? (
                   <>
                     <p className="text-sm text-muted-foreground">
                       Were you referred? Enter their username or wallet address. Both of you will receive {REFERRAL_REWARD_AMOUNT} WAGA once you both set your usernames.
@@ -410,20 +498,30 @@ export default function Profile() {
                     </form>
                   </>
                 ) : profile?.referredBy && !profile?.referralRewarded ? (
-                  <p className="text-xs text-amber-400 flex items-center gap-1" data-testid="text-referral-pending">
-                    <Clock className="w-3 h-3" />
-                    Referral reward pending - set your username to claim {REFERRAL_REWARD_AMOUNT} WAGA
-                  </p>
+                  <div className="p-3 rounded-lg bg-amber-400/10 border border-amber-400/30">
+                    <p className="text-xs text-amber-400 flex items-center gap-1 font-bold mb-1" data-testid="text-referral-pending">
+                      <Clock className="w-3 h-3" />
+                      REFERRAL PENDING
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mb-2">
+                      Referred by: {profile.referredBy}
+                    </p>
+                    {hasUsername ? (
+                      <p className="text-[10px] text-amber-400 italic">
+                        Waiting for on-chain reward processing...
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-amber-400">
+                        Set your username above to claim {REFERRAL_REWARD_AMOUNT} WAGA
+                      </p>
+                    )}
+                  </div>
                 ) : profile?.referralRewarded ? (
                   <p className="text-xs text-accent flex items-center gap-1" data-testid="text-referral-claimed">
                     <Check className="w-3 h-3" />
                     Referral reward claimed: +{REFERRAL_REWARD_AMOUNT} WAGA
                   </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No referral code applied. Referral codes can only be entered before your first username update.
-                  </p>
-                )}
+                ) : null}
               </div>
             </div>
           </Card>
@@ -520,168 +618,80 @@ export default function Profile() {
                 </div>
               </div>
 
-              <div className="mb-4">
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>Vesting Progress</span>
-                  <span>{Math.round((vestingData.claimed / vestingData.totalVesting) * 100)}%</span>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Next release: {vestingData.dailyAmount.toLocaleString()} WAGA</span>
+                  <span className="font-mono text-muted-foreground">
+                    {vestingData.nextClaimTime > Date.now() 
+                      ? `Available in ${Math.ceil((vestingData.nextClaimTime - Date.now()) / (1000 * 60 * 60))}h`
+                      : "Ready to claim"}
+                  </span>
                 </div>
                 <Progress 
-                  value={(vestingData.claimed / vestingData.totalVesting) * 100} 
+                  value={(vestingData.claimed / (vestingData.totalVesting || 1)) * 100} 
                   className="h-2"
                 />
-              </div>
-
-              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between p-3 rounded-lg bg-muted/30 gap-4">
-                <div>
-                  <p className="text-sm font-medium">Daily Release: {vestingData.dailyAmount.toLocaleString()} WAGA</p>
-                  {vestingData.remaining > 0 && vestingData.nextClaimTime > 0 && !vestingData.canClaim && (
-                    <p className="text-xs text-muted-foreground">
-                      Next claim: {formatTimeUntil(vestingData.nextClaimTime)}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  onClick={() => claimVestingMutation.mutate()}
+                <Button 
+                  className="w-full gap-2" 
                   disabled={!vestingData.canClaim || claimVestingMutation.isPending}
-                  className="gap-2 w-full md:w-auto"
+                  onClick={() => claimVestingMutation.mutate()}
                   data-testid="button-claim-vesting"
                 >
-                  {claimVestingMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Unlock className="w-4 h-4" />
-                  )}
-                  {vestingData.canClaim ? "Claim WAGA" : "Locked"}
+                  {claimVestingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unlock className="w-4 h-4" />}
+                  Claim Daily Release
                 </Button>
               </div>
             </Card>
           )}
 
           <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Recent Games
-              </h3>
-              <Link href="/play">
-                <Button variant="ghost" size="sm" className="gap-1">
-                  Play Now <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="space-y-3">
-              {mockHistory.map((game, i) => {
-                const timeAgo = formatTimeAgo(game.playedAt);
-                const modeConfig = { "1v1": 2, "2-round": 4, "3-round": 8, "4-round": 16 };
-                const totalPlayers = game.totalPlayers || modeConfig[game.mode] || 2;
-                const poolAmount = game.poolAmount || (game.wager * totalPlayers);
-                
-                return (
-                  <motion.div
-                    key={game.gameId}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className={`p-4 rounded-lg border ${
-                      game.result === "won"
-                        ? "bg-accent/5 border-accent/30"
-                        : "bg-muted/30 border-border"
-                    }`}
-                    data-testid={`history-item-${game.gameId}`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            game.result === "won"
-                              ? "bg-accent/20 text-accent"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {game.result === "won" ? (
-                            <Trophy className="w-5 h-5" />
-                          ) : (
-                            <Gamepad2 className="w-5 h-5" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium capitalize">{game.mode.replace("-", " ")} Mode</p>
-                          <p className="text-xs text-muted-foreground">{timeAgo}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`font-bold ${game.result === "won" ? "text-accent" : "text-muted-foreground"}`}>
-                          {game.result === "won" ? `+${game.payout?.toFixed(2)}` : `-${game.wager}`} SOL
-                        </p>
-                        <SolToUsd sol={game.result === "won" ? (game.payout || 0) : game.wager} className="text-[10px] opacity-70" />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 text-xs mb-2">
-                      <div className="bg-muted/30 p-2 rounded text-center">
-                        <p className="text-muted-foreground">Wager</p>
-                        <p className="font-semibold">{game.wager} SOL</p>
-                      </div>
-                      <div className="bg-muted/30 p-2 rounded text-center">
-                        <p className="text-muted-foreground">Pool</p>
-                        <p className="font-semibold">{poolAmount.toFixed(2)} SOL</p>
-                      </div>
-                      <div className="bg-muted/30 p-2 rounded text-center">
-                        <p className="text-muted-foreground">Players</p>
-                        <p className="font-semibold">{totalPlayers}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        {game.roundsSurvived !== undefined && (
-                          <span className="text-muted-foreground">
-                            Rounds survived: <span className="font-medium text-foreground">{game.roundsSurvived}</span>
-                          </span>
-                        )}
-                        {game.opponents && game.opponents.length > 0 && (
-                          <span className="text-muted-foreground">
-                            vs {game.opponents.slice(0, 2).map(o => o.displayName || o.walletAddress.slice(0, 6)).join(", ")}
-                            {game.opponents.length > 2 && ` +${game.opponents.length - 2} more`}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-secondary font-medium">+{game.wagaEarned} WAGA</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-              {mockHistory.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Gamepad2 className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p>No games played yet</p>
-                </div>
-              )}
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-muted-foreground" />
+              Game History
+            </h3>
+            <div className="space-y-2 overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-muted-foreground uppercase bg-muted/30">
+                  <tr>
+                    <th className="px-4 py-2">Mode</th>
+                    <th className="px-4 py-2">Wager</th>
+                    <th className="px-4 py-2 text-right">Result</th>
+                    <th className="px-4 py-2 text-right">Payout</th>
+                    <th className="px-4 py-2 text-right">WAGA</th>
+                    <th className="px-4 py-2 text-right">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {mockHistory.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                        No games played yet. <Link href="/play" className="text-primary hover:underline">Start playing!</Link>
+                      </td>
+                    </tr>
+                  )}
+                  {mockHistory.map((game, i) => {
+                    const isWin = game.result === "win";
+                    return (
+                      <tr key={game.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 font-medium">{game.mode}</td>
+                        <td className="px-4 py-3 font-mono">{game.wager} SOL</td>
+                        <td className={`px-4 py-3 text-right font-bold ${isWin ? "text-green-400" : "text-destructive"}`}>
+                          {game.result.toUpperCase()}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono">{game.payoutSol.toFixed(2)} SOL</td>
+                        <td className="px-4 py-3 text-right text-secondary">+{game.wagaReward.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground text-[10px]">
+                          {new Date(game.timestamp).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </Card>
         </motion.div>
       </div>
     </div>
   );
-}
-
-function formatTimeAgo(timestamp: number): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 60) return "Just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-function formatTimeUntil(timestamp: number): string {
-  const ms = timestamp - Date.now();
-  if (ms <= 0) return "Now";
-  const hours = Math.floor(ms / (1000 * 60 * 60));
-  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m`;
 }
