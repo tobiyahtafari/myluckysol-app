@@ -124,7 +124,7 @@ export function Header() {
               <img
                 src={headerLogo}
                 alt="MyLuckySol"
-                className="h-14 w-auto md:h-14"
+                className="h-14 w-auto min-w-[140px] md:min-w-0 md:h-14"
                 data-testid="img-header-logo"
               />
             </Link>

@@ -334,12 +334,13 @@ export default function Chat() {
     },
   });
 
-  // Disable auto-scroll to bottom
-  /*
+  // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = document.getElementById("chat-messages-container");
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages]);
-  */
 
   const handleSend = () => {
     const msg = input.trim();
@@ -382,7 +383,7 @@ export default function Chat() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto py-2 space-y-0.5">
+          <div className="flex-1 overflow-y-auto py-2 space-y-0.5" id="chat-messages-container">
             {isLoading && (
               <div className="text-center text-muted-foreground text-sm py-8">Loading chat...</div>
             )}
@@ -408,6 +409,24 @@ export default function Chat() {
               </div>
             ) : (
               <div className="flex gap-2">
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-8 text-orange-400 hover:bg-orange-400/10"
+                    onClick={() => setInput(prev => prev + "🔥")}
+                  >
+                    <Flame className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-8 text-blue-400 hover:bg-blue-400/10"
+                    onClick={() => setInput(prev => prev + "💧")}
+                  >
+                    <Droplets className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Input
                   value={input}
                   onChange={e => setInput(e.target.value)}
