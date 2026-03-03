@@ -830,7 +830,21 @@ export async function registerRoutes(
     try {
       const limit = parseInt(req.query.limit as string) || 100;
       const messages = await storage.getGlobalChatMessages(limit);
-      res.json(messages);
+      
+      // Enhance messages with real-time profile data (avatars, current usernames)
+      const enhancedMessages = await Promise.all(messages.map(async (msg) => {
+        if (!msg.walletAddress) return msg;
+        const profile = await storage.getProfile(msg.walletAddress);
+        return {
+          ...msg,
+          username: profile?.username || msg.username,
+          avatarUrl: profile?.avatarUrl,
+          isGodStreak: profile?.godStreakActive || false,
+          isStreakBreaker: profile?.isStreakBreakerActive || false
+        };
+      }));
+      
+      res.json(enhancedMessages);
     } catch (error) {
       console.error("Error getting global chat:", error);
       res.status(500).json({ error: "Internal server error" });
