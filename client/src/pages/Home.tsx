@@ -450,9 +450,9 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 opacity-50" />
                     <div className="relative z-10 space-y-4">
                       <div className="space-y-0">
-                        <div className="text-5xl font-black text-gradient-gold tracking-tighter animate-neon-text">{jackpot.toFixed(1)} SOL</div>
+                        <div className="text-5xl font-black tracking-tighter animate-text-gradient">{jackpot.toFixed(1)} SOL</div>
                         {jackpotUsd && (
-                          <div className="text-lg font-mono text-accent font-bold animate-neon-text">
+                          <div className="text-lg font-mono font-bold animate-text-gradient">
                             ${jackpotUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD
                           </div>
                         )}

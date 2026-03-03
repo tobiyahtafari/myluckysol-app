@@ -518,21 +518,26 @@
     animation: neon-pulse 4s ease-in-out infinite;
   }
 
-  @keyframes neon-text-flicker {
-    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-      text-shadow: 
-        0 0 4px #fff,
-        0 0 11px #fff,
-        0 0 19px #fff,
-        0 0 40px hsl(var(--primary)),
-        0 0 80px hsl(var(--primary));
-    }
-    20%, 22%, 24%, 55% {
-      text-shadow: none;
-    }
+  @keyframes text-gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 
-  .animate-neon-text {
-    animation: neon-text-flicker 3s infinite alternate;
+  .animate-text-gradient {
+    background: linear-gradient(
+      to right,
+      #FFD700,
+      #FFA500,
+      #FF00CC,
+      #3333FF,
+      #00FFA3,
+      #FFD700
+    );
+    background-size: 300% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: text-gradient-shift 4s linear infinite;
   }
 }
