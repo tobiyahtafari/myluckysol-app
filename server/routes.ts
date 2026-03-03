@@ -855,12 +855,30 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Profile not found. Play a game first." });
       }
 
+      if (profile.isBanned || (profile.timeoutUntil && profile.timeoutUntil > Date.now())) {
+        return res.status(403).json({ error: "You are currently timed out or banned from chat." });
+      }
+
       if ((profile.totalWagered || 0) < CHAT_MIN_TOTAL_WAGERED) {
         return res.status(403).json({ 
           error: `You must wager at least ${CHAT_MIN_TOTAL_WAGERED} SOL in total to chat.`,
           required: CHAT_MIN_TOTAL_WAGERED,
           current: profile.totalWagered || 0,
         });
+      }
+
+      // Moderation logic
+      const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-z0-9]+\s*(dot|\.)\s*[a-z0-9]+\s*(dot|\.)\s*[a-z0-9]+)/gi;
+      const spacedRegex = /(([a-z]\s+){3,}[a-z])/gi;
+      
+      if (urlRegex.test(message) || spacedRegex.test(message)) {
+        const warnings = (profile.chatWarnings || 0) + 1;
+        if (warnings >= 2) {
+          await storage.updateProfile(walletAddress, { timeoutUntil: Date.now() + 24 * 60 * 60 * 1000, chatWarnings: 0 });
+          return res.status(400).json({ error: "Advertising/links are banned. You have been timed out for 24h." });
+        }
+        await storage.updateProfile(walletAddress, { chatWarnings: warnings });
+        return res.status(400).json({ error: "Links/Advertising are not allowed. Warning 1/2." });
       }
 
       const chatMessage = await storage.addGlobalChatMessage({

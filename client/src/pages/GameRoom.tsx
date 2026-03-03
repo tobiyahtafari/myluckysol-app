@@ -139,7 +139,7 @@ export default function GameRoom() {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Total Pool</p>
                   <p className="text-4xl font-bold text-gradient-gold">
-                    {game.poolAmount.toFixed(2)} SOL <SolToUsd sol={game.poolAmount} className="text-sm font-normal block opacity-70" />
+                    {game.poolAmount.toFixed(2)} SOL <SolToUsd sol={game.poolAmount} className="text-sm font-normal block text-accent opacity-70" />
                   </p>
                 </div>
                 <div className="w-px h-12 bg-border hidden md:block" />

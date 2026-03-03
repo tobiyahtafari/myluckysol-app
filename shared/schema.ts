@@ -142,6 +142,9 @@ export const playerProfileSchema = z.object({
   isStreakBreakerActive: z.boolean().default(false),
   godStreaksAchieved: z.number().default(0),
   streaksBeaten: z.number().default(0),
+  chatWarnings: z.number().default(0),
+  timeoutUntil: z.number().optional(),
+  isBanned: z.boolean().default(false),
   createdAt: z.number(),
   lastPlayedAt: z.number().optional(),
 });
