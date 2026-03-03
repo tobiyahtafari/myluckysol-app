@@ -119,22 +119,9 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
-          <div className="flex h-16 md:h-16 items-center justify-between gap-4 relative">
-            <div className="flex items-center gap-2">
-              {/* Mobile Sandwich Menu */}
-              <div className="md:hidden">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="text-muted-foreground"
-                  data-testid="button-mobile-menu"
-                >
-                  {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </Button>
-              </div>
-
-              <Link href="/" className="flex items-center gap-2 h-14 py-1 translate-y-0 shrink-0">
+          <div className="flex h-20 md:h-16 items-center justify-between gap-4 relative">
+            <div className="flex flex-col items-start gap-1">
+              <Link href="/" className="flex items-center h-10 py-1 translate-y-0 shrink-0">
                 <img
                   src={headerLogo}
                   alt="MyLuckySol"
@@ -142,6 +129,20 @@ export function Header() {
                   data-testid="img-header-logo"
                 />
               </Link>
+
+              {/* Mobile Sandwich Menu - Below Logo */}
+              <div className="md:hidden">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="text-muted-foreground h-7 px-0 gap-1 hover:bg-transparent"
+                  data-testid="button-mobile-menu"
+                >
+                  {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Menu</span>
+                </Button>
+              </div>
             </div>
 
             {/* Desktop Nav */}
