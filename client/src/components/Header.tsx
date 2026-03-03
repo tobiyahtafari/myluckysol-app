@@ -119,12 +119,12 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
-          <div className="flex h-16 md:h-16 items-center justify-between gap-4 relative">
-            <Link href="/" className="flex items-center h-10 md:h-12 py-1 shrink-0">
+          <div className="flex h-20 md:h-16 items-center justify-between gap-4 relative">
+            <Link href="/" className="flex items-center h-12 md:h-14 py-1 shrink-0">
               <img
                 src={headerLogo}
                 alt="MyLuckySol"
-                className="h-full w-auto object-contain"
+                className="h-full w-auto object-contain max-w-[160px] xs:max-w-[180px] sm:max-w-none"
                 data-testid="img-header-logo"
               />
             </Link>
