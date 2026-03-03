@@ -120,29 +120,14 @@ export function Header() {
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
           <div className="flex h-16 md:h-16 items-center justify-between gap-4 relative">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="flex items-center h-10 md:h-12 py-1 shrink-0">
-                <img
-                  src={headerLogo}
-                  alt="MyLuckySol"
-                  className="h-full w-auto object-contain"
-                  data-testid="img-header-logo"
-                />
-              </Link>
-              
-              <div className="md:hidden">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="text-muted-foreground h-9 px-3 gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-colors"
-                  data-testid="button-mobile-menu"
-                >
-                  <Menu className="h-4 w-4" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Menu</span>
-                </Button>
-              </div>
-            </div>
+            <Link href="/" className="flex items-center h-10 md:h-12 py-1 shrink-0">
+              <img
+                src={headerLogo}
+                alt="MyLuckySol"
+                className="h-full w-auto object-contain"
+                data-testid="img-header-logo"
+              />
+            </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
@@ -164,17 +149,36 @@ export function Header() {
             </nav>
 
             <div className="flex items-center gap-2">
-              <PriceWidget />
+              <div className="hidden md:block">
+                <PriceWidget />
+              </div>
               
-              {connected ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+              <DropdownMenu onOpenChange={(open) => open && setMobileMenuOpen(false)}>
+                <DropdownMenuTrigger asChild>
+                  {connected ? (
                     <Button variant="outline" className="gap-2 h-9 px-3 border-accent/20 bg-accent/5 hover:bg-accent/10 rounded-full" data-testid="button-wallet-dropdown">
                       <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                       <span className="font-mono text-xs">{profile?.username || shortAddress}</span>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64">
+                  ) : (
+                    <Button 
+                      className="gap-2 h-9 rounded-full" 
+                      data-testid="button-connect-wallet"
+                    >
+                      <Wallet className="h-4 w-4" />
+                      Connect
+                    </Button>
+                  )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  {!connected && (
+                    <DropdownMenuItem onClick={() => setWalletModalOpen(true)} className="md:hidden flex items-center gap-2 cursor-pointer font-bold text-primary">
+                      <Wallet className="h-4 w-4" />
+                      Connect Wallet
+                    </DropdownMenuItem>
+                  )}
+                  
+                  {connected && (
                     <div className="px-3 py-2 space-y-2">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>Connected via {getWalletDisplayName()}</span>
@@ -204,72 +208,87 @@ export function Header() {
                         </span>
                       </div>
                     </div>
-                    
-                    {network === "devnet" && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={handleAirdrop}
-                          disabled={airdropLoading}
-                          className="cursor-pointer"
-                          data-testid="button-airdrop"
-                        >
-                          {airdropLoading ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Droplets className="h-4 w-4 mr-2 text-cyan-400" />
-                          )}
-                          Request Devnet SOL
+                  )}
+
+                  {/* Mobile Navigation Merged into Dropdown */}
+                  <div className="md:hidden">
+                    <DropdownMenuSeparator />
+                    <div className="px-2 py-1.5">
+                      <PriceWidget />
+                    </div>
+                    <DropdownMenuSeparator />
+                    <div className="py-1">
+                      {navItems.map((item) => (
+                        <DropdownMenuItem key={item.href} asChild>
+                          <Link href={item.href} className="flex items-center gap-3 cursor-pointer py-2 px-3">
+                            {item.icon && <item.icon className="h-4 w-4 text-muted-foreground" />}
+                            <span className="text-sm">{item.label}</span>
+                          </Link>
                         </DropdownMenuItem>
-                      </>
-                    )}
-                    
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
-                        <User className="h-4 w-4" />
-                        Profile
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/terms" className="flex items-center gap-2 cursor-pointer">
-                        <ShieldCheck className="h-4 w-4" />
-                        Terms & Conditions
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/privacy" className="flex items-center gap-2 cursor-pointer">
-                        <ShieldCheck className="h-4 w-4" />
-                        Privacy
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/docs" className="flex items-center gap-2 cursor-pointer">
-                        <ShieldCheck className="h-4 w-4" />
-                        Docs
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={disconnect}
-                      className="text-destructive focus:text-destructive cursor-pointer"
-                      data-testid="button-disconnect"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Disconnect
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button 
-                  onClick={() => setWalletModalOpen(true)} 
-                  className="gap-2" 
-                  data-testid="button-connect-wallet"
-                >
-                  <Wallet className="h-4 w-4" />
-                  Connect
-                </Button>
-              )}
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {connected && network === "devnet" && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleAirdrop}
+                        disabled={airdropLoading}
+                        className="cursor-pointer"
+                        data-testid="button-airdrop"
+                      >
+                        {airdropLoading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Droplets className="h-4 w-4 mr-2 text-cyan-400" />
+                        )}
+                        Request Devnet SOL
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/terms" className="flex items-center gap-2 cursor-pointer">
+                      <ShieldCheck className="h-4 w-4" />
+                      Terms & Conditions
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/privacy" className="flex items-center gap-2 cursor-pointer">
+                      <ShieldCheck className="h-4 w-4" />
+                      Privacy
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/docs" className="flex items-center gap-2 cursor-pointer">
+                      <ShieldCheck className="h-4 w-4" />
+                      Docs
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  {connected && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={disconnect}
+                        className="text-destructive focus:text-destructive cursor-pointer"
+                        data-testid="button-disconnect"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Disconnect
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -278,27 +297,6 @@ export function Header() {
             <PriceWidget />
           </div>
         </div>
-
-        {/* Mobile Navigation Dropdown */}
-        {mobileMenuOpen && (
-          <nav className="md:hidden border-t border-border/50 bg-background px-4 py-4 space-y-2 animate-in slide-in-from-top-4 duration-200">
-            {navItems.map((item) => {
-              const isActive = location === item.href;
-              return (
-                <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
-                  <Button
-                    variant={isActive ? "secondary" : "ghost"}
-                    className={`w-full justify-start gap-3 h-12 ${isActive ? "text-secondary-foreground" : "text-muted-foreground"}`}
-                    data-testid={`link-nav-mobile-${item.label.toLowerCase()}`}
-                  >
-                    {item.icon && <item.icon className="h-5 w-5" />}
-                    <span className="text-base font-medium">{item.label}</span>
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
-        )}
       </header>
 
       <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
