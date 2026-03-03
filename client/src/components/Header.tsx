@@ -119,15 +119,30 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between gap-4 relative">
-            <Link href="/" className="flex items-center gap-2 h-14 py-1 translate-y-5 md:translate-y-0 shrink-0">
-              <img
-                src={headerLogo}
-                alt="MyLuckySol"
-                className="h-full w-auto object-contain"
-                data-testid="img-header-logo"
-              />
-            </Link>
+          <div className="flex h-16 md:h-16 items-center justify-between gap-4 relative">
+            <div className="flex items-center gap-2">
+              {/* Mobile Sandwich Menu */}
+              <div className="md:hidden">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="text-muted-foreground"
+                  data-testid="button-mobile-menu"
+                >
+                  {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                </Button>
+              </div>
+
+              <Link href="/" className="flex items-center gap-2 h-14 py-1 translate-y-0 shrink-0">
+                <img
+                  src={headerLogo}
+                  alt="MyLuckySol"
+                  className="h-full w-auto object-contain"
+                  data-testid="img-header-logo"
+                />
+              </Link>
+            </div>
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
@@ -257,19 +272,6 @@ export function Header() {
                   Connect
                 </Button>
               )}
-
-              {/* Mobile Sandwich Menu */}
-              <div className="md:hidden">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="text-muted-foreground"
-                  data-testid="button-mobile-menu"
-                >
-                  {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </Button>
-              </div>
             </div>
           </div>
 
