@@ -410,7 +410,17 @@ export class MemStorage implements IStorage {
       lastUpdatedAt: Date.now(),
     };
 
-    console.log(`[GIVEAWAY] Season ${stats.currentSeason} completed! Payouts recorded for 20 winners.`);
+    // ABUSE PREVENTION: Reset luck and streaks for new season
+    for (const profile of this.profiles.values()) {
+      profile.gamesPlayed = 0;
+      profile.gamesWon = 0;
+      profile.currentStreak = 0;
+      profile.bestStreak = 0;
+      profile.luckScore = 50;
+      this.profiles.set(profile.walletAddress, profile);
+    }
+
+    console.log(`[GIVEAWAY] Season ${stats.currentSeason} completed! Payouts recorded for 20 winners. Season ${stats.currentSeason + 1} started.`);
   }
 
   async getAllProfiles(): Promise<PlayerProfile[]> {

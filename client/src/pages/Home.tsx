@@ -460,8 +460,8 @@ export default function Home() {
                       
                       <div className="space-y-3">
                         <div className="flex justify-between items-end text-xs">
-                          <span className="text-muted-foreground font-bold uppercase tracking-widest">Season Progress</span>
-                          <span className="text-primary font-mono font-bold">{giveawayStats?.progressPercent.toFixed(1)}%</span>
+                          <span className="text-muted-foreground font-bold uppercase tracking-widest">Games To Go</span>
+                          <span className="text-primary font-mono font-bold">{(1000000 - (giveawayStats?.gamesInCycle || 0)).toLocaleString()}</span>
                         </div>
                         <Progress value={giveawayStats?.progressPercent || 0} className="h-2 bg-white/5" />
                       </div>
