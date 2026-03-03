@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useWallet } from "@/lib/wallet-context";
-import { Gamepad2, Shield, Zap, Users, Trophy, Coins, Play, RotateCcw } from "lucide-react";
+import { Gamepad2, Shield, Zap, Users, Trophy, Coins, Play, RotateCcw, Flame, Droplets, Gift, TrendingUp } from "lucide-react";
 import { WalletModal } from "@/components/WalletModal";
 import { EarningsCalculator } from "@/components/EarningsCalculator";
 import { useQuery } from "@tanstack/react-query";
+import { useSolPrice } from "@/lib/price-context";
+import { Progress } from "@/components/ui/progress";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
 import heroBgGif from "@assets/myluckysolbg_(1)_1771978388066.gif";
 import footerBgGif from "@assets/bg2_(1)_1772062359228.gif";
@@ -133,7 +135,28 @@ export default function Home() {
       description: "100x WAGA match on entry, 1000x WAGA match for winners",
       color: "from-emerald-400 to-green-600",
     },
+    {
+      icon: Flame,
+      title: "God Streaks",
+      description: "Trigger a hidden streak with 95% win weight and dominate the arena",
+      color: "from-orange-500 to-red-600",
+    },
+    {
+      icon: Droplets,
+      title: "Streak Breaker",
+      description: "Face a God with a 25% chance to strip their advantage and win 75% of the time",
+      color: "from-blue-400 to-cyan-600",
+    },
   ];
+
+  const { solPrice } = useSolPrice();
+  const { data: giveawayStats } = useQuery<{ displayBalance: number; currentSeason: number; progressPercent: number; gamesInCycle: number }>({
+    queryKey: ["/api/giveaway/stats"],
+    refetchInterval: 10000,
+  });
+
+  const jackpot = giveawayStats?.displayBalance ?? 200;
+  const jackpotUsd = solPrice ? jackpot * solPrice : null;
 
   const stats = [
     { value: globalStats ? formatCompact(globalStats.gamesPlayed) : "0", label: "Games Played" },
@@ -372,8 +395,8 @@ export default function Home() {
               </div>
             </motion.div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {features.slice(0, 2).map((feature, i) => (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {features.map((feature, i) => (
                 <motion.div
                   key={feature.title}
                   initial={{ opacity: 0, y: 20 }}
@@ -390,27 +413,63 @@ export default function Home() {
                   </Card>
                 </motion.div>
               ))}
-              {features.slice(2).map((feature, i) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2 + i * 0.1 }}
-                >
-                  <Card className="h-full p-6 game-card-hover">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4`}>
-                      <feature.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
-                  </Card>
-                </motion.div>
-              ))}
             </div>
           </div>
         </section>
       </div>
+
+      <section className="py-20 bg-background/40 relative z-10 border-y border-border/50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex flex-col md:flex-row items-center gap-8 md:gap-12"
+            >
+              <div className="flex-1 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-widest uppercase">
+                  <Gift className="w-3.5 h-3.5" />
+                  Season {giveawayStats?.currentSeason || 1} Live
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold">
+                  The <span className="text-gradient-gold">Million Game</span> Giveaway
+                </h2>
+                <p className="text-muted-foreground">
+                  Every game contributes to the massive jackpot. Split between the luckiest and most persistent players when we hit 1M games.
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Live Pot</p>
+                    <p className="text-2xl font-bold text-primary">{jackpot.toFixed(1)} SOL</p>
+                    {jackpotUsd && <p className="text-[10px] text-muted-foreground">${jackpotUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD</p>}
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Progress</p>
+                    <p className="text-2xl font-bold text-secondary">{giveawayStats?.progressPercent.toFixed(1) || 0}%</p>
+                    <p className="text-[10px] text-muted-foreground">{(giveawayStats?.gamesInCycle || 0).toLocaleString()} / 1M</p>
+                  </div>
+                </div>
+                <Link href="/giveaway">
+                  <Button className="w-full sm:w-auto gap-2 group">
+                    View Giveaway Details
+                    <Zap className="w-4 h-4 transition-transform group-hover:scale-110" />
+                  </Button>
+                </Link>
+              </div>
+              <div className="flex-shrink-0 w-full md:w-72 space-y-4">
+                <div className="relative p-6 rounded-2xl border border-primary/30 bg-primary/5 shadow-[0_0_40px_rgba(245,184,0,0.1)] text-center">
+                  <div className="text-4xl font-black text-gradient-gold mb-1">{jackpot.toFixed(1)} SOL</div>
+                  <div className="text-sm text-muted-foreground font-mono uppercase tracking-widest">Jackpot Floor</div>
+                  <div className="mt-4">
+                    <Progress value={giveawayStats?.progressPercent || 0} className="h-2" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
       <section className="py-20 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
         <div className="container mx-auto px-4">
