@@ -85,6 +85,10 @@ export default function Play() {
       // Step 3: Sign and send the join_game transaction
       const signature = await signAndSendTransaction(adapter, connection, transaction);
       
+      // Add a small delay to allow Solana cluster to process the transaction
+      // before the backend tries to verify it
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       // Step 4: Confirm join with backend (includes tx signature for verification)
       const response = await apiRequest("POST", "/api/games/join", {
         ...data,

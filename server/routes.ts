@@ -171,8 +171,13 @@ export async function registerRoutes(
       // First verify the transaction is confirmed
       const verification = await solanaClient.verifyTransaction(txSignature);
       if (!verification.confirmed) {
-        console.warn(`[ON-CHAIN] Transaction not confirmed: ${verification.error}`);
-        return res.status(400).json({ error: "Transaction not confirmed" });
+        console.warn(`[ON-CHAIN] Transaction not confirmed: ${verification.error}. Waiting for confirmation...`);
+        // Retry verification once after a small delay if not found immediately
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retryVerification = await solanaClient.verifyTransaction(txSignature);
+        if (!retryVerification.confirmed) {
+          return res.status(400).json({ error: "Transaction not confirmed on-chain yet. Please try again in a few seconds." });
+        }
       }
       
       // Check if program is deployed - use appropriate validation
@@ -243,6 +248,8 @@ export async function registerRoutes(
       if (!updatedGame) {
         return res.status(400).json({ error: "Failed to join game" });
       }
+
+      console.log(`[ON-CHAIN] Player ${walletAddress.slice(0, 8)}... successfully joined game ${updatedGame.id}. Total players: ${updatedGame.players.length}`);
 
       // Check if game is full and should start
       const config = GAME_MODES[mode];
