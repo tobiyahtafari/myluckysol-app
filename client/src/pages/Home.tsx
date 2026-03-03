@@ -441,6 +441,32 @@ export default function Home() {
                   <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
                     A guaranteed <span className="text-primary font-bold">200 SOL floor</span>. Every single game increases the pot. Split between the top 10 luckiest and top 10 most persistent players.
                   </p>
+
+                  <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative p-6 rounded-3xl border-2 border-primary/30 bg-black/40 backdrop-blur-xl shadow-[0_0_80px_rgba(245,184,0,0.15)] text-center overflow-hidden group max-w-sm mx-auto lg:mx-0 animate-neon-pulse"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 opacity-50" />
+                    <div className="relative z-10 space-y-4">
+                      <div className="space-y-0">
+                        <div className="text-5xl font-black text-gradient-gold tracking-tighter">{jackpot.toFixed(1)} SOL</div>
+                        {jackpotUsd && (
+                          <div className="text-lg font-mono text-accent font-bold">
+                            ${jackpotUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-end text-xs">
+                          <span className="text-muted-foreground font-bold uppercase tracking-widest">Season Progress</span>
+                          <span className="text-primary font-mono font-bold">{giveawayStats?.progressPercent.toFixed(1)}%</span>
+                        </div>
+                        <Progress value={giveawayStats?.progressPercent || 0} className="h-2 bg-white/5" />
+                      </div>
+                    </div>
+                  </motion.div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
@@ -464,51 +490,14 @@ export default function Home() {
                       <Zap className="w-5 h-5 relative z-10 transition-transform group-hover:scale-110 group-hover:rotate-12" />
                     </Button>
                   </Link>
-                  <div className="flex -space-x-3">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold">
-                        {i}
-                      </div>
-                    ))}
-                    <div className="w-10 h-10 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-                      +1k
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              <div className="flex-shrink-0 w-full lg:w-96">
-                <motion.div 
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative p-8 rounded-3xl border-2 border-primary/30 bg-black/40 backdrop-blur-xl shadow-[0_0_80px_rgba(245,184,0,0.15)] text-center overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 opacity-50" />
-                  <div className="relative z-10 space-y-6">
-                    <div className="space-y-1">
-                      <div className="text-5xl md:text-6xl font-black text-gradient-gold tracking-tighter">{jackpot.toFixed(1)}</div>
-                      <div className="text-xl font-black text-primary/80">SOLANA</div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-end text-sm">
-                        <span className="text-muted-foreground font-bold uppercase tracking-widest">Milestone</span>
-                        <span className="text-primary font-mono font-bold">{giveawayStats?.progressPercent.toFixed(1)}%</span>
-                      </div>
-                      <Progress value={giveawayStats?.progressPercent || 0} className="h-3 bg-white/5" />
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold">
-                        { (1000000 - (giveawayStats?.gamesInCycle || 0)).toLocaleString() } Games Remaining
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-white/10">
-                      <div className="flex items-center justify-center gap-2 text-accent font-bold">
-                        <Trophy className="w-4 h-4" />
-                        <span className="text-xs uppercase tracking-widest">Top 20 Players Win</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+              <div className="hidden lg:block flex-shrink-0 w-full lg:w-96">
+                <div className="relative aspect-square">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full blur-3xl animate-pulse" />
+                  <Gift className="absolute inset-0 m-auto w-48 h-48 text-primary/20" />
+                </div>
               </div>
             </motion.div>
           </div>
