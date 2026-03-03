@@ -680,18 +680,18 @@ export default function Profile() {
                     </tr>
                   )}
                   {mockHistory.map((game, i) => {
-                    const isWin = game.result === "win";
+                    const isWin = game.result === "won";
                     return (
-                      <tr key={game.id} className="hover:bg-muted/30 transition-colors">
+                      <tr key={game.gameId || i} className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3 font-medium">{game.mode}</td>
                         <td className="px-4 py-3 font-mono">{game.wager} SOL</td>
                         <td className={`px-4 py-3 text-right font-bold ${isWin ? "text-green-400" : "text-destructive"}`}>
-                          {game.result.toUpperCase()}
+                          {isWin ? "WIN" : "LOSS"}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono">{game.payoutSol.toFixed(2)} SOL</td>
-                        <td className="px-4 py-3 text-right text-secondary">+{game.wagaReward.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right font-mono">{(game.payout || 0).toFixed(2)} SOL</td>
+                        <td className="px-4 py-3 text-right text-secondary">+{(game.wagaEarned || 0).toLocaleString()}</td>
                         <td className="px-4 py-3 text-right text-muted-foreground text-[10px]">
-                          {new Date(game.timestamp).toLocaleDateString()}
+                          {new Date(game.playedAt).toLocaleDateString()}
                         </td>
                       </tr>
                     );

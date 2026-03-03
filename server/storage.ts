@@ -600,7 +600,11 @@ export class MemStorage implements IStorage {
           sorted = activePlayers.sort((a, b) => b.totalWon - a.totalWon);
           break;
         case "luck":
-          sorted = activePlayers.sort((a, b) => b.luckScore - a.luckScore);
+          sorted = activePlayers.sort((a, b) => {
+            const aRate = a.gamesPlayed > 0 ? a.gamesWon / a.gamesPlayed : 0;
+            const bRate = b.gamesPlayed > 0 ? b.gamesWon / b.gamesPlayed : 0;
+            return bRate - aRate;
+          });
           break;
         case "streaks":
           sorted = activePlayers.sort((a, b) => b.bestStreak - a.bestStreak);
