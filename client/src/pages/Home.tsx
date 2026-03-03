@@ -450,9 +450,9 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 opacity-50" />
                     <div className="relative z-10 space-y-4">
                       <div className="space-y-0">
-                        <div className="text-5xl font-black text-gradient-gold tracking-tighter">{jackpot.toFixed(1)} SOL</div>
+                        <div className="text-5xl font-black text-gradient-gold tracking-tighter animate-neon-text">{jackpot.toFixed(1)} SOL</div>
                         {jackpotUsd && (
-                          <div className="text-lg font-mono text-accent font-bold">
+                          <div className="text-lg font-mono text-accent font-bold animate-neon-text">
                             ${jackpotUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD
                           </div>
                         )}
@@ -467,19 +467,6 @@ export default function Home() {
                       </div>
                     </div>
                   </motion.div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm group hover:border-primary/30 transition-colors">
-                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2">Live Jackpot</p>
-                    <p className="text-3xl font-black text-primary mb-1">{jackpot.toFixed(1)} SOL</p>
-                    {jackpotUsd && <p className="text-sm font-mono text-accent/80 font-bold">${jackpotUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD</p>}
-                  </div>
-                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm group hover:border-secondary/30 transition-colors">
-                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2">Progress</p>
-                    <p className="text-3xl font-black text-secondary mb-1">{giveawayStats?.progressPercent.toFixed(1) || 0}%</p>
-                    <p className="text-sm font-mono text-muted-foreground">{(giveawayStats?.gamesInCycle || 0).toLocaleString()} / 1M</p>
-                  </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">

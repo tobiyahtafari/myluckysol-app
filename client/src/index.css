@@ -498,4 +498,41 @@
   .streak-water-border {
     animation: streak-water-pulse 2.4s ease-in-out infinite;
   }
+
+  @keyframes neon-pulse {
+    0%, 100% {
+      border-color: rgba(153, 69, 255, 0.3);
+      box-shadow: 0 0 20px rgba(153, 69, 255, 0.2);
+    }
+    33% {
+      border-color: rgba(0, 255, 163, 0.5);
+      box-shadow: 0 0 30px rgba(0, 255, 163, 0.3);
+    }
+    66% {
+      border-color: rgba(3, 225, 255, 0.5);
+      box-shadow: 0 0 30px rgba(3, 225, 255, 0.3);
+    }
+  }
+
+  .animate-neon-pulse {
+    animation: neon-pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes neon-text-flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+      text-shadow: 
+        0 0 4px #fff,
+        0 0 11px #fff,
+        0 0 19px #fff,
+        0 0 40px hsl(var(--primary)),
+        0 0 80px hsl(var(--primary));
+    }
+    20%, 22%, 24%, 55% {
+      text-shadow: none;
+    }
+  }
+
+  .animate-neon-text {
+    animation: neon-text-flicker 3s infinite alternate;
+  }
 }
