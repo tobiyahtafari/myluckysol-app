@@ -119,9 +119,9 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
-          <div className="flex h-24 md:h-16 items-center justify-between gap-4 relative">
-            <div className="flex flex-col items-start gap-1 py-2">
-              <Link href="/" className="flex items-center h-12 md:h-14 py-1 translate-y-0 shrink-0">
+          <div className="flex h-16 md:h-16 items-center justify-between gap-4 relative">
+            <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center h-10 md:h-12 py-1 shrink-0">
                 <img
                   src={headerLogo}
                   alt="MyLuckySol"
@@ -129,18 +129,17 @@ export function Header() {
                   data-testid="img-header-logo"
                 />
               </Link>
-
-              {/* Mobile Sandwich Menu - Below Logo */}
+              
               <div className="md:hidden">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="text-muted-foreground h-7 px-0 gap-1 hover:bg-transparent"
+                  className="text-muted-foreground h-9 px-3 gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-colors"
                   data-testid="button-mobile-menu"
                 >
-                  {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Menu</span>
+                  <Menu className="h-4 w-4" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Menu</span>
                 </Button>
               </div>
             </div>
@@ -165,16 +164,14 @@ export function Header() {
             </nav>
 
             <div className="flex items-center gap-2">
-              <div className="hidden md:block">
-                <PriceWidget />
-              </div>
+              <PriceWidget />
               
               {connected ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="gap-2" data-testid="button-wallet-dropdown">
-                      <div className="w-2 h-2 rounded-full bg-accent" />
-                      {profile?.username || shortAddress}
+                    <Button variant="outline" className="gap-2 h-9 px-3 border-accent/20 bg-accent/5 hover:bg-accent/10 rounded-full" data-testid="button-wallet-dropdown">
+                      <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                      <span className="font-mono text-xs">{profile?.username || shortAddress}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64">
