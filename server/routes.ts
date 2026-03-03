@@ -887,6 +887,7 @@ export async function registerRoutes(
         message: message.trim(),
         isGodStreak: profile.godStreakActive || false,
         isStreakBreaker: profile.isStreakBreakerActive || false,
+        color: req.body.color || "#ffffff",
       });
 
       res.json(chatMessage);
@@ -931,6 +932,7 @@ export async function registerRoutes(
         isStreakBreaker: !!senderProfile?.isStreakBreakerActive,
         tipAmount: Number(amount),
         tipRecipient: recipient.walletAddress,
+        color: "#facc15", // Gold color for tips
       });
 
       res.json({

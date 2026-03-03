@@ -51,7 +51,7 @@ export interface IStorage {
   getChatMessages(gameId: string): Promise<ChatMessage[]>;
   addChatMessage(data: ChatMessage): Promise<ChatMessage>;
   getGlobalChatMessages(limit?: number): Promise<GlobalChatMessage[]>;
-  addGlobalChatMessage(data: Omit<GlobalChatMessage, "id" | "timestamp">): Promise<GlobalChatMessage>;
+  addGlobalChatMessage(data: any): Promise<any>;
   getGameHistory(walletAddress: string, limit: number): Promise<GameHistory[]>;
   addGameHistory(walletAddress: string, history: GameHistory): Promise<void>;
   getGame(id: string): Promise<Game | undefined>;
@@ -320,8 +320,8 @@ export class MemStorage implements IStorage {
     return this.globalChatMessages.slice(-limit);
   }
 
-  async addGlobalChatMessage(data: Omit<GlobalChatMessage, "id" | "timestamp">): Promise<GlobalChatMessage> {
-    const message: GlobalChatMessage = {
+  async addGlobalChatMessage(data: any): Promise<any> {
+    const message: any = {
       ...data,
       id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       timestamp: Date.now(),

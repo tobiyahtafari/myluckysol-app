@@ -23,6 +23,7 @@ interface GlobalChatMessage {
   isStreakBreaker: boolean;
   tipAmount?: number;
   tipRecipient?: string;
+  color?: string;
 }
 
 interface GameNotification {
@@ -92,7 +93,9 @@ function ChatMessageItem({ msg }: { msg: GlobalChatMessage }) {
           )}
           <span className="text-[10px] text-muted-foreground ml-auto">{formatTime(msg.timestamp)}</span>
         </div>
-        <p className="text-sm text-foreground/90 break-words mt-0.5">{msg.message}</p>
+        <p className="text-sm break-words mt-0.5" style={{ color: msg.color || "rgba(255, 255, 255, 0.9)" }}>
+          {msg.message}
+        </p>
       </div>
     </motion.div>
   );
@@ -307,7 +310,20 @@ export default function Chat() {
   const queryClientInstance = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
+  const [selectedColor, setSelectedColor] = useState("#ffffff");
   const [tipModalOpen, setTipModalOpen] = useState(false);
+
+  const CHAT_COLORS = [
+    { name: "White", value: "#ffffff" },
+    { name: "Gold", value: "#facc15" },
+    { name: "Cyan", value: "#22d3ee" },
+    { name: "Pink", value: "#f472b6" },
+    { name: "Green", value: "#4ade80" },
+    { name: "Orange", value: "#fb923c" },
+    { name: "Purple", value: "#c084fc" },
+  ];
+
+  const CHAT_EMOJIS = ["🔥", "💧", "💎", "🍀", "🚀", "💰", "👑", "🎲"];
 
   const { data: messages = [], isLoading } = useQuery<GlobalChatMessage[]>({
     queryKey: ["/api/chat"],
@@ -315,10 +331,11 @@ export default function Chat() {
   });
 
   const sendMutation = useMutation({
-    mutationFn: async (message: string) => {
+    mutationFn: async ({ message, color }: { message: string; color: string }) => {
       return apiRequest("POST", "/api/chat", {
         walletAddress,
         message,
+        color,
       });
     },
     onSuccess: () => {
@@ -342,16 +359,16 @@ export default function Chat() {
     }
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSubmit = () => {
     const msg = input.trim();
     if (!msg || !connected || sendMutation.isPending) return;
-    sendMutation.mutate(msg);
+    sendMutation.mutate({ message: msg, color: selectedColor });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSubmit();
     }
   };
 
@@ -365,9 +382,6 @@ export default function Chat() {
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-primary" />
               <span className="font-semibold text-sm">Global Chat</span>
-              <Badge variant="outline" className="text-xs text-muted-foreground">
-                {messages.length} messages
-              </Badge>
             </div>
             {connected && (
               <Button
@@ -408,43 +422,55 @@ export default function Chat() {
                 Wager at least 0.1 SOL total to unlock chat
               </div>
             ) : (
-              <div className="flex gap-2">
-                <div className="flex gap-1">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1.5">
+                    {CHAT_COLORS.map(color => (
+                      <button
+                        key={color.value}
+                        onClick={() => setSelectedColor(color.value)}
+                        className={cn(
+                          "w-5 h-5 rounded-full border border-white/10 transition-transform hover:scale-110",
+                          selectedColor === color.value && "ring-2 ring-primary ring-offset-1 ring-offset-background"
+                        )}
+                        style={{ backgroundColor: color.value }}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-1">
+                    {CHAT_EMOJIS.map(emoji => (
+                      <button
+                        key={emoji}
+                        onClick={() => setInput(prev => prev + emoji)}
+                        className="w-7 h-7 flex items-center justify-center hover:bg-white/5 rounded transition-colors text-sm"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type a message..."
+                    maxLength={280}
+                    className="flex-1 h-9 text-sm"
+                    style={{ color: selectedColor }}
+                    data-testid="input-chat-message"
+                  />
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-8 text-orange-400 hover:bg-orange-400/10"
-                    onClick={() => setInput(prev => prev + "🔥")}
+                    size="sm"
+                    className="h-9 px-3"
+                    onClick={handleSubmit}
+                    disabled={sendMutation.isPending || !input.trim()}
+                    data-testid="button-send-chat"
                   >
-                    <Flame className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-8 text-blue-400 hover:bg-blue-400/10"
-                    onClick={() => setInput(prev => prev + "💧")}
-                  >
-                    <Droplets className="h-4 w-4" />
+                    <Send className="h-4 w-4" />
                   </Button>
                 </div>
-                <Input
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a message..."
-                  maxLength={280}
-                  className="flex-1 h-9 text-sm"
-                  data-testid="input-chat-message"
-                />
-                <Button
-                  size="sm"
-                  className="h-9 px-3"
-                  onClick={handleSend}
-                  disabled={sendMutation.isPending || !input.trim()}
-                  data-testid="button-send-chat"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
               </div>
             )}
             {connected && (
