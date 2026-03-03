@@ -37,7 +37,7 @@ export function LuckBar({ score, showPercentile = true, size = "md" }: LuckBarPr
           <span className="font-semibold">Luck Score</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`font-bold ${color}`}>{label}</span>
+          <span className={`font-bold ${color}`}>{isUnranked ? label : `${score}%`}</span>
           {!isUnranked && (
             score >= 50 ? (
               <TrendingUp className="w-4 h-4 text-green-400" />
@@ -84,7 +84,7 @@ export function LuckBar({ score, showPercentile = true, size = "md" }: LuckBarPr
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>0</span>
           <span className="text-center">
-            {isUnranked ? "Play a game to reveal your luck" : `Top ${Math.max(1, 100 - clampedScore)}% of players`}
+            {isUnranked ? "Play a game to reveal your luck" : `${clampedScore}%`}
           </span>
           <span>100</span>
         </div>

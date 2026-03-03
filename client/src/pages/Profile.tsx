@@ -537,7 +537,7 @@ export default function Profile() {
           </Card>
 
           <Card className="p-6">
-            <LuckBar score={profile?.gamesPlayed === 0 ? 0 : (profile?.luckScore || 50)} size="lg" />
+            <LuckBar score={profile?.gamesPlayed === 0 ? 0 : Math.round((profile?.gamesWon || 0) / (profile?.gamesPlayed || 1) * 100)} size="lg" />
           </Card>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
