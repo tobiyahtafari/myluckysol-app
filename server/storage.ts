@@ -983,14 +983,17 @@ export class MemStorage implements IStorage {
     // Transfer fees on devnet
     if (solanaClient.isOnChainEnabled()) {
       // Transfer to Foundation Treasury (9%)
-      solanaClient.transferSolToTreasury(treasuryFee).then(res => {
+      const FOUNDATION_TREASURY = "BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP";
+      solanaClient.transferSol(FOUNDATION_TREASURY, treasuryFee).then(res => {
         if (res.success) console.log(`[DEVNET] 9% Treasury fee transferred: ${res.txSig}`);
+        else console.warn(`[DEVNET] Treasury fee transfer failed: ${res.error}`);
       });
       
       // Transfer to Giveaway Treasury (1%)
       const GIVEAWAY_WALLET = "FGY64g3Pt8wMrMR3A9abkVxSjwh2Yt4dT4BYkw6rU3yf";
       solanaClient.transferSol(GIVEAWAY_WALLET, giveawayFee).then(res => {
         if (res.success) console.log(`[DEVNET] 1% Giveaway fee transferred: ${res.txSig}`);
+        else console.warn(`[DEVNET] Giveaway fee transfer failed: ${res.error}`);
       });
     }
 
