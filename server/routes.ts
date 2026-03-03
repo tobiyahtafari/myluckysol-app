@@ -898,6 +898,7 @@ export async function registerRoutes(
       const chatMessage = await storage.addGlobalChatMessage({
         walletAddress,
         username: profile.username,
+        avatarUrl: profile.avatarUrl,
         message: message.trim(),
         isGodStreak: profile.godStreakActive || false,
         isStreakBreaker: profile.isStreakBreakerActive || false,
@@ -907,60 +908,6 @@ export async function registerRoutes(
       res.json(chatMessage);
     } catch (error) {
       console.error("Error posting global chat:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // Tip endpoint - send SOL tip to another player
-  app.post("/api/tip", async (req, res) => {
-    try {
-      const { fromWallet, toIdentifier, amount, txSignature } = req.body;
-
-      if (!fromWallet || !toIdentifier || !amount) {
-        return res.status(400).json({ error: "fromWallet, toIdentifier, and amount are required" });
-      }
-
-      if (typeof amount !== "number" || amount <= 0) {
-        return res.status(400).json({ error: "Amount must be a positive number" });
-      }
-
-      const recipient = await storage.getProfileByUsernameOrWallet(toIdentifier);
-      if (!recipient) {
-        return res.status(404).json({ error: "Recipient not found" });
-      }
-
-      if (recipient.walletAddress === fromWallet) {
-        return res.status(400).json({ error: "Cannot tip yourself" });
-      }
-
-      // Log the tip (on-chain transfer should be done client-side)
-      console.log(`[TIP] ${fromWallet.slice(0, 8)}... tipped ${amount} SOL to ${recipient.walletAddress.slice(0, 8)}... (fee: ${TIP_FEE_SOL} SOL). Tx: ${txSignature}`);
-
-      // Add to global chat
-      const senderProfile = await storage.getProfile(fromWallet);
-      await storage.addGlobalChatMessage({
-        walletAddress: fromWallet,
-        username: senderProfile?.username,
-        message: `tipped ${recipient.username || recipient.walletAddress.slice(0, 8)} ${amount} SOL`,
-        isGodStreak: !!senderProfile?.godStreakActive,
-        isStreakBreaker: !!senderProfile?.isStreakBreakerActive,
-        tipAmount: Number(amount),
-        tipRecipient: recipient.walletAddress,
-        color: "#facc15", // Gold color for tips
-      });
-
-      res.json({
-        success: true,
-        recipient: {
-          walletAddress: recipient.walletAddress,
-          username: recipient.username,
-        },
-        amount: Number(amount),
-        fee: TIP_FEE_SOL,
-        txSignature,
-      });
-    } catch (error) {
-      console.error("Error processing tip:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

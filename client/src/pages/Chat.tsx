@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Flame, Droplets, Coins, X, MessageSquare, Bell, Smile } from "lucide-react";
+import { Send, Flame, Droplets, X, MessageSquare, Bell, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +23,6 @@ interface GlobalChatMessage {
   timestamp: number;
   isGodStreak: boolean;
   isStreakBreaker: boolean;
-  tipAmount?: number;
-  tipRecipient?: string;
   color?: string;
 }
 
@@ -322,7 +320,6 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
   const [selectedColor, setSelectedColor] = useState("#ffffff");
-  const [tipModalOpen, setTipModalOpen] = useState(false);
 
   const CHAT_COLORS = [
     { name: "White", value: "#ffffff" },
@@ -394,18 +391,6 @@ export default function Chat() {
               <MessageSquare className="h-4 w-4 text-primary" />
               <span className="font-semibold text-sm">Global Chat</span>
             </div>
-            {connected && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 h-7 text-xs border-primary/30 text-primary hover:bg-primary/10"
-                onClick={() => setTipModalOpen(true)}
-                data-testid="button-open-tip"
-              >
-                <Coins className="h-3 w-3" />
-                Tip
-              </Button>
-            )}
           </div>
 
           <div className="flex-1 overflow-y-auto py-2 space-y-0.5" id="chat-messages-container">
@@ -510,12 +495,6 @@ export default function Chat() {
           <NotificationPanel />
         </div>
       </div>
-
-      <AnimatePresence>
-        {tipModalOpen && walletAddress && (
-          <TipModal walletAddress={walletAddress} onClose={() => setTipModalOpen(false)} />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
