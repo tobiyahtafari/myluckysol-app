@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Flame, Droplets, Coins, X, MessageSquare, Bell } from "lucide-react";
+import { Send, Flame, Droplets, Coins, X, MessageSquare, Bell, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useWallet } from "@/lib/wallet-context";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -17,6 +18,7 @@ interface GlobalChatMessage {
   id: string;
   walletAddress: string;
   username?: string;
+  avatarUrl?: string;
   message: string;
   timestamp: number;
   isGodStreak: boolean;
@@ -59,7 +61,16 @@ function ChatMessageItem({ msg }: { msg: GlobalChatMessage }) {
       data-testid={`msg-chat-${msg.id}`}
     >
       <div className="flex-shrink-0 mt-0.5">
-        {msg.isGodStreak ? (
+        {msg.avatarUrl ? (
+          <div className={cn(
+            "w-7 h-7 rounded-full overflow-hidden border",
+            msg.isGodStreak ? "border-orange-500/40 god-fire-border" : 
+            msg.isStreakBreaker ? "border-blue-500/40 streak-water-border" : 
+            "border-border/50"
+          )}>
+            <img src={msg.avatarUrl} alt="" className="w-full h-full object-cover" />
+          </div>
+        ) : msg.isGodStreak ? (
           <div className="w-7 h-7 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center god-fire-border">
             <Flame className="h-3.5 w-3.5 text-orange-400" />
           </div>
@@ -323,7 +334,7 @@ export default function Chat() {
     { name: "Purple", value: "#c084fc" },
   ];
 
-  const CHAT_EMOJIS = ["🔥", "💧", "💎", "🍀", "🚀", "💰", "👑", "🎲"];
+  const CHAT_EMOJIS = ["🔥", "💰", "🚀", "🍀", "💎", "💯", "GG", "GL", "LFG", "😎", "🤑", "🙌"];
 
   const { data: messages = [], isLoading } = useQuery<GlobalChatMessage[]>({
     queryKey: ["/api/chat"],
@@ -439,15 +450,26 @@ export default function Chat() {
                     ))}
                   </div>
                   <div className="flex gap-1">
-                    {CHAT_EMOJIS.map(emoji => (
-                      <button
-                        key={emoji}
-                        onClick={() => setInput(prev => prev + emoji)}
-                        className="w-7 h-7 flex items-center justify-center hover:bg-white/5 rounded transition-colors text-sm"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/5" data-testid="button-emoji-picker">
+                          <Smile className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-2 bg-popover/95 backdrop-blur-md border-border/50" side="top" align="end">
+                        <div className="grid grid-cols-4 gap-1">
+                          {CHAT_EMOJIS.map(emoji => (
+                            <button
+                              key={emoji}
+                              onClick={() => setInput(prev => prev + emoji)}
+                              className="h-10 flex items-center justify-center hover:bg-primary/10 rounded transition-colors text-lg"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
                 <div className="flex gap-2">
