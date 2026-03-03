@@ -119,9 +119,9 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
-          <div className="flex h-20 md:h-16 items-center justify-between gap-4 relative">
-            <div className="flex flex-col items-start gap-1">
-              <Link href="/" className="flex items-center h-10 py-1 translate-y-0 shrink-0">
+          <div className="flex h-24 md:h-16 items-center justify-between gap-4 relative">
+            <div className="flex flex-col items-start gap-1 py-2">
+              <Link href="/" className="flex items-center h-12 md:h-14 py-1 translate-y-0 shrink-0">
                 <img
                   src={headerLogo}
                   alt="MyLuckySol"
