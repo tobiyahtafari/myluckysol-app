@@ -418,53 +418,97 @@ export default function Home() {
         </section>
       </div>
 
-      <section className="py-20 bg-background/40 relative z-10 border-y border-border/50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+      <section className="py-24 relative z-10 overflow-hidden border-y border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-background to-secondary/10 animate-gradient-slow opacity-50" />
+        <div className="container mx-auto px-4 relative">
+          <div className="max-w-5xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="flex flex-col md:flex-row items-center gap-8 md:gap-12"
+              className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20"
             >
-              <div className="flex-1 space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-widest uppercase">
-                  <Gift className="w-3.5 h-3.5" />
+              <div className="flex-1 space-y-8 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-widest uppercase">
+                  <Gift className="w-4 h-4" />
                   Season {giveawayStats?.currentSeason || 1} Live
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold">
-                  The <span className="text-gradient-gold">Million Game</span> Giveaway
-                </h2>
-                <p className="text-muted-foreground">
-                  Every game contributes to the massive jackpot. Split between the luckiest and most persistent players when we hit 1M games.
-                </p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                    <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Live Pot</p>
-                    <p className="text-2xl font-bold text-primary">{jackpot.toFixed(1)} SOL</p>
-                    {jackpotUsd && <p className="text-[10px] text-muted-foreground">${jackpotUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD</p>}
+                <div className="space-y-4">
+                  <h2 className="text-4xl md:text-5xl font-black tracking-tight">
+                    The <span className="text-gradient-gold">Million Game</span> <br />
+                    Giveaway Jackpot
+                  </h2>
+                  <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
+                    A guaranteed <span className="text-primary font-bold">200 SOL floor</span>. Every single game increases the pot. Split between the top 10 luckiest and top 10 most persistent players.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm group hover:border-primary/30 transition-colors">
+                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2">Live Jackpot</p>
+                    <p className="text-3xl font-black text-primary mb-1">{jackpot.toFixed(1)} SOL</p>
+                    {jackpotUsd && <p className="text-sm font-mono text-accent/80 font-bold">${jackpotUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })} USD</p>}
                   </div>
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                    <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Progress</p>
-                    <p className="text-2xl font-bold text-secondary">{giveawayStats?.progressPercent.toFixed(1) || 0}%</p>
-                    <p className="text-[10px] text-muted-foreground">{(giveawayStats?.gamesInCycle || 0).toLocaleString()} / 1M</p>
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm group hover:border-secondary/30 transition-colors">
+                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2">Progress</p>
+                    <p className="text-3xl font-black text-secondary mb-1">{giveawayStats?.progressPercent.toFixed(1) || 0}%</p>
+                    <p className="text-sm font-mono text-muted-foreground">{(giveawayStats?.gamesInCycle || 0).toLocaleString()} / 1M</p>
                   </div>
                 </div>
-                <Link href="/giveaway">
-                  <Button className="w-full sm:w-auto gap-2 group">
-                    View Giveaway Details
-                    <Zap className="w-4 h-4 transition-transform group-hover:scale-110" />
-                  </Button>
-                </Link>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+                  <Link href="/giveaway">
+                    <Button size="lg" className="h-14 px-10 text-lg gap-3 group relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <span className="relative z-10">View Giveaway Details</span>
+                      <Zap className="w-5 h-5 relative z-10 transition-transform group-hover:scale-110 group-hover:rotate-12" />
+                    </Button>
+                  </Link>
+                  <div className="flex -space-x-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold">
+                        {i}
+                      </div>
+                    ))}
+                    <div className="w-10 h-10 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                      +1k
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex-shrink-0 w-full md:w-72 space-y-4">
-                <div className="relative p-6 rounded-2xl border border-primary/30 bg-primary/5 shadow-[0_0_40px_rgba(245,184,0,0.1)] text-center">
-                  <div className="text-4xl font-black text-gradient-gold mb-1">{jackpot.toFixed(1)} SOL</div>
-                  <div className="text-sm text-muted-foreground font-mono uppercase tracking-widest">Jackpot Floor</div>
-                  <div className="mt-4">
-                    <Progress value={giveawayStats?.progressPercent || 0} className="h-2" />
+
+              <div className="flex-shrink-0 w-full lg:w-96">
+                <motion.div 
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative p-8 rounded-3xl border-2 border-primary/30 bg-black/40 backdrop-blur-xl shadow-[0_0_80px_rgba(245,184,0,0.15)] text-center overflow-hidden group"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 opacity-50" />
+                  <div className="relative z-10 space-y-6">
+                    <div className="space-y-1">
+                      <div className="text-5xl md:text-6xl font-black text-gradient-gold tracking-tighter">{jackpot.toFixed(1)}</div>
+                      <div className="text-xl font-black text-primary/80">SOLANA</div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-end text-sm">
+                        <span className="text-muted-foreground font-bold uppercase tracking-widest">Milestone</span>
+                        <span className="text-primary font-mono font-bold">{giveawayStats?.progressPercent.toFixed(1)}%</span>
+                      </div>
+                      <Progress value={giveawayStats?.progressPercent || 0} className="h-3 bg-white/5" />
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold">
+                        { (1000000 - (giveawayStats?.gamesInCycle || 0)).toLocaleString() } Games Remaining
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10">
+                      <div className="flex items-center justify-center gap-2 text-accent font-bold">
+                        <Trophy className="w-4 h-4" />
+                        <span className="text-xs uppercase tracking-widest">Top 20 Players Win</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           </div>
