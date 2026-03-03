@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 import solanaLogo from "@assets/solanaLogoMark_1769362416276.png";
 import wagaLogo from "@assets/waga-5000px-modified_1769362416276.png";
@@ -120,11 +121,11 @@ export function Header() {
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4">
           <div className="flex h-20 md:h-16 items-center justify-between gap-4 relative">
-            <Link href="/" className="flex items-center h-12 md:h-14 py-1 shrink-0">
+            <Link href="/" className="flex items-center h-14 md:h-14 py-1 shrink-0">
               <img
                 src={headerLogo}
                 alt="MyLuckySol"
-                className="h-full w-auto object-contain max-w-[160px] xs:max-w-[180px] sm:max-w-none"
+                className="h-full w-auto object-contain min-w-[200px] xs:min-w-[240px]"
                 data-testid="img-header-logo"
               />
             </Link>
@@ -156,17 +157,19 @@ export function Header() {
               <DropdownMenu onOpenChange={(open) => open && setMobileMenuOpen(false)}>
                 <DropdownMenuTrigger asChild>
                   {connected ? (
-                    <Button variant="outline" className="gap-2 h-9 px-3 border-accent/20 bg-accent/5 hover:bg-accent/10 rounded-full" data-testid="button-wallet-dropdown">
+                    <Button variant="outline" className="gap-2 h-10 px-3 border-accent/20 bg-accent/5 hover:bg-accent/10 rounded-full" data-testid="button-wallet-dropdown">
                       <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                       <span className="font-mono text-xs">{profile?.username || shortAddress}</span>
+                      <Menu className="h-5 w-5 ml-1 md:hidden text-muted-foreground" />
                     </Button>
                   ) : (
                     <Button 
-                      className="gap-2 h-9 rounded-full" 
+                      className="gap-2 h-10 px-4 rounded-full" 
                       data-testid="button-connect-wallet"
                     >
                       <Wallet className="h-4 w-4" />
-                      Connect
+                      <span className="font-bold">Connect</span>
+                      <Menu className="h-5 w-5 ml-1 md:hidden opacity-70" />
                     </Button>
                   )}
                 </DropdownMenuTrigger>
@@ -290,11 +293,6 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </div>
-
-          {/* Bottom Row Mobile Only: Price Widget positioned to the right */}
-          <div className="flex md:hidden h-10 items-center justify-end pb-2">
-            <PriceWidget />
           </div>
         </div>
       </header>
