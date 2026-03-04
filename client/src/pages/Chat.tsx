@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/lib/game-store";
-import { type GameModeKey } from "@shared/schema";
+import { GAME_MODES, type GameModeKey } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 
 interface GlobalChatMessage {
