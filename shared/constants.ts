@@ -1,10 +1,10 @@
-export const FOUNDATION_TREASURY_WALLET = "BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP";
-export const GIVEAWAY_WALLET = "FGY64g3Pt8wMrMR3A9abkVxSjwh2Yt4dT4BYkw6rU3yf";
+export const FOUNDATION_TREASURY_WALLET = "ENTER_TREASURY_WALLET_HERE";
+export const GIVEAWAY_WALLET = "ENTER_GIVEAWAY_WALLET_HERE";
 
 export const MYLUCKYSOL_PROGRAM_ID = "Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5";
 export const WAGA_TOKEN_MINT = "He6oGbz2KLH1G1V1PVbCZWHru8rWiWR6UZUxX6z9um5F";
-export const WAGA_REWARDS_VAULT = ""; // Replace with your fresh Mainnet vault wallet address
-export const WAGA_VAULT_ATA = ""; // Replace with your fresh Mainnet vault ATA address
+export const WAGA_REWARDS_VAULT = "ENTER_VAULT_WALLET_HERE"; // The central wallet holding WAGA
+export const WAGA_VAULT_ATA = "ENTER_VAULT_ATA_HERE"; // The Associated Token Account for WAGA on the vault wallet
 
 export const PAYOUT_SPLIT = {
   WINNER_PERCENT: 90,
