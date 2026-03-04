@@ -35,8 +35,16 @@ export default function Home() {
   const [showGiveawayVideo, setShowGiveawayVideo] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
   const [giveawayVideoEnded, setGiveawayVideoEnded] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
   const playerRef = useRef<any>(null);
   const giveawayPlayerRef = useRef<any>(null);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobileView(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     // Load YouTube IFrame API
@@ -51,34 +59,7 @@ export default function Home() {
       // API is ready
     };
 
-    // Add a global listener for the play button to ensure it works on all devices
-    const handleGlobalClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // Use stopPropagation in the handlers instead of just checking closest
-      // to prevent multiple triggers if nested
-      const mainOverlay = target.closest('[data-testid="video-overlay"]');
-      const giveawayOverlay = target.closest('[data-testid="giveaway-video-overlay"]') || target.closest('[data-testid="giveaway-video-overlay-mobile"]');
-      
-      if (mainOverlay) {
-        if (!showVideo) {
-          e.preventDefault();
-          e.stopPropagation();
-          handlePlayClick();
-        }
-      } else if (giveawayOverlay) {
-        // Only trigger if the video isn't already showing to prevent double-init
-        if (!showGiveawayVideo) {
-          e.preventDefault();
-          e.stopPropagation();
-          handleGiveawayPlayClick();
-        }
-      }
-    };
-
-    document.addEventListener('click', handleGlobalClick);
-
     return () => {
-      document.removeEventListener('click', handleGlobalClick);
       if (playerRef.current) {
         playerRef.current.destroy();
       }
@@ -372,13 +353,7 @@ export default function Home() {
               className="mb-16 max-w-4xl mx-auto"
             >
               <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
-              onClick={(e) => {
-                if (!showVideo) {
-                  // e.preventDefault();
-                  // e.stopPropagation();
-                  handlePlayClick();
-                }
-              }} 
+              onClick={() => { if (!showVideo) handlePlayClick(); }} 
               data-testid="video-overlay">
                 <AnimatePresence mode="wait">
                   {!showVideo ? (
@@ -502,13 +477,7 @@ export default function Home() {
                   {/* Mobile Video - Only visible on small screens */}
                   <div className="block lg:hidden w-full max-w-sm mx-auto">
                     <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
-                      onClick={(e) => {
-                        if (!showGiveawayVideo) {
-                          // e.preventDefault();
-                          // e.stopPropagation();
-                          handleGiveawayPlayClick();
-                        }
-                      }} 
+                      onClick={() => { if (!showGiveawayVideo) handleGiveawayPlayClick(); }} 
                       data-testid="giveaway-video-overlay-mobile">
                       <AnimatePresence mode="wait">
                         {!showGiveawayVideo ? (
@@ -535,7 +504,7 @@ export default function Home() {
                               className="w-full h-full object-cover"
                             />
                           </motion.div>
-                        ) : (
+                        ) : isMobileView ? (
                           <motion.div 
                             key="giveaway-video-container-mobile"
                             initial={{ opacity: 0 }}
@@ -543,7 +512,7 @@ export default function Home() {
                             className="absolute inset-0 z-20"
                           >
                             <iframe 
-                              id="giveaway-youtube-player-mobile"
+                              id="giveaway-youtube-player"
                               width="100%" 
                               height="100%" 
                               src="https://www.youtube.com/embed/iixwKcidSq8?autoplay=1&enablejsapi=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3" 
@@ -575,7 +544,7 @@ export default function Home() {
                               )}
                             </AnimatePresence>
                           </motion.div>
-                        )}
+                        ) : null}
                       </AnimatePresence>
                     </div>
                   </div>
@@ -623,13 +592,7 @@ export default function Home() {
 
               <div className="hidden lg:block flex-shrink-0 w-full lg:w-96">
                 <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
-                  onClick={(e) => {
-                    if (!showGiveawayVideo) {
-                      // e.preventDefault();
-                      // e.stopPropagation();
-                      handleGiveawayPlayClick();
-                    }
-                  }} 
+                  onClick={() => { if (!showGiveawayVideo) handleGiveawayPlayClick(); }} 
                   data-testid="giveaway-video-overlay">
                   <AnimatePresence mode="wait">
                     {!showGiveawayVideo ? (
@@ -656,7 +619,7 @@ export default function Home() {
                           className="w-full h-full object-cover"
                         />
                       </motion.div>
-                    ) : (
+                    ) : !isMobileView ? (
                       <motion.div 
                         key="giveaway-video-container"
                         initial={{ opacity: 0 }}
@@ -691,12 +654,12 @@ export default function Home() {
                               >
                                 <RotateCcw className="w-6 h-6 text-black" />
                               </motion.div>
-                              <span className="text-lg font-bold text-white uppercase tracking-wider drop-shadow-lg">Watch Again</span>
+                              <span className="text-lg font-bold text-white uppercase tracking-wider drop-shadow-lg">Play Again</span>
                             </motion.div>
                           )}
                         </AnimatePresence>
                       </motion.div>
-                    )}
+                    ) : null}
                   </AnimatePresence>
                 </div>
               </div>
