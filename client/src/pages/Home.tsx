@@ -476,6 +476,79 @@ export default function Home() {
                     The <span className="text-gradient-gold">Million Game</span> <br />
                     Giveaway Jackpot
                   </h2>
+
+                  {/* Mobile Video - Only visible on small screens */}
+                  <div className="block lg:hidden w-full max-w-sm mx-auto">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showGiveawayVideo ? handleGiveawayPlayClick : undefined} data-testid="giveaway-video-overlay-mobile">
+                      <AnimatePresence mode="wait">
+                        {!showGiveawayVideo ? (
+                          <motion.div 
+                            key="giveaway-initial-overlay-mobile"
+                            initial={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 z-10"
+                          >
+                            <div className="absolute inset-[-2px] bg-gradient-to-r from-primary via-secondary to-primary animate-pulse opacity-50 blur-sm group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4 group-hover:bg-black/40 transition-colors">
+                              <motion.div
+                                animate={{ scale: [1, 1.1, 1] }}
+                                transition={{ repeat: Infinity, duration: 2 }}
+                                className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_20px_rgba(245,184,0,0.4)]"
+                              >
+                                <Play className="w-5 h-5 text-black fill-current translate-x-0.5" />
+                              </motion.div>
+                              <span className="text-sm font-bold text-white uppercase tracking-wider drop-shadow-lg">Click To Watch</span>
+                            </div>
+                            <img 
+                              src="https://img.youtube.com/vi/iixwKcidSq8/maxresdefault.jpg" 
+                              alt="Giveaway Video Thumbnail"
+                              className="w-full h-full object-cover"
+                            />
+                          </motion.div>
+                        ) : (
+                          <motion.div 
+                            key="giveaway-video-container-mobile"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="absolute inset-0 z-20"
+                          >
+                            <iframe 
+                              id="giveaway-youtube-player-mobile"
+                              width="100%" 
+                              height="100%" 
+                              src="https://www.youtube.com/embed/iixwKcidSq8?autoplay=1&enablejsapi=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3" 
+                              title="Million Game Giveaway Video" 
+                              frameBorder="0" 
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                              referrerPolicy="strict-origin-when-cross-origin" 
+                              allowFullScreen
+                            ></iframe>
+
+                            <AnimatePresence>
+                              {giveawayVideoEnded && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-4 cursor-pointer"
+                                  onClick={handleGiveawayReplayClick}
+                                >
+                                  <motion.div
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_20px_rgba(245,184,0,0.6)]"
+                                  >
+                                    <RotateCcw className="w-5 h-5 text-black" />
+                                  </motion.div>
+                                  <span className="text-sm font-bold text-white uppercase tracking-wider drop-shadow-lg">Watch Again</span>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
                   <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
                     A guaranteed <span className="text-primary font-bold">200 SOL floor</span>. Every single game increases the pot. Split between the top 10 luckiest and top 10 most persistent players.
                   </p>
