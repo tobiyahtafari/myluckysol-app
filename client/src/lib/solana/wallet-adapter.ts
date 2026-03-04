@@ -224,8 +224,8 @@ export async function requestDevnetAirdrop(
   return signature;
 }
 
-export const DEVNET_RPC = "https://api.devnet.solana.com";
-export const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
+export const DEVNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com";
+export const MAINNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 
 export type NetworkType = "devnet" | "mainnet-beta";
 

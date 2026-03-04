@@ -6,8 +6,9 @@ let lastFetchTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds
 const FALLBACK_SOL_PRICE = 100; // Fallback price if API fails
 
-// Mock WAGA price for testing (will be replaced with real DEX price once live)
-const MOCK_WAGA_PRICE_USD = 0.001; // $0.001 per WAGA for testing
+// WAGA price for username cost calculations
+// If not yet trading on a major DEX with an API, we use a fixed floor price.
+const WAGA_PRICE_USD = parseFloat(process.env.WAGA_PRICE_USD || "0.001");
 
 export async function getSolPrice(): Promise<number> {
   const now = Date.now();
