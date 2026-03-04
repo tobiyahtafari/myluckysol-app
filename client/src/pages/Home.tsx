@@ -54,9 +54,15 @@ export default function Home() {
     // Add a global listener for the play button to ensure it works on all devices
     const handleGlobalClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      // Use stopPropagation in the handlers instead of just checking closest
+      // to prevent multiple triggers if nested
       if (target.closest('[data-testid="video-overlay"]')) {
+        e.preventDefault();
+        e.stopPropagation();
         handlePlayClick();
-      } else if (target.closest('[data-testid="giveaway-video-overlay"]')) {
+      } else if (target.closest('[data-testid="giveaway-video-overlay"]') || target.closest('[data-testid="giveaway-video-overlay-mobile"]')) {
+        e.preventDefault();
+        e.stopPropagation();
         handleGiveawayPlayClick();
       }
     };
@@ -357,7 +363,15 @@ export default function Home() {
               viewport={{ once: true }}
               className="mb-16 max-w-4xl mx-auto"
             >
-              <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showVideo ? handlePlayClick : undefined} data-testid="video-overlay">
+              <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
+              onClick={(e) => {
+                if (!showVideo) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handlePlayClick();
+                }
+              }} 
+              data-testid="video-overlay">
                 <AnimatePresence mode="wait">
                   {!showVideo ? (
                     <motion.div 
@@ -479,7 +493,15 @@ export default function Home() {
 
                   {/* Mobile Video - Only visible on small screens */}
                   <div className="block lg:hidden w-full max-w-sm mx-auto">
-                    <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showGiveawayVideo ? handleGiveawayPlayClick : undefined} data-testid="giveaway-video-overlay-mobile">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
+                      onClick={(e) => {
+                        if (!showGiveawayVideo) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleGiveawayPlayClick();
+                        }
+                      }} 
+                      data-testid="giveaway-video-overlay-mobile">
                       <AnimatePresence mode="wait">
                         {!showGiveawayVideo ? (
                           <motion.div 
@@ -592,7 +614,15 @@ export default function Home() {
               </div>
 
               <div className="hidden lg:block flex-shrink-0 w-full lg:w-96">
-                <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showGiveawayVideo ? handleGiveawayPlayClick : undefined} data-testid="giveaway-video-overlay">
+                <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
+                  onClick={(e) => {
+                    if (!showGiveawayVideo) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleGiveawayPlayClick();
+                    }
+                  }} 
+                  data-testid="giveaway-video-overlay">
                   <AnimatePresence mode="wait">
                     {!showGiveawayVideo ? (
                       <motion.div 
