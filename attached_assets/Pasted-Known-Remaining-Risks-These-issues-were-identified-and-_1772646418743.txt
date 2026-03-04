@@ -1,0 +1,20 @@
+Known Remaining Risks
+These issues were identified and must be addressed before or shortly after mainnet launch:
+
+High Priority
+Risk	Impact	Fix
+In-memory storage	All data lost on restart, including vesting balances and game records	Replace MemStorage with PostgreSQL (section 10)
+No transaction replay protection	A player could submit the same txSignature to join two different games	Store used signatures in DB and reject duplicates
+No rate limiting	Endpoints can be hammered; chat spam, slot-camping	Add express-rate-limit (section 11)
+Giveaway payout is not automated	At 1M games, the triggerGiveawayPayout() function records winners but does not send SOL	Implement a giveaway payout admin endpoint that sends SOL from the giveaway wallet to each winner
+Referral partial rollback	If WAGA transfer to referred user fails, both are rolled back; if referrer transfer fails, only the referrer is rolled back (referred user keeps their 100 WAGA)	Add atomic rollback for both parties
+Medium Priority
+Risk	Impact	Fix
+programDeployed is cached at startup	If program is deployed after server start, the server stays in fallback mode until restarted	Clear the cache periodically or add a manual override endpoint
+PATCH /api/profile allows pendingReferralBy to be overwritten	A user could in theory change their referrer before earning rewards	Validate that pendingReferralBy cannot be changed once set if referralRewarded is true
+No CORS restriction	Any origin can make API calls	Restrict CORS to production domain
+Public avatar endpoint	/api/avatar/:walletAddress has no size or type limit beyond the 2MB buffer check	Already capped at 2MB; ensure content-type validation is enforced
+Low Priority
+Risk	Impact	Fix
+Console logs expose wallet address prefixes	Not exploitable but is noisy	Sanitize logging in production
+God streak camping expiry relies on client calling the API	If player never loads the page, streak never expires	Add a server-side cron job to run checkAndExpireGodStreak for all active god streak holders every hour

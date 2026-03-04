@@ -7,6 +7,7 @@ import {
   type ChatMessage,
   type GlobalChatMessage,
   type GiveawayStats,
+  type GiveawayWinner,
   type GameModeKey,
   type WagerTier,
   type LeaderboardEntry,
@@ -71,6 +72,8 @@ export interface IStorage {
   getGiveawayLeaderboard(): Promise<{ luck: LeaderboardEntry[]; streaks: LeaderboardEntry[] }>;
   checkAndExpireGodStreak(walletAddress: string): Promise<void>;
   getAllProfiles(): Promise<PlayerProfile[]>;
+  isTransactionUsed(signature: string): Promise<boolean>;
+  markTransactionUsed(signature: string, walletAddress: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -82,6 +85,7 @@ export class MemStorage implements IStorage {
   private avatarImages: Map<string, { data: Buffer; contentType: string }>;
   private giveawayStats: GiveawayStats;
   private giveawayWinners: GiveawayWinner[];
+  private usedTxSignatures: Set<string>;
 
   constructor() {
     this.profiles = new Map();
@@ -91,6 +95,7 @@ export class MemStorage implements IStorage {
     this.globalChatMessages = [];
     this.gameHistory = new Map();
     this.giveawayWinners = [];
+    this.usedTxSignatures = new Set();
     this.giveawayStats = {
       totalGamesPlayed: 0,
       cycleStartGameCount: 0,
@@ -1158,6 +1163,14 @@ export class MemStorage implements IStorage {
     }
   }
 
+  async isTransactionUsed(signature: string): Promise<boolean> {
+    return this.usedTxSignatures.has(signature);
+  }
+
+  async markTransactionUsed(signature: string, _walletAddress: string): Promise<void> {
+    this.usedTxSignatures.add(signature);
+  }
+
   storeAvatarImage(walletAddress: string, data: Buffer, contentType: string): void {
     this.avatarImages.set(walletAddress, { data, contentType });
   }
@@ -1196,4 +1209,15 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { PgStorage } from "./pg-storage";
+
+function createStorage(): IStorage {
+  if (process.env.DATABASE_URL) {
+    console.log("[STORAGE] Using PostgreSQL storage");
+    return new PgStorage();
+  }
+  console.log("[STORAGE] Using in-memory storage (no DATABASE_URL)");
+  return new MemStorage();
+}
+
+export const storage: IStorage = createStorage();

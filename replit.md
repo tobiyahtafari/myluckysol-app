@@ -41,7 +41,10 @@ MyLuckySol is a casino-grade, provably fair decentralized application (DApp) on 
 - **Profile Management**: Players can set usernames (with a small SOL fee), track game history, manage referrals, and claim vested WAGA.
 
 ### Backend & Blockchain Interaction
-- **API Endpoints**: Facilitate game preparation, joining, claiming winnings, profile management (including username updates and WAGA vesting), leaderboard queries, global stats (`/api/stats`), completed games feed (`/api/games/completed`), game verification (`/api/verify`), global chat (`/api/chat`), tipping (`/api/tip`), giveaway stats (`/api/giveaway/stats`), giveaway leaderboard (`/api/giveaway/leaderboard`), and god streak status (`/api/profile/:wallet/god-streak`).
+- **API Endpoints**: Facilitate game preparation, joining, claiming winnings, profile management (including username updates and WAGA vesting), leaderboard queries, global stats (`/api/stats`), completed games feed (`/api/games/completed`), game verification (`/api/verify`), global chat (`/api/chat`), tipping (`/api/tip`), giveaway stats (`/api/giveaway/stats`), giveaway leaderboard (`/api/giveaway/leaderboard`), giveaway winners (`/api/giveaway/winners`), and god streak status (`/api/profile/:wallet/god-streak`).
+- **Rate Limiting**: `express-rate-limit` applied — join: 10/min, vesting claims: 3/min, chat: 5/10s, tips: 5/min.
+- **Transaction Replay Protection**: `used_tx_signatures` table prevents the same transaction being used twice for game joins.
+- **Persistent Storage**: `server/pg-storage.ts` implements `IStorage` using PostgreSQL (10 tables). Falls back to `MemStorage` if `DATABASE_URL` is not set. DB tables: `player_profiles`, `games`, `game_history`, `global_chat_messages`, `giveaway_stats`, `giveaway_winners`, `used_tx_signatures`, `avatar_images`.
 - **Solana Integration**: Handles SOL transfers (wagers, payouts, username fees, tips), WAGA token transfers from a central Rewards Vault, and on-chain program interactions.
 - **Fallback Mode**: Currently operates in a fallback mode using direct SOL transfers to an authority wallet due to an un-deployed Solana program. The full on-chain mode will use PDA-based escrow after program deployment.
 

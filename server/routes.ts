@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT, CHAT_MIN_TOTAL_WAGERED, TIP_FEE_SOL, GIVEAWAY_MIN_SOL_FLOOR, GIVEAWAY_MILESTONE_GAMES, GIVEAWAY_PAYOUT_PERCENTS, type WagerTier, type GameModeKey } from "@shared/schema";
+import { GAME_MODES, WAGER_TIERS, insertGameSchema, WAGA_ENTRY_MULTIPLIER, VESTING_PERIOD_MS, VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT, CHAT_MIN_TOTAL_WAGERED, TIP_FEE_SOL, GIVEAWAY_MIN_SOL_FLOOR, GIVEAWAY_MILESTONE_GAMES, GIVEAWAY_PAYOUT_PERCENTS, type WagerTier, type GameModeKey, FOUNDATION_FEE, GIVEAWAY_FEE } from "@shared/schema";
 import { calculateWagaReward, getUsernameUpdateCostSol } from "./price-service";
 import { solanaClient } from "./solana-client";
 import { z } from "zod";
@@ -241,6 +241,13 @@ export async function registerRoutes(
       
       txVerified = true;
       console.log(`[ON-CHAIN] Transaction ${txSignature.slice(0, 16)}... verified on slot ${verification.slot}`);
+
+      // REPLAY PROTECTION: Ensure this tx signature hasn't been used before
+      const alreadyUsed = await storage.isTransactionUsed(txSignature);
+      if (alreadyUsed) {
+        return res.status(400).json({ error: "Transaction already used. Cannot join a game twice with the same transaction." });
+      }
+      await storage.markTransactionUsed(txSignature, walletAddress);
 
       // Join the game with real wallet (only after tx verified)
       const updatedGame = await storage.joinGame(game.id, walletAddress, txSignature);
@@ -958,6 +965,88 @@ export async function registerRoutes(
       res.json(winners);
     } catch (error) {
       console.error("Error getting giveaway winners:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Tip another player (wallet-to-wallet, with 0.001 SOL platform fee)
+  app.post("/api/tip", async (req, res) => {
+    try {
+      const { fromWallet, toIdentifier, amount } = req.body;
+
+      if (!fromWallet || !toIdentifier || !amount) {
+        return res.status(400).json({ error: "fromWallet, toIdentifier, and amount are required" });
+      }
+
+      const tipAmount = parseFloat(amount);
+      if (isNaN(tipAmount) || tipAmount <= 0) {
+        return res.status(400).json({ error: "Invalid tip amount" });
+      }
+
+      const sender = await storage.getProfile(fromWallet);
+      if (!sender) {
+        return res.status(403).json({ error: "Sender profile not found. Play a game first." });
+      }
+
+      const recipient = await storage.getProfileByUsernameOrWallet(toIdentifier);
+      if (!recipient) {
+        return res.status(404).json({ error: "Recipient not found. Make sure the username or wallet address is correct." });
+      }
+
+      if (recipient.walletAddress === fromWallet) {
+        return res.status(400).json({ error: "You cannot tip yourself." });
+      }
+
+      // On-chain: transfer tipAmount to recipient, TIP_FEE_SOL to treasury
+      if (solanaClient.isOnChainEnabled()) {
+        const [tipTransfer, feeTransfer] = await Promise.all([
+          solanaClient.transferSol(recipient.walletAddress, tipAmount),
+          solanaClient.transferSol(solanaClient.getTreasuryWallet().toBase58(), TIP_FEE_SOL),
+        ]);
+
+        if (!tipTransfer.success) {
+          return res.status(500).json({ error: `Tip transfer failed: ${tipTransfer.error}` });
+        }
+
+        // Post a system message in global chat announcing the tip
+        await storage.addGlobalChatMessage({
+          walletAddress: fromWallet,
+          username: sender.username,
+          message: `tipped ${recipient.username || toIdentifier.slice(0, 6) + "..."} ${tipAmount} SOL`,
+          isGodStreak: sender.godStreakActive || false,
+          isStreakBreaker: sender.isStreakBreakerActive || false,
+          color: "#facc15",
+        });
+
+        return res.json({
+          success: true,
+          amount: tipAmount,
+          fee: TIP_FEE_SOL,
+          tipTxSig: tipTransfer.txSig,
+          feeTxSig: feeTransfer.txSig,
+          recipient: { walletAddress: recipient.walletAddress, username: recipient.username },
+        });
+      }
+
+      // Devnet mode: just record the tip message
+      await storage.addGlobalChatMessage({
+        walletAddress: fromWallet,
+        username: sender.username,
+        message: `tipped ${recipient.username || toIdentifier.slice(0, 6) + "..."} ${tipAmount} SOL`,
+        isGodStreak: sender.godStreakActive || false,
+        isStreakBreaker: sender.isStreakBreakerActive || false,
+        color: "#facc15",
+      });
+
+      res.json({
+        success: true,
+        amount: tipAmount,
+        fee: TIP_FEE_SOL,
+        recipient: { walletAddress: recipient.walletAddress, username: recipient.username },
+        message: "Tip recorded (devnet mode — no on-chain transfer)",
+      });
+    } catch (error) {
+      console.error("Error processing tip:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

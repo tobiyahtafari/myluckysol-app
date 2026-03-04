@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -22,6 +23,44 @@ app.use(
 );
 
 app.use(express.urlencoded({ limit: "10mb", extended: false }));
+
+// Rate limiting — protect against abuse on sensitive endpoints
+const joinLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many join attempts. Please wait a minute." },
+});
+
+const vestingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many vesting claim attempts. Please wait." },
+});
+
+const chatLimiter = rateLimit({
+  windowMs: 10 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many messages. Slow down." },
+});
+
+const tipLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many tip attempts. Please wait." },
+});
+
+app.use("/api/games/join", joinLimiter);
+app.use("/api/profile/:walletAddress/claim-vesting", vestingLimiter);
+app.use("/api/chat", chatLimiter);
+app.use("/api/tip", tipLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
