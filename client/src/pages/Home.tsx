@@ -56,14 +56,22 @@ export default function Home() {
       const target = e.target as HTMLElement;
       // Use stopPropagation in the handlers instead of just checking closest
       // to prevent multiple triggers if nested
-      if (target.closest('[data-testid="video-overlay"]')) {
-        e.preventDefault();
-        e.stopPropagation();
-        handlePlayClick();
-      } else if (target.closest('[data-testid="giveaway-video-overlay"]') || target.closest('[data-testid="giveaway-video-overlay-mobile"]')) {
-        e.preventDefault();
-        e.stopPropagation();
-        handleGiveawayPlayClick();
+      const mainOverlay = target.closest('[data-testid="video-overlay"]');
+      const giveawayOverlay = target.closest('[data-testid="giveaway-video-overlay"]') || target.closest('[data-testid="giveaway-video-overlay-mobile"]');
+      
+      if (mainOverlay) {
+        if (!showVideo) {
+          e.preventDefault();
+          e.stopPropagation();
+          handlePlayClick();
+        }
+      } else if (giveawayOverlay) {
+        // Only trigger if the video isn't already showing to prevent double-init
+        if (!showGiveawayVideo) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleGiveawayPlayClick();
+        }
       }
     };
 
@@ -366,8 +374,8 @@ export default function Home() {
               <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
               onClick={(e) => {
                 if (!showVideo) {
-                  e.preventDefault();
-                  e.stopPropagation();
+                  // e.preventDefault();
+                  // e.stopPropagation();
                   handlePlayClick();
                 }
               }} 
@@ -496,8 +504,8 @@ export default function Home() {
                     <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
                       onClick={(e) => {
                         if (!showGiveawayVideo) {
-                          e.preventDefault();
-                          e.stopPropagation();
+                          // e.preventDefault();
+                          // e.stopPropagation();
                           handleGiveawayPlayClick();
                         }
                       }} 
@@ -617,8 +625,8 @@ export default function Home() {
                 <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
                   onClick={(e) => {
                     if (!showGiveawayVideo) {
-                      e.preventDefault();
-                      e.stopPropagation();
+                      // e.preventDefault();
+                      // e.stopPropagation();
                       handleGiveawayPlayClick();
                     }
                   }} 
