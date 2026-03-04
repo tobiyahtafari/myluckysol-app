@@ -344,6 +344,7 @@ export default function GameRoom() {
           payout={game.winnerPayout || 0}
           wagaReward={game.wagaRewards || 0}
           isCurrentUserWinner={isCurrentUserWinner}
+          isParticipant={!!currentPlayer}
           onClose={() => setShowWinner(false)}
         />
       )}

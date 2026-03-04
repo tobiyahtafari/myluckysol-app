@@ -8,6 +8,7 @@ interface WinnerRevealProps {
   payout: number;
   wagaReward: number;
   isCurrentUserWinner: boolean;
+  isParticipant: boolean;
   onClose: () => void;
 }
 
@@ -84,6 +85,7 @@ export function WinnerReveal({
   payout,
   wagaReward,
   isCurrentUserWinner,
+  isParticipant,
   onClose,
 }: WinnerRevealProps) {
   const soundPlayedRef = useRef(false);
@@ -96,11 +98,11 @@ export function WinnerReveal({
       soundPlayedRef.current = true;
       if (isCurrentUserWinner) {
         playWinSound();
-      } else {
+      } else if (isParticipant) {
         playLoseSound();
       }
     }
-  }, [isCurrentUserWinner]);
+  }, [isCurrentUserWinner, isParticipant]);
 
   // Auto-close countdown
   useEffect(() => {
@@ -158,9 +160,13 @@ export function WinnerReveal({
               <div className="w-14 h-14 rounded-full gradient-gold flex items-center justify-center glow-gold">
                 <Trophy className="w-7 h-7 text-black" />
               </div>
-            ) : (
+            ) : isParticipant ? (
               <div className="w-14 h-14 rounded-full bg-destructive/20 border-2 border-destructive/50 flex items-center justify-center">
                 <Skull className="w-7 h-7 text-destructive" />
+              </div>
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center">
+                <Trophy className="w-7 h-7 text-primary" />
               </div>
             )}
           </motion.div>
@@ -171,10 +177,10 @@ export function WinnerReveal({
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
               className={`text-3xl font-bold mb-1 ${
-                isCurrentUserWinner ? "text-gradient-gold" : "text-destructive"
+                isCurrentUserWinner ? "text-gradient-gold" : isParticipant ? "text-destructive" : "text-primary"
               }`}
             >
-              {isCurrentUserWinner ? "You Won!" : "You Lost"}
+              {isCurrentUserWinner ? "You Won!" : isParticipant ? "You Lost" : "Game Complete!"}
             </motion.h2>
             <motion.p
               initial={{ y: 16, opacity: 0 }}
