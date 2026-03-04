@@ -32,8 +32,11 @@ export default function Home() {
   const { connected } = useWallet();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [showGiveawayVideo, setShowGiveawayVideo] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [giveawayVideoEnded, setGiveawayVideoEnded] = useState(false);
   const playerRef = useRef<any>(null);
+  const giveawayPlayerRef = useRef<any>(null);
 
   useEffect(() => {
     // Load YouTube IFrame API
@@ -53,6 +56,8 @@ export default function Home() {
       const target = e.target as HTMLElement;
       if (target.closest('[data-testid="video-overlay"]')) {
         handlePlayClick();
+      } else if (target.closest('[data-testid="giveaway-video-overlay"]')) {
+        handleGiveawayPlayClick();
       }
     };
 
@@ -62,6 +67,9 @@ export default function Home() {
       document.removeEventListener('click', handleGlobalClick);
       if (playerRef.current) {
         playerRef.current.destroy();
+      }
+      if (giveawayPlayerRef.current) {
+        giveawayPlayerRef.current.destroy();
       }
     };
   }, []);
@@ -77,6 +85,12 @@ export default function Home() {
     }
   };
 
+  const onGiveawayPlayerStateChange = (event: any) => {
+    if (event.data === 0) {
+      setGiveawayVideoEnded(true);
+    }
+  };
+
   const initPlayer = (elementId: string) => {
     if (window.YT && window.YT.Player) {
       playerRef.current = new window.YT.Player(elementId, {
@@ -88,13 +102,30 @@ export default function Home() {
     }
   };
 
+  const initGiveawayPlayer = (elementId: string) => {
+    if (window.YT && window.YT.Player) {
+      giveawayPlayerRef.current = new window.YT.Player(elementId, {
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onGiveawayPlayerStateChange
+        }
+      });
+    }
+  };
+
   const handlePlayClick = () => {
     setShowVideo(true);
     setVideoEnded(false);
-    // On mobile, the player might need to be initialized immediately
-    // and the first user gesture (the click) must be associated with the play() call
     setTimeout(() => {
       initPlayer('youtube-player');
+    }, 50);
+  };
+
+  const handleGiveawayPlayClick = () => {
+    setShowGiveawayVideo(true);
+    setGiveawayVideoEnded(false);
+    setTimeout(() => {
+      initGiveawayPlayer('giveaway-youtube-player');
     }, 50);
   };
 
@@ -102,6 +133,13 @@ export default function Home() {
     setVideoEnded(false);
     if (playerRef.current && playerRef.current.playVideo) {
       playerRef.current.playVideo();
+    }
+  };
+
+  const handleGiveawayReplayClick = () => {
+    setGiveawayVideoEnded(false);
+    if (giveawayPlayerRef.current && giveawayPlayerRef.current.playVideo) {
+      giveawayPlayerRef.current.playVideo();
     }
   };
 
@@ -481,9 +519,74 @@ export default function Home() {
               </div>
 
               <div className="hidden lg:block flex-shrink-0 w-full lg:w-96">
-                <div className="relative aspect-square">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full blur-3xl animate-pulse" />
-                  <Gift className="absolute inset-0 m-auto w-48 h-48 text-primary/20" />
+                <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" onClick={!showGiveawayVideo ? handleGiveawayPlayClick : undefined} data-testid="giveaway-video-overlay">
+                  <AnimatePresence mode="wait">
+                    {!showGiveawayVideo ? (
+                      <motion.div 
+                        key="giveaway-initial-overlay"
+                        initial={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-10"
+                      >
+                        <div className="absolute inset-[-2px] bg-gradient-to-r from-primary via-secondary to-primary animate-pulse opacity-50 blur-sm group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4 group-hover:bg-black/40 transition-colors">
+                          <motion.div
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                            className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_30px_rgba(245,184,0,0.4)]"
+                          >
+                            <Play className="w-6 h-6 text-black fill-current translate-x-0.5" />
+                          </motion.div>
+                          <span className="text-lg font-bold text-white uppercase tracking-wider drop-shadow-lg">Click To Watch</span>
+                        </div>
+                        <img 
+                          src="https://img.youtube.com/vi/iixwKcidSq8/maxresdefault.jpg" 
+                          alt="Giveaway Video Thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        key="giveaway-video-container"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 z-20"
+                      >
+                        <iframe 
+                          id="giveaway-youtube-player"
+                          width="100%" 
+                          height="100%" 
+                          src="https://www.youtube.com/embed/iixwKcidSq8?autoplay=1&enablejsapi=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3" 
+                          title="Million Game Giveaway Video" 
+                          frameBorder="0" 
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                          referrerPolicy="strict-origin-when-cross-origin" 
+                          allowFullScreen
+                        ></iframe>
+
+                        <AnimatePresence>
+                          {giveawayVideoEnded && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-4 cursor-pointer"
+                              onClick={handleGiveawayReplayClick}
+                            >
+                              <motion.div
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_30px_rgba(245,184,0,0.6)]"
+                              >
+                                <RotateCcw className="w-6 h-6 text-black" />
+                              </motion.div>
+                              <span className="text-lg font-bold text-white uppercase tracking-wider drop-shadow-lg">Watch Again</span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             </motion.div>
