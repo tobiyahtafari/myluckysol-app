@@ -61,8 +61,14 @@ export class SolanaGameClient {
   private authorityKeypair: Keypair | null = null;
 
   constructor() {
-    // Use devnet for now
-    this.connection = new Connection("https://api.devnet.solana.com", "confirmed");
+    // Use SOLANA_NETWORK env var to switch between devnet and mainnet
+    const network = process.env.SOLANA_NETWORK || "devnet";
+    const rpcUrl = process.env.SOLANA_RPC_URL || 
+      (network === "mainnet" 
+        ? "https://api.mainnet-beta.solana.com" 
+        : "https://api.devnet.solana.com");
+    this.connection = new Connection(rpcUrl, "confirmed");
+    console.log(`[SOLANA] Connected to ${network} via ${rpcUrl}`);
     this.programId = new PublicKey(MYLUCKYSOL_PROGRAM_ID);
     this.treasuryWallet = new PublicKey(FOUNDATION_TREASURY_WALLET);
 

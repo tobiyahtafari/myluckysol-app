@@ -104,7 +104,7 @@ export async function registerRoutes(
         wager,
         mode,
         playersNeeded: config.players - game.players.length,
-        network: "devnet",
+        network: process.env.SOLANA_NETWORK || "devnet",
         joinTransaction: serializedTx,
         fallbackMode: useFallbackMode, // Let client know we're in fallback mode
       });
@@ -268,7 +268,7 @@ export async function registerRoutes(
         escrowPDA: updatedGame.escrowPDA,
         onChainGameId: updatedGame.onChainGameId,
         txVerified,
-        network: "devnet",
+        network: process.env.SOLANA_NETWORK || "devnet",
         serverTime: Date.now(),
       });
     } catch (error) {
@@ -613,7 +613,11 @@ export async function registerRoutes(
         return res.json({ profile: updated });
       }
 
-      const updated = await storage.updateProfile(walletAddress, req.body);
+      // Only allow safe, user-controlled fields — never pass raw req.body to prevent
+      // privilege escalation (e.g., manually setting isBanned, wagaEarned, etc.)
+      const allowedUpdates: Partial<import("@shared/schema").PlayerProfile> = {};
+      if (req.body.displayName !== undefined) allowedUpdates.displayName = String(req.body.displayName).slice(0, 50);
+      const updated = await storage.updateProfile(walletAddress, allowedUpdates);
       res.json({ profile: updated });
     } catch (error) {
       console.error("Error updating profile:", error);
