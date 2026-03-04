@@ -384,7 +384,7 @@ function LiveGameCard({ game, isActive }: { game: Game; isActive?: boolean }) {
         </div>
         <Link href={`/game/${game.id}`}>
           <Button size="sm" variant={isActive ? "default" : "outline"} data-testid={`button-join-live-game-${game.id}`}>
-            {isActive ? "Resume" : game.status === "waiting" ? "Join" : "Spectate"}
+            {isActive ? "Resume" : "Spectate"}
           </Button>
         </Link>
       </div>

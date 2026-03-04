@@ -74,10 +74,16 @@ export default function Fairness() {
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const gamesPerPage = 20;
+
   const { data: completedGames, isLoading } = useQuery<CompletedGame[]>({
     queryKey: ["/api/games/completed"],
     refetchInterval: 5000,
   });
+
+  const totalPages = completedGames ? Math.ceil(completedGames.length / gamesPerPage) : 0;
+  const currentGames = completedGames ? completedGames.slice((currentPage - 1) * gamesPerPage, currentPage * gamesPerPage) : [];
 
   const handleVerify = async () => {
     if (!searchHash.trim()) return;
@@ -404,57 +410,85 @@ if (opponent.godStreakActive) {
               <p className="text-muted-foreground">No completed games yet. Play a game to see results here.</p>
             </Card>
           ) : (
-            <div className="space-y-2">
-              {completedGames.map((game) => (
-                <Card
-                  key={game.id}
-                  className="p-4 border-border/50 hover:border-primary/30 transition-colors"
-                  data-testid={`card-game-${game.id}`}
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                    <div className="flex items-center gap-4">
-                      <div className="text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-1 rounded">
-                        {game.mode}
+            <>
+              <div className="space-y-2">
+                {currentGames.map((game) => (
+                  <Card
+                    key={game.id}
+                    className="p-4 border-border/50 hover:border-primary/30 transition-colors"
+                    data-testid={`card-game-${game.id}`}
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                      <div className="flex items-center gap-4">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-1 rounded">
+                          {game.mode}
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Pool: </span>
+                          <span className="font-semibold text-gradient-gold">{game.poolAmount} SOL</span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Winner: </span>
+                          <span className="font-mono text-xs">
+                            {game.players.find(p => p.walletAddress === game.winnerId)?.username || (game.winnerId ? shortAddr(game.winnerId) : "N/A")}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Pool: </span>
-                        <span className="font-semibold text-gradient-gold">{game.poolAmount} SOL</span>
-                      </div>
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Winner: </span>
-                        <span className="font-mono text-xs">
-                          {game.players.find(p => p.walletAddress === game.winnerId)?.username || (game.winnerId ? shortAddr(game.winnerId) : "N/A")}
+                      <div className="flex items-center gap-2">
+                        {game.serverSeedHash && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs font-mono h-7 gap-1 text-muted-foreground hover:text-foreground"
+                            onClick={() => {
+                              setSearchHash(game.serverSeedHash || "");
+                              handleVerify();
+                              const verifySection = document.getElementById("verify-section");
+                              if (verifySection) {
+                                verifySection.scrollIntoView({ behavior: "smooth" });
+                              }
+                            }}
+                            data-testid={`button-verify-game-${game.id}`}
+                          >
+                            <Shield className="w-3 h-3" />
+                            {game.serverSeedHash.slice(0, 8)}...
+                          </Button>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {game.completedAt ? formatTime(game.completedAt) : ""}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {game.serverSeedHash && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs font-mono h-7 gap-1 text-muted-foreground hover:text-foreground"
-                          onClick={() => {
-                            setSearchHash(game.serverSeedHash || "");
-                            handleVerify();
-                            const verifySection = document.getElementById("verify-section");
-                            if (verifySection) {
-                              verifySection.scrollIntoView({ behavior: "smooth" });
-                            }
-                          }}
-                          data-testid={`button-verify-game-${game.id}`}
-                        >
-                          <Shield className="w-3 h-3" />
-                          {game.serverSeedHash.slice(0, 8)}...
-                        </Button>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {game.completedAt ? formatTime(game.completedAt) : ""}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    data-testid="button-prev-page"
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    data-testid="button-next-page"
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </motion.div>
       </div>
