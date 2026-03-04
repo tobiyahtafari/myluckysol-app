@@ -70,9 +70,10 @@ export function GameChat({ gameId }: { gameId: string }) {
   };
 
   const scrollToBottom = useCallback((smooth = true) => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: smooth ? "smooth" : "instant" 
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "instant"
       });
     }
     setHasNewMessages(false);
