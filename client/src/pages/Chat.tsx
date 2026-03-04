@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Flame, Droplets, X, MessageSquare, Bell, Smile, Coins } from "lucide-react";
+import { Send, Flame, Droplets, X, MessageSquare, Bell, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -110,118 +110,6 @@ function ChatMessageItem({ msg }: { msg: GlobalChatMessage }) {
   );
 }
 
-function TipModal({
-  onClose,
-  walletAddress,
-}: {
-  onClose: () => void;
-  walletAddress: string;
-}) {
-  const [recipient, setRecipient] = useState("");
-  const [amount, setAmount] = useState("0.01");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const tipMutation = useMutation({
-    mutationFn: async (data: { fromWallet: string; toIdentifier: string; amount: number }) => {
-      return apiRequest("POST", "/api/tip", data);
-    },
-    onSuccess: (response: any) => {
-      const data = response.data || response;
-      toast({
-        title: "Tip sent",
-        description: `${data.amount} SOL sent to ${data.recipient?.username || formatAddress(data.recipient?.walletAddress || "")}`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
-      onClose();
-    },
-    onError: (err: any) => {
-      toast({
-        title: "Tip failed",
-        description: err.message || "Failed to process tip",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSend = () => {
-    const amt = parseFloat(amount);
-    if (!recipient.trim() || isNaN(amt) || amt <= 0) return;
-    tipMutation.mutate({
-      fromWallet: walletAddress,
-      toIdentifier: recipient.trim(),
-      amount: amt,
-    });
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-background border border-border/60 rounded-2xl p-6 w-full max-w-sm space-y-4"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-lg flex items-center gap-2">
-            <Coins className="h-5 w-5 text-primary" />
-            Send Tip
-          </h3>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} data-testid="button-close-tip">
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Recipient (username or wallet)</label>
-            <Input
-              value={recipient}
-              onChange={e => setRecipient(e.target.value)}
-              placeholder="username or wallet address"
-              data-testid="input-tip-recipient"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Amount (SOL)</label>
-            <Input
-              type="number"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              min="0.001"
-              step="0.01"
-              data-testid="input-tip-amount"
-            />
-          </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground bg-border/20 rounded-lg px-3 py-2">
-            <span>Platform fee</span>
-            <span className="font-mono">0.001 SOL</span>
-          </div>
-        </div>
-
-        <Button
-          className="w-full"
-          onClick={handleSend}
-          disabled={tipMutation.isPending || !recipient.trim() || !amount}
-          data-testid="button-send-tip"
-        >
-          {tipMutation.isPending ? "Sending..." : "Send Tip"}
-        </Button>
-
-        <p className="text-[10px] text-muted-foreground text-center">
-          Tips are sent on-chain. The recipient must have a MyLuckySol account.
-        </p>
-      </motion.div>
-    </motion.div>
-  );
-}
 
 interface LiveGame {
   id: string;

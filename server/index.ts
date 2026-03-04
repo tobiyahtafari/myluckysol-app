@@ -49,18 +49,9 @@ const chatLimiter = rateLimit({
   message: { error: "Too many messages. Slow down." },
 });
 
-const tipLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many tip attempts. Please wait." },
-});
-
 app.use("/api/games/join", joinLimiter);
 app.use("/api/profile/:walletAddress/claim-vesting", vestingLimiter);
 app.use("/api/chat", chatLimiter);
-app.use("/api/tip", tipLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

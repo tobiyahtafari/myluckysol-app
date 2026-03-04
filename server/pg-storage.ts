@@ -419,8 +419,8 @@ export class PgStorage implements IStorage {
       timestamp: Number(r.timestamp),
       isGodStreak: r.is_god_streak || false,
       isStreakBreaker: r.is_streak_breaker || false,
-      tipAmount: r.data?.tipAmount,
-      tipRecipient: r.data?.tipRecipient,
+      
+      
       color: r.color,
       avatarUrl: r.avatar_url || undefined,
     }));

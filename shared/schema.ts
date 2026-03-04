@@ -40,7 +40,6 @@ export const GIVEAWAY_PAYOUT_PERCENTS = [22, 16, 12, 10, 9, 8, 7, 6, 5, 5] as co
 
 // Chat constants
 export const CHAT_MIN_TOTAL_WAGERED = 0.1; // Min 0.1 SOL wager history to chat
-export const TIP_FEE_SOL = 0.001;          // Fixed fee per tip
 
 export type GameStatus = "waiting" | "countdown" | "in_progress" | "resolving" | "completed";
 
@@ -181,8 +180,6 @@ export const globalChatMessageSchema = z.object({
   timestamp: z.number(),
   isGodStreak: z.boolean().default(false),
   isStreakBreaker: z.boolean().default(false),
-  tipAmount: z.number().optional(),
-  tipRecipient: z.string().optional(),
 });
 
 export type GlobalChatMessage = z.infer<typeof globalChatMessageSchema>;

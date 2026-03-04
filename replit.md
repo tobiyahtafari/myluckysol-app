@@ -41,11 +41,11 @@ MyLuckySol is a casino-grade, provably fair decentralized application (DApp) on 
 - **Profile Management**: Players can set usernames (with a small SOL fee), track game history, manage referrals, and claim vested WAGA.
 
 ### Backend & Blockchain Interaction
-- **API Endpoints**: Facilitate game preparation, joining, claiming winnings, profile management (including username updates and WAGA vesting), leaderboard queries, global stats (`/api/stats`), completed games feed (`/api/games/completed`), game verification (`/api/verify`), global chat (`/api/chat`), tipping (`/api/tip`), giveaway stats (`/api/giveaway/stats`), giveaway leaderboard (`/api/giveaway/leaderboard`), giveaway winners (`/api/giveaway/winners`), and god streak status (`/api/profile/:wallet/god-streak`).
-- **Rate Limiting**: `express-rate-limit` applied — join: 10/min, vesting claims: 3/min, chat: 5/10s, tips: 5/min.
+- **API Endpoints**: Facilitate game preparation, joining, claiming winnings, profile management (including username updates and WAGA vesting), leaderboard queries, global stats (`/api/stats`), completed games feed (`/api/games/completed`), game verification (`/api/verify`), global chat (`/api/chat`), giveaway stats (`/api/giveaway/stats`), giveaway leaderboard (`/api/giveaway/leaderboard`), giveaway winners (`/api/giveaway/winners`), and god streak status (`/api/profile/:wallet/god-streak`).
+- **Rate Limiting**: `express-rate-limit` applied — join: 10/min, vesting claims: 3/min, chat: 5/10s.
 - **Transaction Replay Protection**: `used_tx_signatures` table prevents the same transaction being used twice for game joins.
 - **Persistent Storage**: `server/pg-storage.ts` implements `IStorage` using PostgreSQL (10 tables). Falls back to `MemStorage` if `DATABASE_URL` is not set. DB tables: `player_profiles`, `games`, `game_history`, `global_chat_messages`, `giveaway_stats`, `giveaway_winners`, `used_tx_signatures`, `avatar_images`.
-- **Solana Integration**: Handles SOL transfers (wagers, payouts, username fees, tips), WAGA token transfers from a central Rewards Vault, and on-chain program interactions.
+- **Solana Integration**: Handles SOL transfers (wagers, payouts, username fees), WAGA token transfers from a central Rewards Vault, and on-chain program interactions.
 - **Fallback Mode**: Currently operates in a fallback mode using direct SOL transfers to an authority wallet due to an un-deployed Solana program. The full on-chain mode will use PDA-based escrow after program deployment.
 
 ### Pages
@@ -56,7 +56,7 @@ MyLuckySol is a casino-grade, provably fair decentralized application (DApp) on 
 - **Game Room** (`/game/:id`): Live game view with player slots (fire/water animations for God/Breaker), countdown timer, chat.
 - **Leaderboard** (`/leaderboard`): Sortable by earnings/luck/streaks with period filters.
 - **Giveaway** (`/giveaway`): Million game jackpot tracker (200 SOL floor), progress bar, top 10 luck and streak leaderboards with payout % breakdown.
-- **Chat** (`/chat`): Global chat (gated by 0.1 SOL wager history) with split layout — live games panel on right. Tipping modal (0.001 SOL fee). Fire/water badge indicators for God/Breaker users.
+- **Chat** (`/chat`): Global chat (gated by 0.1 SOL wager history) with split layout — live games panel on right. Fire/water badge indicators for God/Breaker users.
 - **Profile** (`/profile`): Username/avatar management, game history, referral system, WAGA vesting claims.
 - **Docs** (`/docs`): Contract addresses and ecosystem info (WAGA Rewards Escrow model).
 - **How to Play** (`/how-to-play`): Step-by-step guide.
