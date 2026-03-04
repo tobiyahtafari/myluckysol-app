@@ -540,7 +540,7 @@ export default function Home() {
                                   >
                                     <RotateCcw className="w-5 h-5 text-black" />
                                   </motion.div>
-                                  <span className="text-sm font-bold text-white uppercase tracking-wider drop-shadow-lg">Watch Again</span>
+                                  <span className="text-sm font-bold text-white uppercase tracking-wider drop-shadow-lg">Play Again</span>
                                 </motion.div>
                               )}
                             </AnimatePresence>
