@@ -25,7 +25,6 @@ Before any mainnet transaction, confirm each item is complete:
 - [ ] Anchor program compiled and audited
 - [ ] Anchor program deployed to **mainnet-beta** with a new program ID
 - [ ] `shared/constants.ts` updated with mainnet program ID, token mint, and wallet ATAs
-- [ ] WAGA token minted on mainnet with correct supply
 - [ ] WAGA Rewards Vault ATA funded with enough WAGA for projected rewards
 - [ ] All 4 wallet keypairs are secured (hardware wallet or multi-sig recommended for Treasury and Giveaway)
 - [ ] `SOLANA_NETWORK=mainnet` environment variable set
@@ -201,21 +200,27 @@ The server's `isProgramDeployed()` check will detect the live program and switch
 
 ## 5. WAGA Token Setup
 
-### 5.1 Mint WAGA on Mainnet
+### 5.1 Deposit WAGA to Rewards Vault
 
-```bash
-# Create the token mint (9 decimals recommended)
-spl-token create-token --decimals 9
+Since the WAGA token is already deployed and minted on mainnet, you only need to fund the Rewards Vault's Associated Token Account (ATA) so the platform can distribute rewards.
 
-# Note the mint address and update shared/constants.ts:
-# WAGA_TOKEN_MINT = "<new_mainnet_mint_address>"
+1. **Identify your Mainnet WAGA Mint:**
+   Ensure `WAGA_TOKEN_MINT` in `shared/constants.ts` matches your existing mainnet token.
 
-# Create the Rewards Vault wallet ATA
-spl-token create-account <WAGA_TOKEN_MINT> --owner <WAGA_REWARDS_VAULT_ADDRESS>
+2. **Create/Identify the Rewards Vault ATA:**
+   If not already created, create an ATA for the `WAGA_REWARDS_VAULT` wallet:
+   ```bash
+   spl-token create-account <WAGA_TOKEN_MINT> --owner <WAGA_REWARDS_VAULT_ADDRESS>
+   ```
 
-# Fund the vault with the initial WAGA supply for rewards
-spl-token mint <WAGA_TOKEN_MINT> <TOTAL_SUPPLY> <VAULT_ATA>
-```
+3. **Deposit WAGA Tokens:**
+   Transfer the required amount of WAGA tokens from your holding wallet to the Vault ATA. This balance will be used for:
+   - **Wager Bonuses:** Immediate 100x match.
+   - **Winnings Match:** 1000x match (into vesting).
+   - **Referral Rewards:** 100 WAGA for both parties.
+
+4. **Update Constants:**
+   Ensure `WAGA_REWARDS_VAULT` and `WAGA_VAULT_ATA` in `shared/constants.ts` are correct.
 
 ### 5.2 Reward Supply Planning
 
@@ -501,7 +506,7 @@ Follow these steps in order on launch day:
 2. **Set all Secrets** listed in section 3
 3. **Run database migration** (`npm run db:push`) to create all tables
 4. **Fund the authority wallet** with at least 5 SOL on mainnet
-5. **Fund the WAGA Rewards Vault ATA** with the projected WAGA supply
+5. **Deposit WAGA tokens** into the Rewards Vault ATA for projected rewards
 6. **Deploy the Anchor program** to mainnet (section 4)
 7. **Update `shared/constants.ts`** with mainnet program ID, WAGA mint, and vault ATA
 8. **Initialize the game config PDA** (one-time on-chain transaction)
