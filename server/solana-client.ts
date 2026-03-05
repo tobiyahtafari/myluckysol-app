@@ -79,6 +79,13 @@ export class SolanaGameClient {
         const secretKey = bs58.decode(authorityPrivateKey);
         this.authorityKeypair = Keypair.fromSecretKey(secretKey);
         console.log("[SOLANA] Authority keypair loaded:", this.authorityKeypair.publicKey.toBase58());
+        
+        // Check if this authority is also the WAGA vault (for simpler setup)
+        if (this.authorityKeypair.publicKey.toBase58() === WAGA_REWARDS_VAULT) {
+          console.log("[SOLANA] Authority is the WAGA Vault owner");
+        } else {
+          console.warn("[SOLANA] Authority is NOT the WAGA Vault owner. Ensure vault delegation is set up.");
+        }
       } catch (e) {
         console.warn("[SOLANA] Failed to load authority keypair:", e);
       }
@@ -406,30 +413,52 @@ export class SolanaGameClient {
     });
   }
 
-  // Transfer SOL directly (for fallback mode)
-  async transferSol(
+  // Transfer WAGA from vault (authority must be owner or delegate)
+  async transferWagaFromVault(
     to: string,
-    sol: number
+    amount: number
   ): Promise<{ success: boolean; txSig?: string; error?: string }> {
     if (!this.authorityKeypair) return { success: false, error: "No authority" };
     
     try {
-      const lamports = Math.round(sol * LAMPORTS_PER_SOL);
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: this.authorityKeypair.publicKey,
-          toPubkey: new PublicKey(to),
-          lamports,
-        })
+      const mintPubkey = new PublicKey(WAGA_TOKEN_MINT);
+      const vaultPubkey = new PublicKey(WAGA_REWARDS_VAULT);
+      const recipientPubkey = new PublicKey(to);
+      
+      const vaultAta = await getOrCreateAssociatedTokenAccount(
+        this.connection,
+        this.authorityKeypair,
+        mintPubkey,
+        vaultPubkey
       );
-
+      
+      const recipientAta = await getOrCreateAssociatedTokenAccount(
+        this.connection,
+        this.authorityKeypair,
+        mintPubkey,
+        recipientPubkey
+      );
+      
+      const transaction = new Transaction().add(
+        createTransferInstruction(
+          vaultAta.address,
+          recipientAta.address,
+          this.authorityKeypair.publicKey,
+          amount,
+          [],
+          TOKEN_PROGRAM_ID
+        )
+      );
+      
       const signature = await sendAndConfirmTransaction(
         this.connection,
         transaction,
         [this.authorityKeypair]
       );
+      
       return { success: true, txSig: signature };
     } catch (e) {
+      console.error("[SOLANA] WAGA transfer error:", e);
       return { success: false, error: String(e) };
     }
   }
