@@ -1,0 +1,376 @@
+================================================================================
+MYLUCKYSOL MAINNET DEPLOYMENT - STEP BY STEP GUIDE
+================================================================================
+
+OVERVIEW:
+You are deploying MyLuckySol smart contract to Solana Mainnet using:
+- Authority Wallet: Fresh keypair funded with 3 SOL
+- This wallet will: Deploy program, pay transaction fees, sign WAGA transfers
+
+================================================================================
+PART 1: LOCAL MACHINE SETUP (Your Computer)
+================================================================================
+
+STEP 1.1: Install Required Tools
+-----------------------------------
+If you haven't already, install on your local machine (Windows/Mac/Linux):
+
+A) Install Solana CLI (v1.18.4 or later)
+   Command: sh -c "$(curl -sSfL https://release.solana.com/v1.18.4/install)"
+   Verify: solana --version
+
+B) Install Rust Toolchain
+   Command: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   Verify: rustc --version
+
+C) Install Anchor Framework (latest)
+   Command: avm install latest && avm use latest
+   Verify: anchor --version
+
+STEP 1.2: Verify Authority Wallet Details
+-----------------------------------
+You should have:
+- Authority Wallet Address: [YOUR_AUTHORITY_PUBLIC_KEY_HERE]
+- Authority Private Key: [YOUR_AUTHORITY_PRIVATE_KEY_BASE58_HERE]
+- Current Balance: 3 SOL (confirmed on mainnet via https://solscan.io)
+
+ACTION: Save these in a secure text file for reference during deployment.
+
+================================================================================
+PART 2: CONFIGURE SOLANA CLI FOR MAINNET
+================================================================================
+
+STEP 2.1: Set Solana CLI to Mainnet
+-----------------------------------
+Run these commands in your terminal:
+
+  solana config set --url mainnet-beta
+  
+This tells Solana CLI to use Mainnet instead of Devnet.
+
+STEP 2.2: Set Your Authority Keypair
+-----------------------------------
+Convert your Authority private key to a Solana keypair file:
+
+1. Create a new file: ~/.config/solana/authority-mainnet.json
+2. Paste your Authority private key as a JSON array:
+   Example format: [1,2,3,4,5,...]  (32 bytes of your private key)
+
+OR, if you have the 12-word seed phrase:
+   solana-keygen recover --outfile ~/.config/solana/authority-mainnet.json
+
+3. Set this as your active keypair:
+   solana config set --keypair ~/.config/solana/authority-mainnet.json
+
+4. Verify it's set:
+   solana config get
+   (Should show your Authority wallet public key)
+
+STEP 2.3: Verify Balance
+-----------------------------------
+Run: solana balance
+
+You should see approximately 3 SOL
+
+================================================================================
+PART 3: DEPLOY THE ANCHOR PROGRAM
+================================================================================
+
+STEP 3.1: Download the Program Folder
+-----------------------------------
+Download the "program/" folder from this Replit project to your local machine.
+
+Place it in a working directory, e.g.:
+  ~/projects/myluckysol/program/
+
+STEP 3.2: Build the Program
+-----------------------------------
+From your terminal, navigate to the program folder:
+
+  cd ~/projects/myluckysol/program
+  anchor build
+
+This compiles the Rust smart contract into a deployable binary.
+Expected output: "Finished release..." at the end.
+
+Check the binary size (important for cost):
+  ls -lh target/deploy/myluckysol.so
+  (Should be 200-400 KB)
+
+STEP 3.3: Deploy the Program
+-----------------------------------
+Run the deployment command:
+
+  anchor deploy --provider.cluster mainnet
+
+This will:
+1. Estimate deployment cost (shown in output)
+2. Deduct SOL from your Authority wallet for rent + fees
+3. Deploy the program to Mainnet
+4. Output the PROGRAM ID (save this!)
+
+Example output:
+  Program ID: 5mJbYhLfX8eQmYJvJw3kX... (32-character address)
+
+IMPORTANT: Save the Program ID somewhere safe - you'll need it immediately.
+
+STEP 3.4: Verify Deployment
+-----------------------------------
+Run: solana program show [PROGRAM_ID] --url mainnet-beta
+
+Should show:
+  - Program ID: [PROGRAM_ID]
+  - Status: Deployed
+  - Data size: [SIZE]
+
+Expected cost summary:
+  - Deployment fee: ~1 SOL
+  - Remaining balance: ~2 SOL
+
+================================================================================
+PART 4: UPDATE REPLIT WITH PROGRAM ID
+================================================================================
+
+STEP 4.1: Update Constants File
+-----------------------------------
+In Replit, open: shared/constants.ts
+
+Find the line:
+  export const MYLUCKYSOL_PROGRAM_ID = "Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5";
+
+Replace it with your new Program ID from Step 3.3:
+  export const MYLUCKYSOL_PROGRAM_ID = "[YOUR_NEW_PROGRAM_ID_HERE]";
+
+Save and commit this change to Replit.
+
+================================================================================
+PART 5: CONFIGURE REPLIT SECRETS
+================================================================================
+
+STEP 5.1: Open Replit Secrets
+-----------------------------------
+In Replit (left sidebar):
+1. Click the "Secrets" icon (lock icon)
+2. Add each secret below
+
+STEP 5.2: Add Critical Secrets
+-----------------------------------
+
+SECRET 1: SOLANA_AUTHORITY_PRIVATE_KEY
+  Value: [YOUR_AUTHORITY_PRIVATE_KEY_BASE58]
+  (This is the base58-encoded private key of your Authority wallet)
+
+SECRET 2: SESSION_SECRET
+  Value: [RANDOM_32+_CHARACTER_STRING]
+  Generate: openssl rand -base64 32
+  (This encrypts session cookies)
+
+SECRET 3: DATABASE_URL
+  Value: [REPLIT_DATABASE_CONNECTION_STRING]
+  (Should already be set from Replit DB)
+  Format: postgres://user:password@host:port/dbname
+
+STEP 5.3: Add Network Secrets
+-----------------------------------
+
+SECRET 4: SOLANA_NETWORK
+  Value: mainnet
+
+SECRET 5: SOLANA_RPC_URL
+  Value: [YOUR_PRIVATE_RPC_ENDPOINT]
+  Recommended: https://[your-key].helius-rpc.com
+  OR: https://[your-key].quicknode.pro
+  (Do NOT use public endpoints - they have rate limits)
+
+STEP 5.4: Add Token Secrets
+-----------------------------------
+
+SECRET 6: REQUIRE_ONCHAIN_WAGA
+  Value: true
+
+SECRET 7: WAGA_PRICE_USD
+  Value: 0.001
+  (Can be adjusted later without redeployment)
+
+STEP 5.5: Verify All Secrets
+-----------------------------------
+After adding, you should have 7 secrets total.
+Click "View all" to confirm they're all present.
+
+================================================================================
+PART 6: WAGA VAULT SETUP (MAINNET)
+================================================================================
+
+STEP 6.1: Create Associated Token Account (ATA)
+-----------------------------------
+From your local machine, create an ATA for the WAGA Vault:
+
+Address to create ATA for:
+  WAGA_VAULT: CfAkJ1LvnCTLxgLpJcFx4oV7VfxsrQVyGZxRb4iFkJY3
+  WAGA_MINT: He6oGbz2KLH1G1V1PVbCZWHru8rWiWR6UZUxX6z9um5F
+
+Run:
+  spl-token create-account He6oGbz2KLH1G1V1PVbCZWHru8rWiWR6UZUxX6z9um5F \
+    --owner CfAkJ1LvnCTLxgLpJcFx4oV7VfxsrQVyGZxRb4iFkJY3
+
+This creates an ATA and costs ~0.002 SOL from your Authority wallet.
+
+Save the ATA address output (you can optionally update constants later).
+
+STEP 6.2: Deposit WAGA Tokens
+-----------------------------------
+Transfer WAGA tokens to the vault ATA you just created.
+
+Recommended amount: 50,000-100,000 WAGA
+
+This ensures you have enough for:
+  - Entry bonuses: 100 WAGA per 1 SOL wagered
+  - Win bonuses: 1000 WAGA per 1 SOL won
+  - Referral bonuses: 100 WAGA per referral pair
+
+Use your WAGA holder wallet to send tokens to the ATA.
+
+STEP 6.3: Verify Authority Can Sign
+-----------------------------------
+If your Authority wallet is NOT the WAGA Vault owner, set delegation:
+
+  spl-token authorize [VAULT_ATA_ADDRESS] owner [AUTHORITY_PUBLIC_KEY]
+
+This allows Authority to sign WAGA transfers on behalf of the Vault.
+
+================================================================================
+PART 7: DEPLOY WEB APP ON REPLIT
+================================================================================
+
+STEP 7.1: Deploy to Production
+-----------------------------------
+In Replit:
+1. Click the "Deploy" button (or use Deployments menu)
+2. Select "Production"
+3. Choose a custom domain OR use default .replit.app
+4. Click "Deploy"
+5. Wait 2-5 minutes for deployment to complete
+
+You'll get a live URL: https://your-app.replit.app
+
+STEP 7.2: Verify Deployment
+-----------------------------------
+Open your deployed URL in a browser.
+
+Check:
+1. Homepage loads (casino dark theme visible)
+2. Click "Connect Wallet" - should trigger wallet selection
+3. Visit /api/stats in address bar
+   Should return JSON: {"gamesPlayed":0,"solWon":0,...}
+
+Check Replit Logs for errors:
+  Look for: [SOLANA] Connected to mainnet via https://...
+  And:      [SOLANA] Authority keypair loaded: [YOUR_AUTHORITY_PUBLIC_KEY]
+  And:      [STORAGE] Using PostgreSQL storage
+
+If any of these are missing, check Secrets are set correctly.
+
+================================================================================
+PART 8: FINAL TESTING
+================================================================================
+
+STEP 8.1: Smoke Test
+-----------------------------------
+1. Open your live URL
+2. Connect your wallet (use test SOL, can be from devnet first)
+3. Select "1v1" game mode
+4. Select "0.01 SOL" wager
+5. Click "Join Game"
+6. Sign the transaction in your wallet
+7. Wait for the transaction to confirm
+
+STEP 8.2: Verify Game Logic
+-----------------------------------
+Once a game resolves (should take ~30 seconds):
+1. Check if a winner was selected
+2. Verify the payout split:
+   - 90% to winner
+   - 9% to Treasury wallet (7tdpmx5ePCUMFera2BtrGAnVMpW1Qn3csdx9KUycHYYE)
+   - 1% to Giveaway wallet (DpjsfZ3JjCYJo9ehFzCxt9gne5QeU1sUCoxqi492YERN)
+
+STEP 8.3: Check Logs
+-----------------------------------
+In Replit, check the workflow logs for:
+  - Game creation success
+  - Transaction verification
+  - No error messages
+
+If you see errors, review the Secrets again (especially RPC_URL).
+
+================================================================================
+PART 9: ADDRESS REFERENCE
+================================================================================
+
+YOUR ADDRESSES:
+  Authority Wallet: [YOUR_FRESH_MAINNET_KEYPAIR]
+  Status: Deployed program from this account
+  Balance: ~2 SOL remaining after deployment
+  Role: Signs WAGA transfers, pays transaction fees
+
+THIRD-PARTY ADDRESSES (Already Set in Code):
+  Treasury Wallet: 7tdpmx5ePCUMFera2BtrGAnVMpW1Qn3csdx9KUycHYYE
+  Status: Receives 9% of all games
+  Role: Foundation revenue
+
+  Giveaway Wallet: DpjsfZ3JjCYJo9ehFzCxt9gne5QeU1sUCoxqi492YERN
+  Status: Receives 1% of all games
+  Role: Accumulates SOL for Million Game Jackpot
+
+  WAGA Rewards Vault: CfAkJ1LvnCTLxgLpJcFx4oV7VfxsrQVyGZxRb4iFkJY3
+  Status: Holds WAGA tokens
+  Role: Distributes entry bonuses, win bonuses, referral rewards
+  Action: You must deposit 50k-100k WAGA here
+
+PROGRAM:
+  Program ID: [YOUR_NEW_PROGRAM_ID_FROM_STEP_3.3]
+  Status: Deployed to Mainnet
+  Role: Handles on-chain game PDAs and escrow logic
+
+WAGA TOKEN:
+  WAGA Mint: He6oGbz2KLH1G1V1PVbCZWHru8rWiWR6UZUxX6z9um5F
+  Status: Official mainnet WAGA token
+  Role: Rewards and incentives
+
+================================================================================
+PART 10: TROUBLESHOOTING
+================================================================================
+
+ERROR: "Insufficient funds for deployment"
+  Solution: Your Authority wallet needs more SOL. 
+  Add another 2-5 SOL and try again.
+
+ERROR: "RPC timeout" or "429 Too Many Requests"
+  Solution: Your SOLANA_RPC_URL is a public endpoint.
+  Set up a private RPC with Helius or QuickNode (add secret).
+
+ERROR: "[SOLANA] Authority keypair failed to load"
+  Solution: Your SOLANA_AUTHORITY_PRIVATE_KEY secret is incorrect.
+  Verify it's base58-encoded and in the correct format.
+
+ERROR: "WAGA transfer failed: invalid account"
+  Solution: Your WAGA Vault ATA doesn't exist.
+  Run Step 6.1 to create it.
+
+ERROR: "Game transaction not confirmed"
+  Solution: Check your RPC connection (Step 5.3).
+  Verify Authority balance (should have at least 0.5 SOL left).
+
+================================================================================
+SUMMARY: WHAT YOU HAVE AFTER DEPLOYMENT
+================================================================================
+
+✓ Smart Contract Deployed to Mainnet (Program ID: [YOUR_NEW_PROGRAM_ID])
+✓ Web App Live on Replit (URL: https://your-app.replit.app)
+✓ Database Connected (PostgreSQL)
+✓ WAGA Vault Created with tokens deposited
+✓ Authority Wallet Ready (2 SOL remaining for operations)
+✓ All wallets configured for revenue splits
+
+Ready to start: Players can now join games, earn WAGA, and play on mainnet!
+
+================================================================================
