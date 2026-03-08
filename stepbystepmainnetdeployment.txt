@@ -17,7 +17,7 @@ If you haven't already, install on your local machine (Windows/Mac/Linux):
 
 A) Install Solana CLI (v1.18.4 or later)
    Command: sh -c "$(curl -sSfL https://release.solana.com/v1.18.4/install)"
-   Verify: solana --version
+   Verify: 
 
 B) Install Rust Toolchain
    Command: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
