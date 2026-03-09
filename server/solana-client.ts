@@ -442,7 +442,7 @@ export class SolanaGameClient {
         this.connection,
         this.authorityKeypair,
         mintPubkey,
-        vaultPubkey
+        this.authorityKeypair.publicKey
       );
       
       const recipientAta = await getOrCreateAssociatedTokenAccount(

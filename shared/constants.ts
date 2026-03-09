@@ -3,8 +3,8 @@ export const GIVEAWAY_WALLET = "DpjsfZ3JjCYJo9ehFzCxt9gne5QeU1sUCoxqi492YERN";
 
 export const MYLUCKYSOL_PROGRAM_ID = "6nXVPX615n43sfdEW1Jn6MceLhAMUodSmjcHEmW3SncB";
 export const WAGA_TOKEN_MINT = "He6oGbz2KLH1G1V1PVbCZWHru8rWiWR6UZUxX6z9um5F";
-export const WAGA_REWARDS_VAULT = "CfAkJ1LvnCTLxgLpJcFx4oV7VfxsrQVyGZxRb4iFkJY3"; // The central wallet holding WAGA
-export const WAGA_VAULT_ATA = "9kwnaxU6iqVSi4DSkCHkGNpeH6tZoS1Varkrh8i3b4UG"; // Confirmed mainnet ATA
+export const WAGA_REWARDS_VAULT = "EGnpXpxC39WqQrY2XK8iG4mJUw9iyjWSKkAGF2dJnzJL"; // Set back to Authority Wallet
+export const WAGA_VAULT_ATA = ""; // Let it be derived dynamically
 
 export const PAYOUT_SPLIT = {
   WINNER_PERCENT: 90,
