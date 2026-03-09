@@ -65,7 +65,7 @@ export class SolanaGameClient {
     const network = process.env.SOLANA_NETWORK || "mainnet";
     const rpcUrl = process.env.SOLANA_RPC_URL || 
       (network === "mainnet" 
-        ? "https://api.mainnet-beta.solana.com" 
+        ? "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670" 
         : "https://api.devnet.solana.com");
     this.connection = new Connection(rpcUrl, "confirmed");
     console.log(`[SOLANA] Connected to ${network} via ${rpcUrl}`);

@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 
 export const MYLUCKYSOL_PROGRAM_ID = new PublicKey(
-  "Hiu3MhgaUWZS38pugERhxrjH4J3dJ1qcbzbtgXScBpd5"
+  "6nXVPX615n43sfdEW1Jn6MceLhAMUodSmjcHEmW3SncB"
 );
 
 export const WAGA_TOKEN_PROGRAM_ID = new PublicKey(

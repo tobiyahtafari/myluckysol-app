@@ -26,7 +26,12 @@ import {
 } from "./borsh-layouts";
 
 export const DEVNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com";
-export const MAINNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+export const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
+
+export const getActiveRpc = (rpcUrl: string): string => {
+  if (import.meta.env.VITE_SOLANA_RPC_URL) return import.meta.env.VITE_SOLANA_RPC_URL;
+  return rpcUrl;
+};
 
 export class MyLuckySolClient {
   private connection: Connection;
@@ -34,9 +39,10 @@ export class MyLuckySolClient {
   private isDevnet: boolean;
 
   constructor(rpcUrl: string = DEVNET_RPC, programId: PublicKey = MYLUCKYSOL_PROGRAM_ID) {
-    this.connection = new Connection(rpcUrl, "confirmed");
+    const activeRpc = getActiveRpc(rpcUrl);
+    this.connection = new Connection(activeRpc, "confirmed");
     this.programId = programId;
-    this.isDevnet = rpcUrl.includes("devnet");
+    this.isDevnet = activeRpc.includes("devnet");
   }
 
   getConnection(): Connection {
