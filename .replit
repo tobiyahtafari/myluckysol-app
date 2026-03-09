@@ -42,3 +42,10 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[userenv]
+
+[userenv.shared]
+SOLANA_RPC_URL = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a267"
+REQUIRE_ONCHAIN_WAGA = "true"
+WAGA_PRICE_USD = "0.0001"
