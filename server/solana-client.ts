@@ -76,14 +76,15 @@ export class SolanaGameClient {
     const authorityPrivateKey = process.env.SOLANA_AUTHORITY_PRIVATE_KEY;
     if (authorityPrivateKey) {
       try {
-        let secretKey: number[];
+        let secretKey: Uint8Array;
         if (authorityPrivateKey.trim().startsWith('[')) {
-          secretKey = JSON.parse(authorityPrivateKey);
+          const keyArray = JSON.parse(authorityPrivateKey);
+          secretKey = Uint8Array.from(keyArray);
         } else {
           // Fallback to base58 if not a JSON array
-          secretKey = Array.from(bs58.decode(authorityPrivateKey));
+          secretKey = bs58.decode(authorityPrivateKey);
         }
-        this.authorityKeypair = Keypair.fromSecretKey(Uint8Array.from(secretKey));
+        this.authorityKeypair = Keypair.fromSecretKey(secretKey);
         console.log("[SOLANA] Authority keypair loaded:", this.authorityKeypair.publicKey.toBase58());
         
         // Check if this authority is also the WAGA vault (for simpler setup)
