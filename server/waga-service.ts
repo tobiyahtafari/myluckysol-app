@@ -17,9 +17,7 @@ class WagaService {
   private isInitialized: boolean = false;
 
   constructor() {
-    const network = process.env.SOLANA_NETWORK || "mainnet";
-    const rpcUrl = process.env.SOLANA_RPC_URL || 
-      (network === "mainnet" ? MAINNET_RPC : DEVNET_RPC);
+    const rpcUrl = process.env.SOLANA_RPC_URL || MAINNET_RPC;
     this.connection = new Connection(rpcUrl, "confirmed");
   }
 

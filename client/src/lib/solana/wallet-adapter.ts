@@ -228,15 +228,13 @@ export const DEVNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.de
 export const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
 
 // Add specific Helius support if provided
-export const getActiveRpc = (network: NetworkType = "devnet"): string => {
-  if (network === "mainnet-beta") return MAINNET_RPC;
-  if (import.meta.env.VITE_SOLANA_RPC_URL) return import.meta.env.VITE_SOLANA_RPC_URL;
-  return network === "devnet" ? "https://api.devnet.solana.com" : MAINNET_RPC;
+export const getActiveRpc = (network: NetworkType = "mainnet-beta"): string => {
+  return MAINNET_RPC;
 };
 
 export type NetworkType = "devnet" | "mainnet-beta";
 
-export function getConnection(network: NetworkType = "devnet"): Connection {
-  const rpc = getActiveRpc(network);
+export function getConnection(network: NetworkType = "mainnet-beta"): Connection {
+  const rpc = MAINNET_RPC;
   return new Connection(rpc, "confirmed");
 }
