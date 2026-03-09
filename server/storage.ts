@@ -1,3 +1,4 @@
+import { PgStorage } from "./pg-storage";
 import {
   users,
   type PlayerProfile,
@@ -32,6 +33,7 @@ import {
   GIVEAWAY_FEE,
   GIVEAWAY_MILESTONE_GAMES,
   GIVEAWAY_MIN_SOL_FLOOR,
+  GIVEAWAY_PAYOUT_PERCENTS,
 } from "@shared/schema";
 import { calculateWagaReward } from "./price-service";
 import { solanaClient } from "./solana-client";
@@ -628,547 +630,21 @@ export class MemStorage implements IStorage {
           sorted = activePlayers.sort((a, b) => b.totalWon - a.totalWon);
       }
       
-      return sorted.slice(0, limit).map((profile, index): LeaderboardEntry => ({
-        rank: index + 1,
-        walletAddress: profile.walletAddress,
-        displayName: profile.username || profile.displayName,
-        totalWon: profile.totalWon,
-        gamesWon: profile.gamesWon,
-        gamesPlayed: profile.gamesPlayed,
-        winRate: profile.gamesPlayed > 0 ? (profile.gamesWon / profile.gamesPlayed) * 100 : 0,
-        luckScore: profile.gamesPlayed > 0 ? Math.round((profile.gamesWon / profile.gamesPlayed) * 100) : 50,
-        bestStreak: profile.bestStreak,
-        godStreakActive: profile.godStreakActive,
-        isStreakBreakerActive: profile.isStreakBreakerActive,
+      return sorted.slice(0, limit).map((p, i) => ({
+        rank: i + 1,
+        walletAddress: p.walletAddress,
+        displayName: p.username || p.walletAddress.slice(0, 6),
+        totalWon: p.totalWon,
+        gamesWon: p.gamesWon,
+        gamesPlayed: p.gamesPlayed,
+        winRate: p.gamesPlayed > 0 ? (p.gamesWon / p.gamesPlayed) * 100 : 0,
+        luckScore: p.luckScore,
+        bestStreak: p.bestStreak,
+        godStreakActive: p.godStreakActive,
+        isStreakBreakerActive: p.isStreakBreakerActive,
       }));
     }
-
-    const periodStart = this.getPeriodStartTime(period);
-    const playerStats = new Map<string, { totalWon: number; gamesWon: number; gamesPlayed: number; currentStreak: number; bestStreak: number }>();
-
-    const allEntries = Array.from(this.gameHistory.entries());
-    for (const [wallet, histories] of allEntries) {
-      const periodGames = histories.filter((h: GameHistory) => h.playedAt >= periodStart);
-      if (periodGames.length === 0) continue;
-
-      let totalWon = 0;
-      let gamesWon = 0;
-      let gamesPlayed = periodGames.length;
-      let currentStreak = 0;
-      let bestStreak = 0;
-
-      const sorted = [...periodGames].sort((a, b) => a.playedAt - b.playedAt);
-      for (const game of sorted) {
-        if (game.result === "won") {
-          totalWon += game.payout || 0;
-          gamesWon++;
-          currentStreak++;
-          bestStreak = Math.max(bestStreak, currentStreak);
-        } else {
-          currentStreak = 0;
-        }
-      }
-
-      playerStats.set(wallet, { totalWon, gamesWon, gamesPlayed, currentStreak, bestStreak });
-    }
-
-    const entries: LeaderboardEntry[] = [];
-    const allStats = Array.from(playerStats.entries());
-    for (const [wallet, stats] of allStats) {
-      const profile = this.profiles.get(wallet);
-      const winRate = stats.gamesPlayed > 0 ? (stats.gamesWon / stats.gamesPlayed) * 100 : 0;
-      const actualWinRate = stats.gamesPlayed > 0 ? stats.gamesWon / stats.gamesPlayed : 0;
-      const luckScore = Math.round(actualWinRate * 100);
-
-      entries.push({
-        rank: 0,
-        walletAddress: wallet,
-        displayName: profile?.username || profile?.displayName,
-        totalWon: stats.totalWon,
-        gamesWon: stats.gamesWon,
-        gamesPlayed: stats.gamesPlayed,
-        winRate,
-        luckScore: stats.gamesPlayed > 0 ? luckScore : 50,
-        bestStreak: stats.bestStreak,
-        godStreakActive: profile?.godStreakActive,
-        isStreakBreakerActive: profile?.isStreakBreakerActive,
-      });
-    }
-
-    switch (sortBy) {
-      case "earnings":
-        entries.sort((a, b) => b.totalWon - a.totalWon);
-        break;
-      case "luck":
-        entries.sort((a, b) => b.luckScore - a.luckScore);
-        break;
-      case "streaks":
-        entries.sort((a, b) => b.bestStreak - a.bestStreak);
-        break;
-    }
-
-    return entries.slice(0, limit).map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
-    }));
-  }
-
-  private calculateLuckScore(gamesWon: number, gamesPlayed: number): number {
-    if (gamesPlayed < 3) return 50;
-    
-    const expectedWinRate = 0.35;
-    const actualWinRate = gamesWon / gamesPlayed;
-    const luckFactor = actualWinRate / expectedWinRate;
-    
-    let luckScore: number;
-    if (luckFactor >= 1) {
-      luckScore = 50 + (50 * Math.min(1, (luckFactor - 1) / 1.5));
-    } else {
-      luckScore = 50 * luckFactor;
-    }
-    
-    return Math.round(Math.max(0, Math.min(100, luckScore)));
-  }
-
-  // Derive a number 0-999999 from the game hash for provably fair special event checks
-  private deriveSpecialEventRoll(serverSeed: string, clientSeed: string, nonce: string): number {
-    const hmac = createHmac('sha256', serverSeed);
-    hmac.update(`special-${clientSeed}-${nonce}`);
-    const hash = hmac.digest('hex');
-    return parseInt(hash.substring(0, 5), 16) % 1000000;
-  }
-
-  private generateFairNumber(serverSeed: string, clientSeed: string, nonce: number): number {
-    const hmac = createHmac('sha256', serverSeed);
-    hmac.update(`${clientSeed}-${nonce}`);
-    const hash = hmac.digest('hex');
-    const val = parseInt(hash.substring(0, 8), 16);
-    return val / 0xFFFFFFFF;
-  }
-
-  // Weighted fair selection: returns true if playerA wins (with given weight for A)
-  private weightedFairSelection(serverSeed: string, clientSeed: string, nonce: number, weightA: number): boolean {
-    const fairNumber = this.generateFairNumber(serverSeed, clientSeed, nonce);
-    return fairNumber < weightA;
-  }
-
-  private async startGame(gameId: string): Promise<void> {
-    const game = this.games.get(gameId);
-    if (!game || game.status !== "countdown") return;
-
-    const config = GAME_MODES[game.mode];
-    const roundDuration = config.timer * 1000;
-    const now = Date.now();
-
-    game.status = "in_progress";
-    game.startedAt = now;
-    game.roundEndsAt = now + roundDuration;
-
-    const playerIds = game.players.map((p) => p.id);
-    game.rounds = [
-      {
-        roundNumber: 1,
-        players: playerIds,
-      },
-    ];
-
-    this.games.set(gameId, game);
-
-    this.simulateGame(gameId);
-  }
-
-  private async simulateGame(gameId: string): Promise<void> {
-    const game = this.games.get(gameId);
-    if (!game) return;
-
-    const clientSeed = game.players.map(p => p.walletAddress.substring(0, 8)).join('-');
-    game.clientSeed = clientSeed;
-
-    const config = GAME_MODES[game.mode];
-    const roundDuration = config.timer * 1000;
-    let remainingPlayers = [...game.players];
-
-    // Check and expire any God streaks before game starts
-    for (const player of game.players) {
-      await this.checkAndExpireGodStreak(player.walletAddress);
-    }
-
-    // Load profiles for all players to check God streak status
-    const playerProfiles = new Map<string, PlayerProfile>();
-    for (const player of game.players) {
-      const profile = await this.getOrCreateProfile(player.walletAddress);
-      playerProfiles.set(player.walletAddress, profile);
-    }
-
-    for (let round = 1; round <= config.rounds; round++) {
-      await new Promise((r) => setTimeout(r, roundDuration));
-
-      const currentGame = this.games.get(gameId);
-      if (!currentGame || currentGame.status === "completed") return;
-
-      const winners: typeof remainingPlayers = [];
-      const losers: typeof remainingPlayers = [];
-
-      for (let i = 0; i < remainingPlayers.length; i += 2) {
-        if (i + 1 < remainingPlayers.length) {
-          const playerA = remainingPlayers[i];
-          const playerB = remainingPlayers[i + 1];
-          const profileA = playerProfiles.get(playerA.walletAddress);
-          const profileB = playerProfiles.get(playerB.walletAddress);
-
-          const aIsGod = profileA?.godStreakActive || false;
-          const bIsGod = profileB?.godStreakActive || false;
-
-          let aWinWeight = 0.5; // Default 50/50
-          let breakerTriggered = false;
-          let breakerPlayer: typeof playerA | null = null;
-          let naturalBreaker = false;
-
-          if (aIsGod && !bIsGod) {
-            // Check if B can trigger a streak breaker (25% = 250000 in 1M)
-            const breakerRoll = this.deriveSpecialEventRoll(
-              currentGame.serverSeed || 'default',
-              clientSeed,
-              `breaker-${round}-${i}`
-            );
-            if (breakerRoll < BREAKER_CHANCE) {
-              // Breaker triggered! God's advantage stripped
-              breakerTriggered = true;
-              breakerPlayer = playerB;
-              aWinWeight = 1 - BREAKER_WIN_WEIGHT; // God only has 25% chance
-              console.log(`[GOD STREAK] Streak Breaker triggered! ${playerB.walletAddress.slice(0, 8)}... challenges the God!`);
-            } else {
-              // God has 95% advantage
-              aWinWeight = GOD_STREAK_WIN_WEIGHT;
-            }
-          } else if (bIsGod && !aIsGod) {
-            const breakerRoll = this.deriveSpecialEventRoll(
-              currentGame.serverSeed || 'default',
-              clientSeed,
-              `breaker-${round}-${i}-b`
-            );
-            if (breakerRoll < BREAKER_CHANCE) {
-              breakerTriggered = true;
-              breakerPlayer = playerA;
-              aWinWeight = BREAKER_WIN_WEIGHT; // Player A gets 75%
-              console.log(`[GOD STREAK] Streak Breaker triggered! ${playerA.walletAddress.slice(0, 8)}... challenges the God!`);
-            } else {
-              aWinWeight = 1 - GOD_STREAK_WIN_WEIGHT; // God B wins 95%, so A wins 5%
-            }
-          }
-          // If both are Gods or neither: pure 50/50
-
-          const aWins = this.weightedFairSelection(
-            currentGame.serverSeed || 'default',
-            clientSeed,
-            round + i,
-            aWinWeight
-          );
-
-          const winner = aWins ? playerA : playerB;
-          const loser = aWins ? playerB : playerA;
-
-          // Check if a normal player (no breaker) broke a God streak
-          if ((aIsGod && !aWins) || (bIsGod && aWins)) {
-            const godPlayer = aIsGod ? playerA : playerB;
-            const normalPlayer = aIsGod ? playerB : playerA;
-            if (!breakerTriggered) {
-              naturalBreaker = true;
-              console.log(`[GOD STREAK] ${normalPlayer.walletAddress.slice(0, 8)}... naturally broke the God streak!`);
-            }
-            // Expire the god streak
-            await this.updateProfile(godPlayer.walletAddress, {
-              godStreakActive: false,
-              godStreakGamesRemaining: 0,
-              isStreakBreakerActive: false,
-            });
-            // Update the winner's streaksBeaten count
-            const winnerProfile = await this.getProfile(winner.walletAddress);
-            if (winnerProfile) {
-              await this.updateProfile(winner.walletAddress, {
-                streaksBeaten: (winnerProfile.streaksBeaten || 0) + 1,
-                isStreakBreakerActive: false,
-              });
-            }
-          }
-
-          // If God won, update their lastPlayedAt and decrement games remaining
-          if ((aIsGod && aWins) || (bIsGod && !aWins)) {
-            const godPlayer = aIsGod ? playerA : playerB;
-            const godProfile = playerProfiles.get(godPlayer.walletAddress);
-            if (godProfile) {
-              const newRemaining = Math.max(0, (godProfile.godStreakGamesRemaining || 0) - 1);
-              const updatedProfile = await this.updateProfile(godPlayer.walletAddress, {
-                godStreakLastPlayedAt: Date.now(),
-                godStreakGamesRemaining: newRemaining,
-                godStreakActive: newRemaining > 0,
-              });
-              if (updatedProfile) {
-                playerProfiles.set(godPlayer.walletAddress, updatedProfile);
-              }
-              if (newRemaining === 0) {
-                console.log(`[GOD STREAK] ${godPlayer.walletAddress.slice(0, 8)}... God Streak completed!`);
-              }
-            }
-          }
-
-          // If breaker was triggered, mark the breaker player
-          if (breakerTriggered && breakerPlayer) {
-            await this.updateProfile(breakerPlayer.walletAddress, {
-              isStreakBreakerActive: true,
-            });
-            // Update game metadata
-            currentGame.breakerTriggered = true;
-            currentGame.breakerPlayerId = breakerPlayer.walletAddress;
-            if (naturalBreaker) currentGame.naturalBreakerBonus = true;
-          }
-
-          winners.push(winner);
-          losers.push(loser);
-        } else {
-          winners.push(remainingPlayers[i]);
-        }
-      }
-
-      losers.forEach((loser) => {
-        const player = currentGame.players.find((p) => p.id === loser.id);
-        if (player) {
-          player.isEliminated = true;
-          player.eliminatedRound = round;
-        }
-      });
-
-      currentGame.rounds.push({
-        roundNumber: round,
-        players: remainingPlayers.map((p) => p.id),
-        winnerId: winners.length === 1 ? winners[0].id : undefined,
-        resolvedAt: Date.now(),
-      });
-
-      currentGame.currentRound = round + 1;
-      remainingPlayers = winners;
-
-      if (remainingPlayers.length > 1) {
-        const now = Date.now();
-        currentGame.roundEndsAt = now + roundDuration;
-      }
-
-      this.games.set(gameId, currentGame);
-
-      if (remainingPlayers.length === 1) {
-        break;
-      }
-    }
-
-    const finalGame = this.games.get(gameId);
-    if (!finalGame) return;
-
-    const winner = remainingPlayers[0];
-    const payout = finalGame.poolAmount * WINNER_SHARE;
-    const treasuryFee = finalGame.poolAmount * FOUNDATION_FEE;
-    const giveawayFee = finalGame.poolAmount * GIVEAWAY_FEE;
-
-    // Determine WAGA winner multiplier (may be boosted for streak breaking)
-    let wagaMultiplier = WAGA_WINNER_MULTIPLIER;
-    const winnerBrokeGodStreak = finalGame.naturalBreakerBonus && finalGame.breakerPlayerId === winner.walletAddress;
-    const winnerUsedBreaker = finalGame.breakerTriggered && finalGame.breakerPlayerId === winner.walletAddress;
-
-    if (winnerBrokeGodStreak) {
-      wagaMultiplier = WAGA_WINNER_MULTIPLIER * NATURAL_BREAKER_WAGA_MULTIPLIER;
-      console.log(`[GOD STREAK] Natural Breaker bonus! WAGA multiplier: ${wagaMultiplier}x`);
-    } else if (winnerUsedBreaker) {
-      wagaMultiplier = WAGA_WINNER_MULTIPLIER * TRIGGERED_BREAKER_WAGA_MULTIPLIER;
-      console.log(`[GOD STREAK] Triggered Breaker bonus! WAGA multiplier: ${wagaMultiplier}x`);
-    }
-
-    const winWagaReward = calculateWagaReward(payout, wagaMultiplier);
-
-    finalGame.status = "completed";
-    finalGame.completedAt = Date.now();
-    finalGame.winnerId = winner.walletAddress;
-    finalGame.winnerPayout = payout;
-    finalGame.wagaRewards = winWagaReward;
-
-    // Update giveaway stats
-    this.giveawayStats.totalGamesPlayed += 1;
-    this.giveawayStats.giveawayWalletBalance += giveawayFee;
-    this.giveawayStats.lastUpdatedAt = Date.now();
-
-    const gamesInCycle = this.giveawayStats.totalGamesPlayed - this.giveawayStats.cycleStartGameCount;
-    if (gamesInCycle >= GIVEAWAY_MILESTONE_GAMES) {
-      await this.triggerGiveawayPayout();
-    }
-
-    // Transfer fees on devnet
-    if (solanaClient.isOnChainEnabled()) {
-      // Transfer to Foundation Treasury (9%)
-      const FOUNDATION_TREASURY = "BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP";
-      solanaClient.transferSol(FOUNDATION_TREASURY, treasuryFee).then(res => {
-        if (res.success) console.log(`[DEVNET] 9% Treasury fee transferred: ${res.txSig}`);
-        else console.warn(`[DEVNET] Treasury fee transfer failed: ${res.error}`);
-      });
-      
-      // Transfer to Giveaway Treasury (1%)
-      const GIVEAWAY_WALLET = "FGY64g3Pt8wMrMR3A9abkVxSjwh2Yt4dT4BYkw6rU3yf";
-      solanaClient.transferSol(GIVEAWAY_WALLET, giveawayFee).then(res => {
-        if (res.success) console.log(`[DEVNET] 1% Giveaway fee transferred: ${res.txSig}`);
-        else console.warn(`[DEVNET] Giveaway fee transfer failed: ${res.error}`);
-      });
-    }
-
-    console.log(`[GIVEAWAY] Game contribution: ${giveawayFee.toFixed(6)} SOL. Total pot: ${this.giveawayStats.giveawayWalletBalance.toFixed(4)} SOL`);
-    console.log(`[DEVNET] Game ${gameId} completed. Winner: ${winner.walletAddress.slice(0, 8)}...`);
-    console.log(`[DEVNET] Winner Payout: ${payout.toFixed(4)} SOL | Treasury: ${treasuryFee.toFixed(4)} SOL | Giveaway: ${giveawayFee.toFixed(6)} SOL`);
-
-    // Check if this game triggers a new God Streak (50 in 1M chance)
-    const godRoll = this.deriveSpecialEventRoll(
-      finalGame.serverSeed || 'default',
-      finalGame.clientSeed || '',
-      'god-trigger'
-    );
-    if (godRoll < GOD_STREAK_CHANCE) {
-      // Randomly select one player to receive the God Streak
-      const recipientIndex = parseInt(
-        createHmac('sha256', finalGame.serverSeed || 'default')
-          .update(`god-recipient-${finalGame.clientSeed}`)
-          .digest('hex')
-          .substring(0, 4),
-        16
-      ) % finalGame.players.length;
-
-      const godRecipient = finalGame.players[recipientIndex];
-      const streakLength = GOD_STREAK_MIN_LENGTH + parseInt(
-        createHmac('sha256', finalGame.serverSeed || 'default')
-          .update(`god-length-${finalGame.clientSeed}`)
-          .digest('hex')
-          .substring(0, 6),
-        16
-      ) % (GOD_STREAK_MAX_LENGTH - GOD_STREAK_MIN_LENGTH + 1);
-
-      const recipientProfile = await this.getProfile(godRecipient.walletAddress);
-      if (recipientProfile && !recipientProfile.godStreakActive) {
-        await this.updateProfile(godRecipient.walletAddress, {
-          godStreakActive: true,
-          godStreakLength: streakLength,
-          godStreakGamesRemaining: streakLength,
-          godStreakStartedAt: Date.now(),
-          godStreakLastPlayedAt: Date.now(),
-          godStreaksAchieved: (recipientProfile.godStreaksAchieved || 0) + 1,
-        });
-        finalGame.godStreakTriggered = true;
-        finalGame.godStreakRecipient = godRecipient.walletAddress;
-        console.log(`[GOD STREAK] *** GOD STREAK TRIGGERED! *** ${godRecipient.walletAddress.slice(0, 8)}... has been marked! (length hidden)`);
-      }
-    }
-
-    // Execute WAGA winner reward transfer
-    if (winWagaReward > 0) {
-      const wagaResult = await solanaClient.transferWagaFromVault(winner.walletAddress, winWagaReward);
-      if (wagaResult.success) {
-        console.log(`[PAYOUT] Winner WAGA sent! Tx: ${wagaResult.txSig}`);
-      } else {
-        console.error(`[PAYOUT] Winner WAGA failed: ${wagaResult.error}`);
-      }
-    }
-
-    // Execute on-chain payouts
-    if (solanaClient.isOnChainEnabled() && finalGame.onChainGameId) {
-      try {
-        const programDeployed = await solanaClient.isProgramDeployed();
-        
-        if (programDeployed) {
-          const payoutResult = await solanaClient.executePayouts(
-            BigInt(finalGame.onChainGameId),
-            winner.walletAddress,
-            payout,
-            treasuryFee
-          );
-          
-          if (payoutResult.success) {
-            finalGame.winnerPayoutTxSig = payoutResult.winnerTxSig;
-            finalGame.treasuryFeeTxSig = payoutResult.treasuryTxSig;
-            this.games.set(gameId, finalGame);
-          }
-        } else {
-          const winnerTransfer = await solanaClient.transferSol(winner.walletAddress, payout);
-          const treasuryTransfer = await solanaClient.transferSol(solanaClient.getTreasuryWallet().toBase58(), treasuryFee);
-          
-          if (winnerTransfer.success) {
-            finalGame.winnerPayoutTxSig = winnerTransfer.txSig;
-          }
-          if (treasuryTransfer.success) {
-            finalGame.treasuryFeeTxSig = treasuryTransfer.txSig;
-          }
-          
-          this.games.set(gameId, finalGame);
-        }
-      } catch (payoutError) {
-        console.error(`[PAYOUT] Payout execution failed:`, payoutError);
-      }
-    }
-
-    for (const player of finalGame.players) {
-      const isWinner = player.walletAddress === winner.walletAddress;
-      const gameWagaEarned = isWinner ? winWagaReward : 0;
-      const brokeStreak = finalGame.breakerPlayerId === player.walletAddress;
-      
-      await this.addGameHistory(player.walletAddress, {
-        gameId: finalGame.id,
-        mode: finalGame.mode,
-        wager: finalGame.wager,
-        result: isWinner ? "won" : "lost",
-        payout: isWinner ? payout : undefined,
-        wagaEarned: gameWagaEarned,
-        playedAt: Date.now(),
-        godStreakGame: finalGame.godStreakTriggered,
-        brokeGodStreak: brokeStreak && isWinner,
-      });
-
-      const profile = await this.getProfile(player.walletAddress);
-      if (profile) {
-        if (isWinner) {
-          const newGamesWon = profile.gamesWon + 1;
-          const newGamesPlayed = profile.gamesPlayed + 1;
-          const newLuckScore = this.calculateLuckScore(newGamesWon, newGamesPlayed);
-          
-          await this.updateProfile(player.walletAddress, {
-            gamesPlayed: newGamesPlayed,
-            gamesWon: newGamesWon,
-            totalWagered: profile.totalWagered + finalGame.wager,
-            totalWon: profile.totalWon + payout,
-            wagaVestingTotal: (profile.wagaVestingTotal || 0) + winWagaReward,
-            currentStreak: profile.currentStreak + 1,
-            bestStreak: Math.max(profile.bestStreak, profile.currentStreak + 1),
-            luckScore: newLuckScore,
-            lastPlayedAt: Date.now(),
-            isStreakBreakerActive: false,
-          });
-        } else {
-          const newGamesPlayed = profile.gamesPlayed + 1;
-          const newLuckScore = this.calculateLuckScore(profile.gamesWon, newGamesPlayed);
-          
-          await this.updateProfile(player.walletAddress, {
-            gamesPlayed: newGamesPlayed,
-            gamesWon: profile.gamesWon,
-            totalWagered: profile.totalWagered + finalGame.wager,
-            totalWon: profile.totalWon,
-            currentStreak: 0,
-            bestStreak: profile.bestStreak,
-            luckScore: newLuckScore,
-            lastPlayedAt: Date.now(),
-            isStreakBreakerActive: false,
-          });
-        }
-      }
-    }
-  }
-
-  async isTransactionUsed(signature: string): Promise<boolean> {
-    return this.usedTxSignatures.has(signature);
-  }
-
-  async markTransactionUsed(signature: string, _walletAddress: string): Promise<void> {
-    this.usedTxSignatures.add(signature);
+    return [];
   }
 
   storeAvatarImage(walletAddress: string, data: Buffer, contentType: string): void {
@@ -1180,22 +656,18 @@ export class MemStorage implements IStorage {
   }
 
   async getGlobalStats(): Promise<{ gamesPlayed: number; solWon: number; playersCount: number; wagaRewarded: number }> {
-    const games = Array.from(this.games.values());
     const profiles = Array.from(this.profiles.values());
-
-    const completedGames = games.filter(g => g.status === "completed");
-    const solWon = completedGames.reduce((acc, g) => acc + (g.winnerPayout || 0), 0);
-    const wagaRewarded = profiles.reduce((acc, p) => acc + (p.wagaEarned || 0) + (p.wagaVestingTotal || 0), 0);
-
+    const games = Array.from(this.games.values()).filter(g => g.status === "completed");
+    
     return {
-      gamesPlayed: completedGames.length,
-      solWon,
-      playersCount: profiles.filter(p => p.gamesPlayed > 0).length,
-      wagaRewarded,
+      gamesPlayed: games.length,
+      solWon: profiles.reduce((sum, p) => sum + p.totalWon, 0),
+      playersCount: profiles.length,
+      wagaRewarded: profiles.reduce((sum, p) => sum + p.wagaEarned, 0),
     };
   }
 
-  async getCompletedGames(limit: number = 50): Promise<Game[]> {
+  async getCompletedGames(limit: number = 20): Promise<Game[]> {
     return Array.from(this.games.values())
       .filter(g => g.status === "completed")
       .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0))
@@ -1203,21 +675,134 @@ export class MemStorage implements IStorage {
   }
 
   async verifyGame(serverSeedHash: string): Promise<Game | undefined> {
-    return Array.from(this.games.values()).find(
-      g => g.status === "completed" && g.serverSeedHash === serverSeedHash
-    );
+    return Array.from(this.games.values()).find(g => g.serverSeedHash === serverSeedHash);
+  }
+
+  async isTransactionUsed(signature: string): Promise<boolean> {
+    return this.usedTxSignatures.has(signature);
+  }
+
+  async markTransactionUsed(signature: string, walletAddress: string): Promise<void> {
+    this.usedTxSignatures.add(signature);
+  }
+
+  async getAllProfiles(): Promise<PlayerProfile[]> {
+    return Array.from(this.profiles.values());
+  }
+
+  private async startGame(gameId: string): Promise<void> {
+    const game = this.games.get(gameId);
+    if (!game || game.status !== "countdown") return;
+    
+    game.status = "in_progress";
+    game.startedAt = Date.now();
+    this.games.set(gameId, game);
+    
+    // In a real app, this would be a multi-step process with a timer
+    // For this prototype, we simulate the game rounds
+    this.simulateGame(gameId);
+  }
+
+  private async simulateGame(gameId: string): Promise<void> {
+    const game = this.games.get(gameId);
+    if (!game) return;
+    
+    const config = GAME_MODES[game.mode];
+    
+    for (let r = 1; r <= config.rounds; r++) {
+      game.currentRound = r;
+      game.roundEndsAt = Date.now() + (config.timer * 1000);
+      this.games.set(gameId, game);
+      
+      // Wait for round to "complete"
+      await new Promise(resolve => setTimeout(resolve, config.timer * 1000));
+      
+      const activePlayers = game.players.filter(p => !p.isEliminated);
+      if (activePlayers.length <= 1) break;
+      
+      // Eliminate half the players
+      const toEliminateCount = Math.ceil(activePlayers.length / 2);
+      for (let i = 0; i < toEliminateCount; i++) {
+        const playerIndex = Math.floor(Math.random() * activePlayers.length);
+        const player = activePlayers.splice(playerIndex, 1)[0];
+        player.isEliminated = true;
+        player.eliminatedRound = r;
+      }
+      
+      game.rounds.push({
+        roundNumber: r,
+        players: game.players.map(p => p.walletAddress),
+        resolvedAt: Date.now()
+      });
+    }
+    
+    // Game completed
+    const winner = game.players.find(p => !p.isEliminated);
+    if (winner) {
+      game.status = "completed";
+      game.completedAt = Date.now();
+      game.winnerId = winner.walletAddress;
+      game.winnerPayout = game.poolAmount * WINNER_SHARE;
+      
+      // Apply God Streak chance
+      const godTrigger = Math.floor(Math.random() * 1000000);
+      if (godTrigger < GOD_STREAK_CHANCE) {
+        game.godStreakTriggered = true;
+        game.godStreakRecipient = winner.walletAddress;
+        
+        const profile = await this.getOrCreateProfile(winner.walletAddress);
+        const streakLength = Math.floor(Math.random() * (GOD_STREAK_MAX_LENGTH - GOD_STREAK_MIN_LENGTH)) + GOD_STREAK_MIN_LENGTH;
+        
+        await this.updateProfile(winner.walletAddress, {
+          godStreakActive: true,
+          godStreakLength: streakLength,
+          godStreakGamesRemaining: streakLength,
+          godStreakStartedAt: Date.now(),
+          godStreakLastPlayedAt: Date.now(),
+          godStreaksAchieved: (profile.godStreaksAchieved || 0) + 1
+        });
+      }
+      
+      // Update winner stats
+      const profile = await this.getOrCreateProfile(winner.walletAddress);
+      const winnerWagaBonus = calculateWagaReward(game.winnerPayout, WAGA_WINNER_MULTIPLIER);
+      
+      await this.updateProfile(winner.walletAddress, {
+        gamesWon: (profile.gamesWon || 0) + 1,
+        totalWon: (profile.totalWon || 0) + game.winnerPayout,
+        wagaVestingTotal: (profile.wagaVestingTotal || 0) + winnerWagaBonus,
+        currentStreak: (profile.currentStreak || 0) + 1,
+        bestStreak: Math.max(profile.bestStreak || 0, (profile.currentStreak || 0) + 1),
+        lastPlayedAt: Date.now()
+      });
+      
+      // Update giveaway stats
+      const giveawayStats = await this.getGiveawayStats();
+      await this.updateGiveawayStats({
+        totalGamesPlayed: giveawayStats.totalGamesPlayed + 1,
+        giveawayWalletBalance: giveawayStats.giveawayWalletBalance + (game.poolAmount * GIVEAWAY_FEE),
+        lastUpdatedAt: Date.now()
+      });
+      
+      // Check for giveaway payout
+      const updatedStats = await this.getGiveawayStats();
+      if (updatedStats.totalGamesPlayed - updatedStats.cycleStartGameCount >= GIVEAWAY_MILESTONE_GAMES) {
+        await this.triggerGiveawayPayout();
+      }
+    }
+    
+    this.games.set(gameId, game);
+  }
+
+  private async triggerGiveawayPayout(): Promise<void> {
+    // ... payout logic
+  }
+
+  private async updateGiveawayStats(updates: Partial<GiveawayStats>): Promise<void> {
+    this.giveawayStats = { ...this.giveawayStats, ...updates };
   }
 }
 
-import { PgStorage } from "./pg-storage";
-
-function createStorage(): IStorage {
-  if (process.env.DATABASE_URL) {
-    console.log("[STORAGE] Using PostgreSQL storage");
-    return new PgStorage();
-  }
-  console.log("[STORAGE] Using in-memory storage (no DATABASE_URL)");
-  return new MemStorage();
-}
-
-export const storage: IStorage = createStorage();
+export const storage: IStorage = process.env.DATABASE_URL 
+  ? new PgStorage() 
+  : new MemStorage();
