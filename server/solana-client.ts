@@ -402,6 +402,7 @@ export class SolanaGameClient {
     const [gamePDA] = this.getGamePDA(gameId);
     const [gamePoolPDA] = this.getGamePoolPDA(gameId);
     const [gameConfigPDA] = this.getGameConfigPDA();
+    const giveawayWallet = new PublicKey(GIVEAWAY_WALLET);
 
     // Account ordering per FinalizeGame context in lib.rs
     const keys = [
@@ -409,6 +410,7 @@ export class SolanaGameClient {
       { pubkey: gamePoolPDA, isSigner: false, isWritable: true },  // game_pool
       { pubkey: gameConfigPDA, isSigner: false, isWritable: false }, // game_config (read-only)
       { pubkey: this.treasuryWallet, isSigner: false, isWritable: true }, // treasury
+      { pubkey: giveawayWallet, isSigner: false, isWritable: true }, // giveaway
       { pubkey: this.authorityKeypair!.publicKey, isSigner: true, isWritable: false }, // authority
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
@@ -432,6 +434,10 @@ export class SolanaGameClient {
       const vaultPubkey = new PublicKey(WAGA_REWARDS_VAULT);
       const recipientPubkey = new PublicKey(to);
       
+      // Use 9 decimals for WAGA on mainnet
+      const decimals = 9;
+      const amountInUnits = BigInt(Math.round(amount * Math.pow(10, decimals)));
+      
       const vaultAta = await getOrCreateAssociatedTokenAccount(
         this.connection,
         this.authorityKeypair,
@@ -451,7 +457,7 @@ export class SolanaGameClient {
           vaultAta.address,
           recipientAta.address,
           this.authorityKeypair.publicKey,
-          amount,
+          amountInUnits,
           [],
           TOKEN_PROGRAM_ID
         )
@@ -493,61 +499,91 @@ export class SolanaGameClient {
     });
   }
 
-  // Execute finalize_game to pay treasury fee from escrow PDA
-  // Note: Winner claims their winnings separately via claim_winnings instruction from frontend
+  // Execute payouts from escrow (PDA or fallback wallet)
   async executePayoutFromEscrow(
     gameId: bigint,
     winnerWallet: string,
     payoutSol: number,
-    treasuryFeeSol: number
-  ): Promise<{ success: boolean; winnerTxSig?: string; treasuryTxSig?: string; error?: string }> {
+    treasuryFeeSol: number,
+    giveawayFeeSol: number = 0
+  ): Promise<{ success: boolean; winnerTxSig?: string; treasuryTxSig?: string; giveawayTxSig?: string; error?: string }> {
     if (!this.authorityKeypair) {
       console.log(`[SOLANA] Payout pending (no authority): ${payoutSol} SOL to ${winnerWallet}`);
       return { success: false, error: "No authority keypair configured" };
     }
 
     try {
-      const [gamePoolPDA] = this.getGamePoolPDA(gameId);
+      // Check if we are in fallback mode (program not deployed)
+      const isProgramDeployed = await this.isProgramDeployed();
+      
+      if (!isProgramDeployed) {
+        // FALLBACK MODE: Authority wallet is the escrow
+        console.log(`[SOLANA] [FALLBACK] Executing direct transfers from authority wallet...`);
+        
+        const winnerPubkey = new PublicKey(winnerWallet);
+        const treasuryPubkey = this.treasuryWallet;
+        const giveawayPubkey = new PublicKey(GIVEAWAY_WALLET);
+        
+        const transaction = new Transaction();
+        
+        // 90% to winner
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.authorityKeypair.publicKey,
+            toPubkey: winnerPubkey,
+            lamports: Math.round(payoutSol * LAMPORTS_PER_SOL),
+          })
+        );
+        
+        // 9% to treasury
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.authorityKeypair.publicKey,
+            toPubkey: treasuryPubkey,
+            lamports: Math.round(treasuryFeeSol * LAMPORTS_PER_SOL),
+          })
+        );
+        
+        // 1% to giveaway
+        if (giveawayFeeSol > 0) {
+          transaction.add(
+            SystemProgram.transfer({
+              fromPubkey: this.authorityKeypair.publicKey,
+              toPubkey: giveawayPubkey,
+              lamports: Math.round(giveawayFeeSol * LAMPORTS_PER_SOL),
+            })
+          );
+        }
 
-      // Check escrow PDA balance
-      const escrowBalance = await this.connection.getBalance(gamePoolPDA);
-      const totalPool = payoutSol + treasuryFeeSol;
-
-      console.log(`[SOLANA] Escrow PDA: ${gamePoolPDA.toBase58()}`);
-      console.log(`[SOLANA] Escrow PDA balance: ${escrowBalance / LAMPORTS_PER_SOL} SOL`);
-      console.log(`[SOLANA] Total pool: ${totalPool} SOL (winner: ${payoutSol}, treasury: ${treasuryFeeSol})`);
-
-      if (escrowBalance === 0) {
-        console.warn(`[SOLANA] Escrow balance is 0 - game may not be on-chain or funds not deposited`);
-        return { success: false, error: "No funds in escrow PDA" };
+        const signature = await sendAndConfirmTransaction(
+          this.connection,
+          transaction,
+          [this.authorityKeypair]
+        );
+        
+        console.log(`[SOLANA] [FALLBACK] Payouts completed! Tx: ${signature}`);
+        return { success: true, winnerTxSig: signature, treasuryTxSig: signature, giveawayTxSig: signature };
       }
 
-      // Build finalize_game instruction to pay treasury fee
-      // This instruction pays the 10% house fee to treasury
-      // Winner claims their 90% separately via claim_winnings from frontend
-      const instruction = this.buildFinalizeGameInstruction(gameId);
-      const transaction = new Transaction().add(instruction);
+      // FULL ON-CHAIN MODE (PDA based)
+      const [gamePoolPDA] = this.getGamePoolPDA(gameId);
+      const escrowBalance = await this.connection.getBalance(gamePoolPDA);
+      
+      if (escrowBalance === 0) {
+        return { success: false, error: "Escrow PDA has 0 balance" };
+      }
 
-      console.log(`[SOLANA] Executing finalize_game instruction...`);
-      console.log(`  - Game ID: ${gameId}`);
-      console.log(`  - Treasury fee: ${treasuryFeeSol} SOL`);
-      console.log(`  - Winner (${winnerWallet.slice(0, 8)}...) can claim: ${payoutSol} SOL`);
-
+      // Finalize game pays the treasury fee (and giveaway fee)
+      const finalizeIx = this.buildFinalizeGameInstruction(gameId);
+      const transaction = new Transaction().add(finalizeIx);
+      
       const signature = await sendAndConfirmTransaction(
         this.connection,
         transaction,
-        [this.authorityKeypair],
-        { commitment: "confirmed" }
+        [this.authorityKeypair]
       );
-
-      console.log(`[SOLANA] Finalize game successful! Treasury fee paid. Tx: ${signature}`);
-      console.log(`[SOLANA] Winner can now claim winnings via claim_winnings instruction`);
-
-      return {
-        success: true,
-        treasuryTxSig: signature,
-        // winnerTxSig will be set when winner claims via frontend
-      };
+      
+      return { success: true, treasuryTxSig: signature };
     } catch (error) {
       console.error("[SOLANA] Payout error:", error);
       return { success: false, error: String(error) };

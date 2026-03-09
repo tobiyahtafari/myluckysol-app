@@ -264,7 +264,31 @@ export async function registerRoutes(
         await storage.updateGameStatus(updatedGame.id, "countdown");
       }
 
-      const wagaReward = calculateWagaReward(wager, WAGA_ENTRY_MULTIPLIER);
+      // Process WAGA win reward bonus (vesting)
+      if (game.winnerId) {
+        const winReward = (game.winnerPayout || 0) * WAGA_WINNER_MULTIPLIER;
+        if (winReward > 0) {
+          const winnerProfile = await storage.getProfile(game.winnerId);
+          if (winnerProfile) {
+            await storage.updateProfile(game.winnerId, {
+              wagaVestingTotal: (winnerProfile.wagaVestingTotal || 0) + winReward
+            });
+            console.log(`[WAGA] Credited ${winReward} WAGA to vesting for ${game.winnerId}`);
+          }
+        }
+      }
+
+      const wagaReward = (wager as number) * WAGA_ENTRY_MULTIPLIER;
+      
+      // Auto-distribute entry reward from vault
+      if (solanaClient.hasAuthority()) {
+        const entryRewardTx = await solanaClient.transferWagaFromVault(walletAddress, wagaReward);
+        if (entryRewardTx.success) {
+          console.log(`[WAGA] Distributed ${wagaReward} WAGA entry reward to ${walletAddress}. Tx: ${entryRewardTx.txSig}`);
+        } else {
+          console.error(`[WAGA] Failed to distribute entry reward: ${entryRewardTx.error}`);
+        }
+      }
 
       res.json({ 
         gameId: updatedGame.id, 
@@ -432,23 +456,67 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/profile/:walletAddress/username-cost", async (req, res) => {
-    try {
-      const profile = await storage.getOrCreateProfile(req.params.walletAddress);
-      const updateCount = profile.usernameUpdateCount || 0;
-      const cost = await getUsernameUpdateCostSol(updateCount);
-      const treasuryAddress = solanaClient.getTreasuryWallet().toBase58();
-      res.json({
-        ...cost,
-        updateCount,
-        currentUsername: profile.username || null,
-        paymentAddress: treasuryAddress,
-      });
-    } catch (error) {
-      console.error("Error getting username cost:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
+    // Claim vesting reward
+    app.post("/api/profile/:walletAddress/claim-vesting", async (req, res) => {
+      try {
+        const walletAddress = req.params.walletAddress;
+        const preview = await storage.previewVestedClaim(walletAddress);
+        
+        if (!preview || !preview.canClaim || preview.claimAmount <= 0) {
+          return res.status(400).json({ 
+            error: "No tokens available to claim at this time",
+            nextClaimTime: preview?.nextClaimTime 
+          });
+        }
+
+        if (solanaClient.hasAuthority()) {
+          const transfer = await solanaClient.transferWagaFromVault(walletAddress, preview.claimAmount);
+          if (!transfer.success) {
+            console.error(`[WAGA] Vesting transfer failed: ${transfer.error}`);
+            return res.status(500).json({ error: "On-chain transfer failed. Please try again later." });
+          }
+          
+          await storage.commitVestedClaim(walletAddress, preview.claimAmount);
+          res.json({ 
+            success: true, 
+            claimedAmount: preview.claimAmount,
+            txSig: transfer.txSig 
+          });
+        } else {
+          // Fallback if no authority
+          await storage.commitVestedClaim(walletAddress, preview.claimAmount);
+          res.json({ success: true, claimedAmount: preview.claimAmount });
+        }
+      } catch (error) {
+        console.error("Error claiming vesting:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    app.get("/api/profile/:walletAddress/vesting", async (req, res) => {
+      try {
+        const walletAddress = req.params.walletAddress;
+        const profile = await storage.getProfile(walletAddress);
+        if (!profile) return res.status(404).json({ error: "Profile not found" });
+
+        const preview = await storage.previewVestedClaim(walletAddress);
+        const totalVesting = profile.wagaVestingTotal || 0;
+        const claimed = profile.wagaVestingClaimed || 0;
+        
+        res.json({
+          totalVesting,
+          claimed,
+          remaining: totalVesting - claimed,
+          nextClaimTime: preview?.nextClaimTime || 0,
+          canClaim: preview?.canClaim || false,
+          claimableAmount: preview?.claimAmount || 0,
+          dailyAmount: Math.ceil(totalVesting * (VESTING_DAILY_PERCENT / 100))
+        });
+      } catch (error) {
+        console.error("Error getting vesting info:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
 
   app.patch("/api/profile/:walletAddress", async (req, res) => {
     try {
