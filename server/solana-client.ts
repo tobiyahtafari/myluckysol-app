@@ -419,6 +419,29 @@ export class SolanaGameClient {
     });
   }
 
+  // Simple SOL transfer from authority wallet to any recipient
+  async transferSol(
+    toAddress: string,
+    amountSol: number
+  ): Promise<{ success: boolean; txSig?: string; error?: string }> {
+    if (!this.authorityKeypair) return { success: false, error: "No authority keypair configured" };
+    try {
+      const toPubkey = new PublicKey(toAddress);
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: this.authorityKeypair.publicKey,
+          toPubkey,
+          lamports: Math.round(amountSol * LAMPORTS_PER_SOL),
+        })
+      );
+      const signature = await sendAndConfirmTransaction(this.connection, transaction, [this.authorityKeypair]);
+      return { success: true, txSig: signature };
+    } catch (error) {
+      console.error("[SOLANA] transferSol error:", error);
+      return { success: false, error: String(error) };
+    }
+  }
+
   // Transfer WAGA from vault (authority must be owner or delegate)
   async transferWagaFromVault(
     to: string,
