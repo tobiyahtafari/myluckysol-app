@@ -26,7 +26,8 @@ import {
 } from "./borsh-layouts";
 
 export const DEVNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com";
-export const MAINNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+// Fallback to public RPC for client-side to avoid CORS/403 issues with private RPCs
+export const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 
 export const getActiveRpc = (rpcUrl: string): string => {
   return MAINNET_RPC;

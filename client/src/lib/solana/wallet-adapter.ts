@@ -225,7 +225,8 @@ export async function requestDevnetAirdrop(
 }
 
 export const DEVNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com";
-export const MAINNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+// Fallback to public RPC for client-side to avoid CORS/403 issues with private RPCs
+export const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 
 // Add specific Helius support if provided
 export const getActiveRpc = (network: NetworkType = "mainnet-beta"): string => {
