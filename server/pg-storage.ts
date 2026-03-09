@@ -36,6 +36,7 @@ import {
 } from "@shared/schema";
 import { calculateWagaReward } from "./price-service";
 import { solanaClient } from "./solana-client";
+import { GIVEAWAY_WALLET } from "@shared/constants";
 import { createHmac, randomBytes } from "crypto";
 import type { IStorage } from "./storage";
 
@@ -1064,30 +1065,32 @@ export class PgStorage implements IStorage {
       }
     }
 
-    // Fee transfers
-    if (solanaClient.isOnChainEnabled()) {
-      solanaClient.transferSol("BmC897s2wDqPdNR1zvsAMZqsZfsm7KprU6DUDLYgjdKP", treasuryFee).then(r => r.success ? console.log(`[FEE] Treasury: ${r.txSig}`) : console.warn(`[FEE] Treasury failed: ${r.error}`));
-      solanaClient.transferSol("FGY64g3Pt8wMrMR3A9abkVxSjwh2Yt4dT4BYkw6rU3yf", giveawayFee).then(r => r.success ? console.log(`[FEE] Giveaway: ${r.txSig}`) : console.warn(`[FEE] Giveaway failed: ${r.error}`));
-    }
-
     // WAGA winner reward
     if (winWagaReward > 0 && solanaClient.hasAuthority()) {
       const wagaResult = await solanaClient.transferWagaFromVault(winner.walletAddress, winWagaReward);
       wagaResult.success ? console.log(`[WAGA] Win reward sent: ${wagaResult.txSig}`) : console.error(`[WAGA] Win reward failed: ${wagaResult.error}`);
     }
 
-    // On-chain payouts
-    if (solanaClient.isOnChainEnabled() && finalGame.onChainGameId) {
+    // SOL payouts — winner (90%), treasury (9%), giveaway (1%)
+    if (solanaClient.hasAuthority() && finalGame.onChainGameId) {
       try {
         const programDeployed = await solanaClient.isProgramDeployed();
         if (programDeployed) {
+          // Full on-chain mode: program handles payouts
           const res = await solanaClient.executePayouts(BigInt(finalGame.onChainGameId), winner.walletAddress, payout, treasuryFee);
           if (res.success) { finalGame.winnerPayoutTxSig = res.winnerTxSig; finalGame.treasuryFeeTxSig = res.treasuryTxSig; }
+          else console.error("[PAYOUT] executePayouts failed:", res.error);
         } else {
+          // Fallback mode: authority wallet pays out directly
           const wt = await solanaClient.transferSol(winner.walletAddress, payout);
           const tt = await solanaClient.transferSol(solanaClient.getTreasuryWallet().toBase58(), treasuryFee);
-          if (wt.success) finalGame.winnerPayoutTxSig = wt.txSig;
-          if (tt.success) finalGame.treasuryFeeTxSig = tt.txSig;
+          const gt = await solanaClient.transferSol(GIVEAWAY_WALLET, giveawayFee);
+          if (wt.success) { finalGame.winnerPayoutTxSig = wt.txSig; console.log(`[PAYOUT] Winner: ${wt.txSig}`); }
+          else console.error("[PAYOUT] Winner transfer failed:", wt.error);
+          if (tt.success) { finalGame.treasuryFeeTxSig = tt.txSig; console.log(`[PAYOUT] Treasury: ${tt.txSig}`); }
+          else console.error("[PAYOUT] Treasury transfer failed:", tt.error);
+          if (gt.success) console.log(`[PAYOUT] Giveaway: ${gt.txSig}`);
+          else console.error("[PAYOUT] Giveaway transfer failed:", gt.error);
         }
       } catch (e) {
         console.error("[PAYOUT] Failed:", e);
