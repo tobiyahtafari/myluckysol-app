@@ -29,6 +29,16 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // Latest blockhash via server-side RPC (avoids client-side domain restrictions)
+  app.get("/api/blockhash", async (req, res) => {
+    try {
+      const { blockhash, lastValidBlockHeight } = await solanaClient.getConnection().getLatestBlockhash();
+      return res.json({ blockhash, lastValidBlockHeight });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // Balance check via server-side RPC (avoids client-side domain restrictions)
   app.get("/api/balance/:wallet", async (req, res) => {
     try {

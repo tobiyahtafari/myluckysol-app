@@ -72,14 +72,9 @@ export default function Play() {
       }
 
       // Step 2: Deserialize the join_game transaction from backend
-      // This transaction uses the program's join_game instruction which properly
-      // transfers SOL to escrow AND updates the on-chain game state
+      // The server embeds a fresh blockhash — no need for a client-side RPC call
       const transactionBuffer = Buffer.from(prepareData.joinTransaction, "base64");
       const transaction = Transaction.from(transactionBuffer);
-      
-      // Update blockhash to ensure transaction is fresh
-      const { blockhash } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
       
       // Step 3: Sign and send the join_game transaction

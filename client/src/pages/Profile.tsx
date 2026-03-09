@@ -174,7 +174,8 @@ export default function Profile() {
         })
       );
 
-      const { blockhash } = await connection.getLatestBlockhash();
+      const bhRes = await fetch("/api/blockhash");
+      const { blockhash } = await bhRes.json();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
 
