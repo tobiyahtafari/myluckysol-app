@@ -15,6 +15,13 @@ import {
   getConnection,
 } from "./solana/wallet-adapter";
 
+async function fetchBalanceFromServer(walletAddress: string): Promise<number> {
+  const res = await fetch(`/api/balance/${walletAddress}`);
+  if (!res.ok) throw new Error("Failed to fetch balance");
+  const data = await res.json();
+  return data.sol as number;
+}
+
 interface WalletState {
   connected: boolean;
   connecting: boolean;
@@ -86,22 +93,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [profile?.wagaEarned]);
 
   const refreshBalance = useCallback(async () => {
-    if (!state.publicKey || !connection) return;
+    if (!state.address) return;
     
     setState(prev => ({ ...prev, balanceLoading: true }));
     
     try {
-      const balance = await connection.getBalance(state.publicKey);
+      const sol = await fetchBalanceFromServer(state.address);
       setState(prev => ({
         ...prev,
-        balance: balance / LAMPORTS_PER_SOL,
+        balance: sol,
         balanceLoading: false,
       }));
     } catch (error) {
       console.error("Failed to fetch balance:", error);
       setState(prev => ({ ...prev, balanceLoading: false }));
     }
-  }, [state.publicKey, connection]);
+  }, [state.address]);
 
   useEffect(() => {
     if (state.connected && state.publicKey) {
@@ -193,15 +200,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (walletAdapter.connected && walletAdapter.publicKey) {
           setAdapter(walletAdapter);
           adapterRef.current = walletAdapter;
-          
-          const balance = await connection.getBalance(walletAdapter.publicKey);
-          
+          const address = walletAdapter.publicKey.toBase58();
+          const sol = await fetchBalanceFromServer(address);
           setState(prev => ({
             ...prev,
             connected: true,
-            address: walletAdapter.publicKey!.toBase58(),
+            address,
             publicKey: walletAdapter.publicKey,
-            balance: balance / LAMPORTS_PER_SOL,
+            balance: sol,
             walletName: savedWallet,
           }));
         } else {
@@ -211,16 +217,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           
           setAdapter(walletAdapter);
           adapterRef.current = walletAdapter;
-          
-          const balance = await connection.getBalance(publicKey);
-          
+          const address = publicKey.toBase58();
+          const sol = await fetchBalanceFromServer(address);
           setState(prev => ({
             ...prev,
             connected: true,
             connecting: false,
-            address: publicKey.toBase58(),
+            address,
             publicKey,
-            balance: balance / LAMPORTS_PER_SOL,
+            balance: sol,
             walletName: savedWallet,
           }));
         }
@@ -256,15 +261,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       adapterRef.current = walletAdapter;
       localStorage.setItem(WALLET_STORAGE_KEY, walletName);
       
-      const balance = await connection.getBalance(publicKey);
+      const address = publicKey.toBase58();
+      const sol = await fetchBalanceFromServer(address);
       
       setState(prev => ({
         ...prev,
         connected: true,
         connecting: false,
-        address: publicKey.toBase58(),
+        address,
         publicKey,
-        balance: balance / LAMPORTS_PER_SOL,
+        balance: sol,
         walletName,
       }));
 
@@ -299,12 +305,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       network,
     }));
 
-    if (state.publicKey) {
+    if (state.address) {
       try {
-        const balance = await newConnection.getBalance(state.publicKey);
+        const sol = await fetchBalanceFromServer(state.address);
         setState(prev => ({
           ...prev,
-          balance: balance / LAMPORTS_PER_SOL,
+          balance: sol,
           balanceLoading: false,
         }));
       } catch (error) {
@@ -314,7 +320,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } else {
       setState(prev => ({ ...prev, balanceLoading: false }));
     }
-  }, [state.publicKey]);
+  }, [state.address]);
 
   const requestAirdrop = useCallback(async (): Promise<string> => {
     if (!state.publicKey) {

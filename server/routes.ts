@@ -29,6 +29,22 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // Balance check via server-side RPC (avoids client-side domain restrictions)
+  app.get("/api/balance/:wallet", async (req, res) => {
+    try {
+      const { wallet } = req.params;
+      if (!wallet || wallet.length < 32 || wallet.length > 44) {
+        return res.status(400).json({ error: "Invalid wallet address" });
+      }
+      const { PublicKey, LAMPORTS_PER_SOL } = await import("@solana/web3.js");
+      const pubkey = new PublicKey(wallet);
+      const lamports = await solanaClient.getConnection().getBalance(pubkey);
+      return res.json({ sol: lamports / LAMPORTS_PER_SOL, lamports });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // Prepare game - returns escrow wallet for SOL transfer (authority wallet)
   app.post("/api/games/prepare", async (req, res) => {
     try {
