@@ -62,7 +62,7 @@ export class SolanaGameClient {
 
   constructor() {
     // Use SOLANA_NETWORK env var to switch between devnet and mainnet
-    const network = process.env.SOLANA_NETWORK || "devnet";
+    const network = process.env.SOLANA_NETWORK || "mainnet";
     const rpcUrl = process.env.SOLANA_RPC_URL || 
       (network === "mainnet" 
         ? "https://api.mainnet-beta.solana.com" 
@@ -76,8 +76,14 @@ export class SolanaGameClient {
     const authorityPrivateKey = process.env.SOLANA_AUTHORITY_PRIVATE_KEY;
     if (authorityPrivateKey) {
       try {
-        const secretKey = bs58.decode(authorityPrivateKey);
-        this.authorityKeypair = Keypair.fromSecretKey(secretKey);
+        let secretKey: number[];
+        if (authorityPrivateKey.trim().startsWith('[')) {
+          secretKey = JSON.parse(authorityPrivateKey);
+        } else {
+          // Fallback to base58 if not a JSON array
+          secretKey = Array.from(bs58.decode(authorityPrivateKey));
+        }
+        this.authorityKeypair = Keypair.fromSecretKey(Uint8Array.from(secretKey));
         console.log("[SOLANA] Authority keypair loaded:", this.authorityKeypair.publicKey.toBase58());
         
         // Check if this authority is also the WAGA vault (for simpler setup)
