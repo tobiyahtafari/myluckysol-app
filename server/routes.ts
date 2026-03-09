@@ -470,6 +470,27 @@ export async function registerRoutes(
     }
   });
 
+  // Username update cost — used by Profile page before initiating payment
+  app.get("/api/profile/:walletAddress/username-cost", async (req, res) => {
+    try {
+      const profile = await storage.getOrCreateProfile(req.params.walletAddress);
+      const updateCount = profile.usernameUpdateCount || 0;
+      const { costSol, costUsd, isFirstUpdate } = await getUsernameUpdateCostSol(updateCount);
+      const paymentAddress = solanaClient.getTreasuryWallet().toBase58();
+      res.json({
+        costSol,
+        costUsd,
+        isFirstUpdate,
+        updateCount,
+        currentUsername: profile.username || null,
+        paymentAddress,
+      });
+    } catch (error) {
+      console.error("Error getting username cost:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Get player game history
   app.get("/api/profile/:walletAddress/history", async (req, res) => {
     try {

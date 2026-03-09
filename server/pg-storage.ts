@@ -1114,20 +1114,23 @@ export class PgStorage implements IStorage {
           if (res.success) { finalGame.winnerPayoutTxSig = res.winnerTxSig; finalGame.treasuryFeeTxSig = res.treasuryTxSig; }
           else console.error("[PAYOUT] executePayouts failed:", res.error);
         } else {
-          // Fallback mode: authority wallet pays out directly
-          const wt = await solanaClient.transferSol(winner.walletAddress, payout);
-          const tt = await solanaClient.transferSol(solanaClient.getTreasuryWallet().toBase58(), treasuryFee);
-          
-          // FIX: Calculate giveaway fee correctly (1% of total pool)
-          const actualGiveawayFee = finalGame.poolAmount * GIVEAWAY_FEE;
-          const gt = await solanaClient.transferSol(GIVEAWAY_WALLET, actualGiveawayFee);
-          
-          if (wt.success) { finalGame.winnerPayoutTxSig = wt.txSig; console.log(`[PAYOUT] Winner: ${wt.txSig}`); }
-          else console.error("[PAYOUT] Winner transfer failed:", wt.error);
-          if (tt.success) { finalGame.treasuryFeeTxSig = tt.txSig; console.log(`[PAYOUT] Treasury: ${tt.txSig}`); }
-          else console.error("[PAYOUT] Treasury transfer failed:", tt.error);
-          if (gt.success) console.log(`[PAYOUT] Giveaway: ${gt.txSig}`);
-          else console.error("[PAYOUT] Giveaway transfer failed:", gt.error);
+          // Fallback mode: authority wallet pays all three in ONE atomic transaction
+          const giveawayFeeAmount = finalGame.poolAmount * GIVEAWAY_FEE;
+          const payoutResult = await solanaClient.executePayoutFromEscrow(
+            BigInt(finalGame.onChainGameId),
+            winner.walletAddress,
+            payout,
+            treasuryFee,
+            giveawayFeeAmount
+          );
+          if (payoutResult.success) {
+            finalGame.winnerPayoutTxSig = payoutResult.winnerTxSig;
+            finalGame.treasuryFeeTxSig = payoutResult.treasuryTxSig;
+            finalGame.giveawayFeeTxSig = payoutResult.giveawayTxSig;
+            console.log(`[PAYOUT] All payouts sent in one tx: ${payoutResult.winnerTxSig}`);
+          } else {
+            console.error("[PAYOUT] Fallback payout failed:", payoutResult.error);
+          }
         }
       } catch (e) {
         console.error("[PAYOUT] Failed:", e);
