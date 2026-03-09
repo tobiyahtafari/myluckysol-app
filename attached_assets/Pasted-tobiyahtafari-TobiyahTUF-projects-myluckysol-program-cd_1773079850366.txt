@@ -1,0 +1,57 @@
+tobiyahtafari@TobiyahTUF:~/projects/myluckysol/program$ cd ~/projects/myluckysol/program
+rm -rf ~/.cargo/registry/src/index.crates.io-*
+rm -rf ~/.cargo/registry/cache/index.crates.io-*
+cargo +nightly build --target bpfel-unknown-unknown --release
+error: failed to run `rustc` to learn about target-specific information
+
+Caused by:
+  process didn't exit successfully: `/home/tobiyahtafari/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin/rustc - --crate-name ___ --print=file-names --target bpfel-unknown-unknown --crate-type bin --crate-type rlib --crate-type dylib --crate-type cdylib --crate-type staticlib --crate-type proc-macro --print=sysroot --print=split-debuginfo --print=crate-name --print=cfg -Wwarnings` (exit status: 1)
+  --- stderr
+  error: error loading target specification: could not find specification for target "bpfel-unknown-unknown"
+    |
+    = help: run `rustc --print target-list` for a list of built-in targets
+
+tobiyahtafari@TobiyahTUF:~/projects/myluckysol/program$ rustup toolchain remove nightly
+rustup install nightly
+rustup component add rust-src --toolchain nightly
+cargo +nightly build --target bpfel-unknown-unknown --release
+warn: removing the active toolchain; a toolchain override will be required for running Rust tools
+warn: removing the default toolchain; proc-macros and build scripts might no longer build
+info: uninstalling toolchain 'nightly-x86_64-unknown-linux-gnu'
+info: toolchain 'nightly-x86_64-unknown-linux-gnu' uninstalled
+info: syncing channel updates for 'nightly-x86_64-unknown-linux-gnu'
+info: latest update on 2026-03-09, rust version 1.96.0-nightly (b41f22de2 2026-03-08)
+info: downloading component 'cargo'
+ 10.5 MiB /  10.5 MiB (100 %)   5.6 MiB/s in  1s
+info: downloading component 'clippy'
+  4.6 MiB /   4.6 MiB (100 %)   4.1 MiB/s in  1s
+info: downloading component 'rust-docs'
+ 21.3 MiB /  21.3 MiB (100 %)  15.8 MiB/s in  1s
+info: downloading component 'rust-std'
+ 28.2 MiB /  28.2 MiB (100 %)  12.7 MiB/s in  2s
+info: downloading component 'rustc'
+ 76.4 MiB /  76.4 MiB (100 %)  13.8 MiB/s in  5s
+info: downloading component 'rustfmt'
+info: installing component 'cargo'
+info: installing component 'clippy'
+info: installing component 'rust-docs'
+ 21.3 MiB /  21.3 MiB (100 %)   8.3 MiB/s in  1s
+info: installing component 'rust-std'
+ 28.2 MiB /  28.2 MiB (100 %)  21.0 MiB/s in  1s
+info: installing component 'rustc'
+ 76.4 MiB /  76.4 MiB (100 %)  19.4 MiB/s in  4s
+info: installing component 'rustfmt'
+
+  nightly-x86_64-unknown-linux-gnu installed - rustc 1.96.0-nightly (b41f22de2 2026-03-08)
+
+info: checking for self-update
+info: downloading component 'rust-src'
+info: installing component 'rust-src'
+error: failed to run `rustc` to learn about target-specific information
+
+Caused by:
+  process didn't exit successfully: `/home/tobiyahtafari/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin/rustc - --crate-name ___ --print=file-names --target bpfel-unknown-unknown --crate-type bin --crate-type rlib --crate-type dylib --crate-type cdylib --crate-type staticlib --crate-type proc-macro --print=sysroot --print=split-debuginfo --print=crate-name --print=cfg -Wwarnings` (exit status: 1)
+  --- stderr
+  error: error loading target specification: could not find specification for target "bpfel-unknown-unknown"
+    |
+    = help: run `rustc --print target-list` for a list of built-in targets
