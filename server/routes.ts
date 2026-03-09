@@ -317,31 +317,7 @@ export async function registerRoutes(
         await storage.updateGameStatus(updatedGame.id, "countdown");
       }
 
-      // Process WAGA win reward bonus (vesting)
-      if (game.winnerId) {
-        const winReward = (game.winnerPayout || 0) * WAGA_WINNER_MULTIPLIER;
-        if (winReward > 0) {
-          const winnerProfile = await storage.getProfile(game.winnerId);
-          if (winnerProfile) {
-            await storage.updateProfile(game.winnerId, {
-              wagaVestingTotal: (winnerProfile.wagaVestingTotal || 0) + winReward
-            });
-            console.log(`[WAGA] Credited ${winReward} WAGA to vesting for ${game.winnerId}`);
-          }
-        }
-      }
-
       const wagaReward = (wager as number) * WAGA_ENTRY_MULTIPLIER;
-      
-      // Auto-distribute entry reward from vault
-      if (solanaClient.hasAuthority()) {
-        const entryRewardTx = await solanaClient.transferWagaFromVault(walletAddress, wagaReward);
-        if (entryRewardTx.success) {
-          console.log(`[WAGA] Distributed ${wagaReward} WAGA entry reward to ${walletAddress}. Tx: ${entryRewardTx.txSig}`);
-        } else {
-          console.error(`[WAGA] Failed to distribute entry reward: ${entryRewardTx.error}`);
-        }
-      }
 
       res.json({ 
         gameId: updatedGame.id, 
