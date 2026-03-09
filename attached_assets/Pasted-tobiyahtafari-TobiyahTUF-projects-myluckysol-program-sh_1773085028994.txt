@@ -1,0 +1,324 @@
+tobiyahtafari@TobiyahTUF:~/projects/myluckysol/program$ sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+source ~/.profile
+solana --version
+downloading stable installer
+  ✨ stable commit bb2993f initialized
+solana-cli 3.1.10 (src:4e4a6bc5; feat:1620780344, client:Agave)
+tobiyahtafari@TobiyahTUF:~/projects/myluckysol/program$ cd ~/projects/myluckysol/program
+rm -f Cargo.lock
+anchor build
+info: uninstalling toolchain '1.84.1-sbpf-solana-v1.51'
+info: toolchain '1.84.1-sbpf-solana-v1.51' uninstalled
+   Compiling proc-macro2 v1.0.106
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.45
+   Compiling version_check v0.9.5
+   Compiling typenum v1.19.0
+   Compiling serde_core v1.0.228
+   Compiling syn v1.0.109
+   Compiling serde v1.0.228
+   Compiling zmij v1.0.21
+   Compiling serde_json v1.0.149
+   Compiling thiserror v1.0.69
+   Compiling anyhow v1.0.102
+   Compiling memchr v2.8.0
+   Compiling cpufeatures v0.2.17
+   Compiling itoa v1.0.17
+   Compiling unicode-segmentation v1.12.0
+   Compiling cfg-if v1.0.4
+   Compiling semver v1.0.27
+   Compiling libc v0.2.183
+   Compiling bs58 v0.5.1
+   Compiling autocfg v1.5.0
+   Compiling once_cell v1.21.3
+   Compiling find-msvc-tools v0.1.9
+   Compiling shlex v1.3.0
+   Compiling generic-array v0.14.7
+   Compiling rustc_version v0.4.1
+   Compiling heck v0.3.3
+   Compiling zerocopy v0.8.42
+   Compiling hashbrown v0.16.1
+   Compiling subtle v2.6.1
+   Compiling winnow v0.7.15
+   Compiling equivalent v1.0.2
+   Compiling ahash v0.7.8
+   Compiling ahash v0.8.12
+   Compiling toml_datetime v1.0.0+spec-1.1.0
+   Compiling feature-probe v0.1.1
+   Compiling solana-frozen-abi-macro v1.18.26
+   Compiling rustversion v1.0.22
+   Compiling cfg_aliases v0.2.1
+   Compiling bv v0.11.1
+   Compiling solana-frozen-abi v1.18.26
+   Compiling borsh v1.6.0
+   Compiling memoffset v0.9.1
+   Compiling num-traits v0.2.19
+   Compiling hashbrown v0.11.2
+   Compiling syn v2.0.117
+   Compiling indexmap v2.13.0
+   Compiling keccak v0.1.6
+   Compiling lazy_static v1.5.0
+   Compiling arrayref v0.3.9
+   Compiling log v0.4.29
+   Compiling bs58 v0.4.0
+   Compiling arrayvec v0.7.6
+   Compiling constant_time_eq v0.4.2
+   Compiling either v1.15.0
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling getrandom v0.2.17
+   Compiling itertools v0.10.5
+   Compiling base64 v0.21.7
+   Compiling digest v0.10.7
+   Compiling jobserver v0.1.34
+   Compiling sha2 v0.10.9
+   Compiling cc v1.2.56
+   Compiling sha3 v0.10.8
+   Compiling toml_parser v1.0.9+spec-1.1.0
+   Compiling toml_edit v0.25.4+spec-1.1.0
+   Compiling blake3 v1.8.3
+   Compiling solana-program v1.18.26
+   Compiling serde_bytes v0.11.19
+   Compiling proc-macro-crate v3.5.0
+   Compiling borsh-derive-internal v0.10.4
+   Compiling borsh-derive-internal v0.9.3
+   Compiling borsh-schema-derive-internal v0.9.3
+   Compiling borsh-schema-derive-internal v0.10.4
+   Compiling anchor-derive-space v0.30.1
+   Compiling serde_derive v1.0.228
+   Compiling thiserror-impl v1.0.69
+   Compiling bytemuck_derive v1.10.2
+   Compiling borsh-derive v1.6.0
+   Compiling num-derive v0.4.2
+   Compiling solana-sdk-macro v1.18.26
+   Compiling hashbrown v0.13.2
+   Compiling bytemuck v1.25.0
+   Compiling anchor-syn v0.30.1
+   Compiling toml v0.5.11
+   Compiling anchor-lang-idl-spec v0.1.0
+   Compiling bincode v1.3.3
+   Compiling anchor-lang-idl v0.1.2
+   Compiling proc-macro-crate v0.1.5
+   Compiling borsh-derive v0.10.4
+   Compiling borsh-derive v0.9.3
+   Compiling borsh v0.9.3
+   Compiling borsh v0.10.4
+   Compiling anchor-attribute-event v0.30.1
+   Compiling anchor-derive-serde v0.30.1
+   Compiling anchor-attribute-account v0.30.1
+   Compiling anchor-attribute-error v0.30.1
+   Compiling anchor-attribute-program v0.30.1
+   Compiling anchor-attribute-access-control v0.30.1
+   Compiling anchor-derive-accounts v0.30.1
+   Compiling anchor-attribute-constant v0.30.1
+   Compiling anchor-lang v0.30.1
+   Compiling myluckysol v0.1.0 (/home/tobiyahtafari/projects/myluckysol/program)
+warning: unexpected `cfg` condition value: `custom-heap`
+  --> src/lib.rs:17:1
+   |
+17 | #[program]
+   | ^^^^^^^^^^
+   |
+   = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+   = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `$crate::custom_heap_default` crate for guidance on how handle this unexpected cfg
+   = help: the macro `$crate::custom_heap_default` may come from an old version of the `solana_program` crate, try updating your dependency with `cargo update -p solana_program`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: `#[warn(unexpected_cfgs)]` on by default
+   = note: this warning originates in the macro `$crate::custom_heap_default` which comes from the expansion of the attribute macro `program` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `custom-panic`
+  --> src/lib.rs:17:1
+   |
+17 | #[program]
+   | ^^^^^^^^^^
+   |
+   = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+   = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `$crate::custom_panic_default` crate for guidance on how handle this unexpected cfg
+   = help: the macro `$crate::custom_panic_default` may come from an old version of the `solana_program` crate, try updating your dependency with `cargo update -p solana_program`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: this warning originates in the macro `$crate::custom_panic_default` which comes from the expansion of the attribute macro `program` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `anchor_lang::system_program`
+ --> src/lib.rs:2:5
+  |
+2 | use anchor_lang::system_program;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `anchor_lang::prelude::*`
+ --> src/constants.rs:1:5
+  |
+1 | use anchor_lang::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `constants::*`
+  --> src/lib.rs:13:5
+   |
+13 | use constants::*;
+   |     ^^^^^^^^^^^^
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+  --> src/lib.rs:17:1
+   |
+17 | #[program]
+   | ^^^^^^^^^^
+   |
+   = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+   = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `program` crate for guidance on how handle this unexpected cfg
+   = help: the attribute macro `program` may come from an old version of the `anchor_attribute_program` crate, try updating your dependency with `cargo update -p anchor_attribute_program`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: this warning originates in the attribute macro `program` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+  --> src/lib.rs:17:1
+   |
+17 | #[program]
+   | ^^^^^^^^^^
+   |
+   = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+   = note: using a cfg inside a derive macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `Accounts` crate for guidance on how handle this unexpected cfg
+   = help: the derive macro `Accounts` may come from an old version of the `anchor_derive_accounts` crate, try updating your dependency with `cargo update -p anchor_derive_accounts`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: this warning originates in the derive macro `Accounts` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+  --> src/lib.rs:62:10
+   |
+62 | #[derive(Accounts)]
+   |          ^^^^^^^^
+   |
+   = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+   = note: using a cfg inside a derive macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `Accounts` crate for guidance on how handle this unexpected cfg
+   = help: the derive macro `Accounts` may come from an old version of the `anchor_derive_accounts` crate, try updating your dependency with `cargo update -p anchor_derive_accounts`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: this warning originates in the derive macro `Accounts` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+  --> src/lib.rs:79:10
+   |
+79 | #[derive(Accounts)]
+   |          ^^^^^^^^
+   |
+   = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+   = note: using a cfg inside a derive macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `Accounts` crate for guidance on how handle this unexpected cfg
+   = help: the derive macro `Accounts` may come from an old version of the `anchor_derive_accounts` crate, try updating your dependency with `cargo update -p anchor_derive_accounts`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: this warning originates in the derive macro `Accounts` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+   --> src/lib.rs:109:10
+    |
+109 | #[derive(Accounts)]
+    |          ^^^^^^^^
+    |
+    = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+    = note: using a cfg inside a derive macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `Accounts` crate for guidance on how handle this unexpected cfg
+    = help: the derive macro `Accounts` may come from an old version of the `anchor_derive_accounts` crate, try updating your dependency with `cargo update -p anchor_derive_accounts`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: this warning originates in the derive macro `Accounts` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+   --> src/lib.rs:127:10
+    |
+127 | #[derive(Accounts)]
+    |          ^^^^^^^^
+    |
+    = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+    = note: using a cfg inside a derive macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `Accounts` crate for guidance on how handle this unexpected cfg
+    = help: the derive macro `Accounts` may come from an old version of the `anchor_derive_accounts` crate, try updating your dependency with `cargo update -p anchor_derive_accounts`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: this warning originates in the derive macro `Accounts` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+   --> src/lib.rs:136:10
+    |
+136 | #[derive(Accounts)]
+    |          ^^^^^^^^
+    |
+    = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+    = note: using a cfg inside a derive macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `Accounts` crate for guidance on how handle this unexpected cfg
+    = help: the derive macro `Accounts` may come from an old version of the `anchor_derive_accounts` crate, try updating your dependency with `cargo update -p anchor_derive_accounts`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: this warning originates in the derive macro `Accounts` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+   --> src/lib.rs:145:10
+    |
+145 | #[derive(Accounts)]
+    |          ^^^^^^^^
+    |
+    = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+    = note: using a cfg inside a derive macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `Accounts` crate for guidance on how handle this unexpected cfg
+    = help: the derive macro `Accounts` may come from an old version of the `anchor_derive_accounts` crate, try updating your dependency with `cargo update -p anchor_derive_accounts`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: this warning originates in the derive macro `Accounts` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `anchor-debug`
+   --> src/lib.rs:170:10
+    |
+170 | #[derive(Accounts)]
+    |          ^^^^^^^^
+    |
+    = note: expected values for `feature` are: `cpi`, `default`, `no-entrypoint`, `no-idl`, and `no-log-ix-name`
+    = note: using a cfg inside a derive macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `Accounts` crate for guidance on how handle this unexpected cfg
+    = help: the derive macro `Accounts` may come from an old version of the `anchor_derive_accounts` crate, try updating your dependency with `cargo update -p anchor_derive_accounts`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: this warning originates in the derive macro `Accounts` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: `state::GameMode` doesn't implement `Debug`
+  --> src/instructions.rs:67:75
+   |
+67 |     msg!("Game {} created with mode {:?} and wager {} lamports", game_id, mode, wager_amount);
+   |                                     ----                                  ^^^^ `state::GameMode` cannot be formatted using `{:?}` because it doesn't implement `Debug`
+   |                                     |
+   |                                     required by this formatting parameter
+   |
+   = help: the trait `Debug` is not implemented for `state::GameMode`
+   = note: add `#[derive(Debug)]` to `state::GameMode` or manually `impl Debug for state::GameMode`
+   = note: this error originates in the macro `$crate::__export::format_args` which comes from the expansion of the macro `msg` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider annotating `state::GameMode` with `#[derive(Debug)]`
+  --> src/state.rs:49:1
+   |
+49 + #[derive(Debug)]
+50 | pub enum GameMode {
+   |
+
+error[E0502]: cannot borrow `*game` as immutable because it is also borrowed as mutable
+   --> src/instructions.rs:191:42
+    |
+188 |         for player in game.players.iter_mut() {
+    |                       ---- mutable borrow occurs here
+...
+191 |                 player.rounds_survived = game.current_round;
+    |                 -------------------------^^^^--------------
+    |                 |                        |
+    |                 |                        immutable borrow occurs here
+    |                 mutable borrow later used here
+    |
+help: try adding a local storing this...
+   --> src/instructions.rs:191:42
+    |
+191 |                 player.rounds_survived = game.current_round;
+    |                                          ^^^^^^^^^^^^^^^^^^
+help: ...and then using that local here
+   --> src/instructions.rs:191:17
+    |
+191 |                 player.rounds_survived = game.current_round;
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some errors have detailed explanations: E0277, E0502.
+For more information about an error, try `rustc --explain E0277`.
+warning: `myluckysol` (lib) generated 19 warnings (5 duplicates)
+error: could not compile `myluckysol` (lib) due to 2 previous errors; 19 warnings emitted
