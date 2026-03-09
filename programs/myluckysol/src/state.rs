@@ -45,7 +45,7 @@ pub struct GamePool {
     pub bump: u8,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug)]
 pub enum GameMode {
     OneVsOne,
     TwoRound,

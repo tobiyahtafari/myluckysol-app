@@ -181,6 +181,7 @@ pub fn resolve_round(
         indices_to_eliminate.sort();
     }
 
+    let current_round = game.current_round;
     for (offset, &idx) in indices_to_eliminate.iter().enumerate() {
         let actual_idx = idx - offset;
         let eliminated_wallet = game.active_players.remove(actual_idx);
@@ -188,11 +189,11 @@ pub fn resolve_round(
         for player in game.players.iter_mut() {
             if player.wallet == eliminated_wallet {
                 player.is_active = false;
-                player.rounds_survived = game.current_round;
+                player.rounds_survived = current_round;
                 break;
             }
         }
-        msg!("Player {} eliminated in round {}", eliminated_wallet, game.current_round);
+        msg!("Player {} eliminated in round {}", eliminated_wallet, current_round);
     }
 
     if game.active_players.len() == 1 {
