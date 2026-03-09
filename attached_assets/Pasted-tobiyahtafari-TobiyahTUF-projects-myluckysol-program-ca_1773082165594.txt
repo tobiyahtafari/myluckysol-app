@@ -1,0 +1,88 @@
+tobiyahtafari@TobiyahTUF:~/projects/myluckysol/program$ cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked
+    Updating git repository `https://github.com/coral-xyz/anchor`
+warning: virtual workspace defaulting to `resolver = "1"` despite one or more workspace members being on edition 2021 which implies `resolver = "2"`
+  |
+  = note: to keep the current resolver, specify `workspace.resolver = "1"` in the workspace root's manifest
+  = note: to use the edition 2021 resolver, specify `workspace.resolver = "2"` in the workspace root's manifest
+  = note: for more details see https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions
+  Installing anchor-cli v0.29.0 (https://github.com/coral-xyz/anchor?tag=v0.29.0#fc9fd6d2)
+    Updating crates.io index
+warning: package `ahash v0.7.6` in Cargo.lock is yanked in registry `crates-io`, consider running without --locked
+warning: package `ahash v0.8.3` in Cargo.lock is yanked in registry `crates-io`, consider running without --locked
+warning: package `futures-util v0.3.28` in Cargo.lock is yanked in registry `crates-io`, consider running without --locked
+   Compiling proc-macro2 v1.0.67
+   Compiling unicode-ident v1.0.12
+   Compiling libc v0.2.148
+   Compiling serde v1.0.188
+   Compiling autocfg v1.1.0
+   Compiling version_check v0.9.4
+   Compiling cfg-if v1.0.0
+   Compiling typenum v1.17.0
+   Compiling syn v1.0.109
+   Compiling once_cell v1.18.0
+   Compiling subtle v2.4.1
+   Compiling thiserror v1.0.49
+   Compiling itoa v1.0.9
+   Compiling ppv-lite86 v0.2.17
+   Compiling semver v1.0.19
+   Compiling scopeguard v1.2.0
+   Compiling log v0.4.20
+   Compiling memchr v2.6.4
+   Compiling serde_json v1.0.107
+   Compiling crunchy v0.2.2
+   Compiling anyhow v1.0.75
+   Compiling generic-array v0.14.7
+   Compiling cpufeatures v0.2.9
+   Compiling num-traits v0.2.16
+   Compiling num-integer v0.1.45
+   Compiling num-bigint v0.4.4
+   Compiling either v1.9.0
+   Compiling crossbeam-utils v0.8.16
+   Compiling byteorder v1.4.3
+   Compiling tinyvec_macros v0.1.1
+   Compiling getrandom v0.1.16
+   Compiling rustc_version v0.4.0
+   Compiling tinyvec v1.6.0
+   Compiling ahash v0.8.3
+   Compiling lazy_static v1.4.0
+   Compiling opaque-debug v0.3.0
+   Compiling quote v1.0.33
+   Compiling memoffset v0.9.0
+   Compiling crossbeam-epoch v0.9.15
+   Compiling block-padding v0.2.1
+   Compiling ryu v1.0.15
+   Compiling hashbrown v0.14.1
+   Compiling syn v2.0.37
+   Compiling equivalent v1.0.1
+   Compiling paste v1.0.14
+   Compiling wasm-bindgen-shared v0.2.87
+   Compiling itertools v0.10.5
+   Compiling lock_api v0.4.10
+   Compiling base64 v0.21.4
+   Compiling rayon-core v1.12.0
+   Compiling parking_lot_core v0.9.8
+   Compiling unicode-normalization v0.1.22
+   Compiling indexmap v2.0.2
+   Compiling crossbeam-deque v0.8.3
+   Compiling jobserver v0.1.26
+   Compiling ahash v0.7.6
+   Compiling getrandom v0.2.10
+   Compiling cc v1.0.83
+   Compiling bumpalo v3.14.0
+   Compiling rand_core v0.6.4
+   Compiling rand_core v0.5.1
+   Compiling feature-probe v0.1.1
+error[E0635]: unknown feature `stdsimd`
+  --> /home/tobiyahtafari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.3/src/lib.rs:99:42
+   |
+99 | #![cfg_attr(feature = "stdsimd", feature(stdsimd))]
+   |                                          ^^^^^^^
+
+   Compiling bitmaps v2.1.0
+   Compiling solana-frozen-abi-macro v1.17.0
+   Compiling bv v0.11.1
+For more information about this error, try `rustc --explain E0635`.
+error: could not compile `ahash` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: failed to compile `anchor-cli v0.29.0 (https://github.com/coral-xyz/anchor?tag=v0.29.0#fc9fd6d2)`, intermediate artifacts can be found at `/tmp/cargo-installf0sUrD`.
+To reuse those artifacts with a future compilation, set the environment variable `CARGO_BUILD_BUILD_DIR` to that path
