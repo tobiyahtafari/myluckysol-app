@@ -1067,10 +1067,11 @@ export class PgStorage implements IStorage {
       }
     }
 
-    // WAGA winner reward
-    if (winWagaReward > 0 && solanaClient.hasAuthority()) {
-      const wagaResult = await solanaClient.transferWagaFromVault(winner.walletAddress, winWagaReward);
-      wagaResult.success ? console.log(`[WAGA] Win reward sent: ${wagaResult.txSig}`) : console.error(`[WAGA] Win reward failed: ${wagaResult.error}`);
+    // WAGA winner reward — ALWAYS VESTED, NEVER SENT IMMEDIATELY
+    if (winWagaReward > 0) {
+      console.log(`[WAGA] Winner reward of ${winWagaReward} WAGA added to vesting for ${winner.walletAddress.slice(0, 6)}...`);
+      // Note: We don't call transferWagaFromVault here because it's vested.
+      // The user claims it from their profile which triggers the actual transfer.
     }
 
     // SOL payouts — winner (90%), treasury (9%), giveaway (1%)
@@ -1086,7 +1087,11 @@ export class PgStorage implements IStorage {
           // Fallback mode: authority wallet pays out directly
           const wt = await solanaClient.transferSol(winner.walletAddress, payout);
           const tt = await solanaClient.transferSol(solanaClient.getTreasuryWallet().toBase58(), treasuryFee);
-          const gt = await solanaClient.transferSol(GIVEAWAY_WALLET, giveawayFee);
+          
+          // FIX: Calculate giveaway fee correctly (1% of total pool)
+          const actualGiveawayFee = finalGame.poolAmount * GIVEAWAY_FEE;
+          const gt = await solanaClient.transferSol(GIVEAWAY_WALLET, actualGiveawayFee);
+          
           if (wt.success) { finalGame.winnerPayoutTxSig = wt.txSig; console.log(`[PAYOUT] Winner: ${wt.txSig}`); }
           else console.error("[PAYOUT] Winner transfer failed:", wt.error);
           if (tt.success) { finalGame.treasuryFeeTxSig = tt.txSig; console.log(`[PAYOUT] Treasury: ${tt.txSig}`); }

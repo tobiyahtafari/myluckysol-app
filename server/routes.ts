@@ -219,12 +219,19 @@ export async function registerRoutes(
       if (!verification.confirmed) {
         console.warn(`[ON-CHAIN] Transaction not confirmed: ${verification.error}. Waiting for confirmation...`);
         // Retry verification once after a small delay if not found immediately
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         const retryVerification = await solanaClient.verifyTransaction(txSignature);
         if (!retryVerification.confirmed) {
           return res.status(400).json({ error: "Transaction not confirmed on-chain yet. Please try again in a few seconds." });
         }
       }
+
+      // TRANSACTION REPLAY PROTECTION
+      const isUsed = await storage.isTransactionUsed(txSignature);
+      if (isUsed) {
+        return res.status(400).json({ error: "Transaction already used" });
+      }
+      await storage.markTransactionUsed(txSignature, walletAddress);
       
       // Check if program is deployed - use appropriate validation
       const programDeployed = await solanaClient.isProgramDeployed();
