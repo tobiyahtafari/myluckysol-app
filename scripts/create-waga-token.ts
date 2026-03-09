@@ -7,6 +7,7 @@ import {
 } from "@solana/spl-token";
 import bs58 from "bs58";
 
+const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
 const DEVNET_RPC = "https://api.devnet.solana.com";
 
 async function createWagaToken() {
@@ -18,7 +19,9 @@ async function createWagaToken() {
   }
 
   try {
-    const connection = new Connection(DEVNET_RPC, "confirmed");
+    const network = process.env.SOLANA_NETWORK || "mainnet";
+    const rpcUrl = network === "mainnet" ? MAINNET_RPC : DEVNET_RPC;
+    const connection = new Connection(rpcUrl, "confirmed");
     const authorityKeypair = Keypair.fromSecretKey(bs58.decode(authorityPrivateKey));
     
     console.log("=== WAGA Token Creation Script ===\n");

@@ -229,8 +229,9 @@ export const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-035
 
 // Add specific Helius support if provided
 export const getActiveRpc = (network: NetworkType = "devnet"): string => {
+  if (network === "mainnet-beta") return MAINNET_RPC;
   if (import.meta.env.VITE_SOLANA_RPC_URL) return import.meta.env.VITE_SOLANA_RPC_URL;
-  return network === "devnet" ? "https://api.devnet.solana.com" : "https://api.mainnet-beta.solana.com";
+  return network === "devnet" ? "https://api.devnet.solana.com" : MAINNET_RPC;
 };
 
 export type NetworkType = "devnet" | "mainnet-beta";

@@ -1,6 +1,7 @@
 import { Connection, PublicKey, Keypair } from "@solana/web3.js";
 import { WAGA_ENTRY_MULTIPLIER, WAGA_WIN_MULTIPLIER } from "@shared/schema";
 
+const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
 const DEVNET_RPC = "https://api.devnet.solana.com";
 const WAGA_TOKEN_PROGRAM_ID = new PublicKey("9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho");
 
@@ -16,7 +17,10 @@ class WagaService {
   private isInitialized: boolean = false;
 
   constructor() {
-    this.connection = new Connection(DEVNET_RPC, "confirmed");
+    const network = process.env.SOLANA_NETWORK || "mainnet";
+    const rpcUrl = process.env.SOLANA_RPC_URL || 
+      (network === "mainnet" ? MAINNET_RPC : DEVNET_RPC);
+    this.connection = new Connection(rpcUrl, "confirmed");
   }
 
   async initialize(): Promise<void> {

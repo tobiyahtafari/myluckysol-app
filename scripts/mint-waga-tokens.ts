@@ -4,6 +4,7 @@ import bs58 from "bs58";
 
 const WAGA_TOKEN_MINT = "9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho";
 const WAGA_REWARDS_VAULT = "9hqGVjFXwBSteHmAhcQ6MpghKv4TVhtCd344NNTtWkjf";
+const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
 const DEVNET_RPC = "https://api.devnet.solana.com";
 
 async function mintWagaTokens() {
@@ -15,7 +16,9 @@ async function mintWagaTokens() {
   }
 
   try {
-    const connection = new Connection(DEVNET_RPC, "confirmed");
+    const network = process.env.SOLANA_NETWORK || "mainnet";
+    const rpcUrl = network === "mainnet" ? MAINNET_RPC : DEVNET_RPC;
+    const connection = new Connection(rpcUrl, "confirmed");
     const authorityKeypair = Keypair.fromSecretKey(bs58.decode(authorityPrivateKey));
     
     console.log("Authority wallet:", authorityKeypair.publicKey.toBase58());
