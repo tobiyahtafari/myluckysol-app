@@ -1,0 +1,594 @@
+tobiyahtafari@TobiyahTUF:~/projects/myluckysol/program$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+rustup default nightly
+rustup component add rust-src
+cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked
+cd ~/projects/myluckysol/program
+rm -rf target Cargo.lock
+anchor build
+info: downloading installer
+warn: It looks like you have an existing rustup settings file at:
+warn: /home/tobiyahtafari/.rustup/settings.toml
+warn: Rustup will install the default toolchain as specified in the settings file,
+warn: instead of the one inferred from the default host triple.
+info: profile set to 'default'
+info: default host triple is x86_64-unknown-linux-gnu
+warn: Updating existing toolchain, profile choice will be ignored
+info: syncing channel updates for 'nightly-x86_64-unknown-linux-gnu'
+info: default toolchain set to 'nightly-x86_64-unknown-linux-gnu'
+
+  nightly-x86_64-unknown-linux-gnu unchanged - rustc 1.96.0-nightly (b41f22de2 2026-03-08)
+
+
+Rust is installed now. Great!
+
+To get started you may need to restart your current shell.
+This would reload your PATH environment variable to include
+Cargo's bin directory ($HOME/.cargo/bin).
+
+To configure your current shell, you need to source
+the corresponding env file under $HOME/.cargo.
+
+This is usually done by running one of the following (note the leading DOT):
+. "$HOME/.cargo/env"            # For sh/bash/zsh/ash/dash/pdksh
+source "$HOME/.cargo/env.fish"  # For fish
+source $"($nu.home-path)/.cargo/env.nu"  # For nushell
+info: using existing install for 'nightly-x86_64-unknown-linux-gnu'
+info: default toolchain set to 'nightly-x86_64-unknown-linux-gnu'
+
+  nightly-x86_64-unknown-linux-gnu unchanged - rustc 1.96.0-nightly (b41f22de2 2026-03-08)
+
+info: component 'rust-src' is up to date
+    Updating git repository `https://github.com/coral-xyz/anchor`
+    Updating git submodule `https://github.com/openbook-dex/program`
+    Updating git submodule `https://github.com/project-serum/stake.git`
+    Updating git submodule `https://github.com/project-serum/swap.git`
+    Updating git submodule `https://github.com/project-serum/serum-dex.git`
+warning: virtual workspace defaulting to `resolver = "1"` despite one or more workspace members being on edition 2021 which implies `resolver = "2"`
+  |
+  = note: to keep the current resolver, specify `workspace.resolver = "1"` in the workspace root's manifest
+  = note: to use the edition 2021 resolver, specify `workspace.resolver = "2"` in the workspace root's manifest
+  = note: for more details see https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions
+  Installing anchor-cli v0.29.0 (https://github.com/coral-xyz/anchor?tag=v0.29.0#fc9fd6d2)
+    Updating crates.io index
+    Updating git repository `https://github.com/openbook-dex/program/`
+warning: package `ahash v0.7.6` in Cargo.lock is yanked in registry `crates-io`, consider running without --locked
+warning: package `ahash v0.8.3` in Cargo.lock is yanked in registry `crates-io`, consider running without --locked
+warning: package `futures-util v0.3.28` in Cargo.lock is yanked in registry `crates-io`, consider running without --locked
+  Downloaded anstream v0.6.4
+  Downloaded arrayvec v0.7.4
+  Downloaded alloc-stdlib v0.2.2
+  Downloaded ahash v0.8.3
+  Downloaded aead v0.4.3
+  Downloaded arrayref v0.3.7
+  Downloaded atty v0.2.14
+  Downloaded ark-ff-macros v0.4.2
+  Downloaded asn1-rs-derive v0.4.0
+  Downloaded aes-gcm-siv v0.10.3
+  Downloaded darling_macro v0.20.3
+  Downloaded async-channel v1.9.0
+  Downloaded darling v0.20.3
+  Downloaded async-mutex v1.4.0
+  Downloaded anstyle v1.0.4
+  Downloaded dlopen2_derive v0.3.0
+  Downloaded borsh-derive-internal v0.9.3
+  Downloaded cfg-if v1.0.0
+  Downloaded block-padding v0.2.1
+  Downloaded borsh-schema-derive-internal v0.9.3
+  Downloaded bit-set v0.5.3
+  Downloaded ark-ff-asm v0.4.2
+  Downloaded dirs-sys-next v0.1.2
+  Downloaded anstyle-query v1.0.0
+  Downloaded ark-serialize-derive v0.4.2
+  Downloaded cpufeatures v0.2.9
+  Downloaded dirs-next v2.0.0
+  Downloaded dirs v4.0.0
+  Downloaded digest v0.9.0
+  Downloaded ark-std v0.4.0
+  Downloaded dirs-sys v0.3.7
+  Downloaded crunchy v0.2.2
+  Downloaded const-oid v0.7.1
+  Downloaded crypto-mac v0.8.0
+  Downloaded borsh-derive-internal v0.10.3
+  Downloaded assert_matches v1.5.0
+  Downloaded alloc-no-stdlib v2.0.4
+  Downloaded colorchoice v1.0.0
+  Downloaded clap_derive v4.4.2
+  Downloaded autocfg v1.1.0
+  Downloaded ascii v0.9.3
+  Downloaded borsh v0.10.3
+  Downloaded deranged v0.3.8
+  Downloaded anyhow v1.0.75
+  Downloaded lock_api v0.4.10
+  Downloaded crypto-common v0.1.6
+  Downloaded clap_lex v0.2.4
+  Downloaded byteorder v1.4.3
+  Downloaded bs58 v0.4.0
+  Downloaded block-buffer v0.9.0
+  Downloaded errno v0.3.4
+  Downloaded borsh-derive v0.9.3
+  Downloaded fastrand v2.0.1
+  Downloaded enum-iterator-derive v1.2.1
+  Downloaded ascii-canvas v3.0.0
+  Downloaded ed25519-dalek-bip32 v0.2.0
+  Downloaded base64ct v1.6.0
+  Downloaded fixedbitset v0.4.2
+  Downloaded form_urlencoded v1.2.0
+  Downloaded eager v0.1.0
+  Downloaded console v0.15.7
+  Downloaded mime v0.3.17
+  Downloaded memoffset v0.7.1
+  Downloaded enum-iterator v1.4.1
+  Downloaded crossbeam-epoch v0.9.15
+  Downloaded memoffset v0.9.0
+  Downloaded is-terminal v0.4.9
+  Downloaded borsh-derive v0.10.3
+  Downloaded ark-serialize v0.4.2
+  Downloaded httpdate v1.0.3
+  Downloaded futures-task v0.3.28
+  Downloaded cipher v0.3.0
+  Downloaded constant_time_eq v0.3.0
+  Downloaded futures-io v0.3.28
+  Downloaded borsh-schema-derive-internal v0.10.3
+  Downloaded block-buffer v0.10.4
+  Downloaded async-trait v0.1.73
+  Downloaded Inflector v0.11.4
+  Downloaded libsecp256k1-gen-ecmult v0.2.1
+  Downloaded num-iter v0.1.43
+  Downloaded lalrpop-util v0.20.0
+  Downloaded num-derive v0.4.0
+  Downloaded generic-array v0.14.7
+  Downloaded ansi_term v0.12.1
+  Downloaded num-derive v0.3.3
+  Downloaded num v0.2.1
+  Downloaded merlin v3.0.0
+  Downloaded bv v0.11.1
+  Downloaded ark-ec v0.4.2
+  Downloaded base64 v0.12.3
+  Downloaded num_cpus v1.16.0
+  Downloaded openssl-probe v0.1.5
+  Downloaded opaque-debug v0.3.0
+  Downloaded oid-registry v0.6.1
+  Downloaded libsecp256k1-gen-genmult v0.2.1
+  Downloaded itoa v1.0.9
+  Downloaded jsonrpc-core v18.0.0
+  Downloaded concurrent-queue v2.3.0
+  Downloaded ident_case v1.0.1
+  Downloaded gethostname v0.2.3
+  Downloaded percent-encoding v2.3.0
+  Downloaded pathdiff v0.2.1
+  Downloaded num-rational v0.2.4
+  Downloaded mime_guess v2.0.4
+  Downloaded clap_lex v0.5.1
+  Downloaded phf_shared v0.11.2
+  Downloaded phf_shared v0.10.0
+  Downloaded pin-utils v0.1.0
+  Downloaded phf_macros v0.11.2
+  Downloaded proc-macro-crate v1.3.1
+  Downloaded num-integer v0.1.45
+  Downloaded precomputed-hash v0.1.1
+  Downloaded memmap2 v0.5.10
+  Downloaded paste v1.0.14
+  Downloaded crossbeam-utils v0.8.16
+  Downloaded os_str_bytes v6.5.1
+  Downloaded crc32fast v1.3.2
+  Downloaded anstyle-parse v0.2.2
+  Downloaded log v0.4.20
+  Downloaded pin-project-lite v0.2.13
+  Downloaded ppv-lite86 v0.2.17
+  Downloaded polyval v0.5.3
+  Downloaded rtoolbox v0.0.1
+  Downloaded rpassword v7.2.0
+  Downloaded same-file v1.0.6
+  Downloaded rand_chacha v0.3.1
+  Downloaded quinn-udp v0.4.1
+  Downloaded displaydoc v0.2.4
+  Downloaded miniz_oxide v0.7.1
+  Downloaded fnv v1.0.7
+  Downloaded event-listener v2.5.3
+  Downloaded equivalent v1.0.1
+  Downloaded crossbeam-channel v0.5.8
+  Downloaded derivation-path v0.2.0
+  Downloaded base64 v0.13.1
+  Downloaded scroll_derive v0.11.1
+  Downloaded filetime v0.2.22
+  Downloaded plain v0.2.3
+  Downloaded pkg-config v0.3.27
+  Downloaded parking_lot_core v0.9.8
+  Downloaded sha1 v0.10.6
+  Downloaded serde_spanned v0.6.3
+  Downloaded rustc-demangle v0.1.23
+  Downloaded parking_lot v0.12.1
+  Downloaded serde_urlencoded v0.7.1
+  Downloaded signature v1.6.4
+  Downloaded rustversion v1.0.14
+  Downloaded num-traits v0.2.16
+  Downloaded quote v1.0.33
+  Downloaded scroll v0.11.0
+  Downloaded new_debug_unreachable v1.0.4
+  Downloaded async-compression v0.4.3
+  Downloaded solana-logger v1.17.0
+  Downloaded solana-client v1.17.0
+  Downloaded serde_with_macros v2.3.3
+  Downloaded portpicker v0.1.1
+  Downloaded pem v1.1.1
+  Downloaded solana-measure v1.17.0
+  Downloaded proc-macro-crate v0.1.5
+  Downloaded solana-rpc-client-nonce-utils v1.17.0
+  Downloaded sha2 v0.10.8
+  Downloaded rand_chacha v0.2.2
+  Downloaded combine v3.8.1
+  Downloaded solana-rayon-threadlimit v1.17.0
+  Downloaded slab v0.4.9
+  Downloaded base64 v0.21.4
+  Downloaded solana-faucet v1.17.0
+  Downloaded spl-discriminator-derive v0.1.1
+  Downloaded spl-program-error v0.3.0
+  Downloaded histogram v0.6.9
+  Downloaded feature-probe v0.1.1
+  Downloaded ena v0.14.2
+  Downloaded either v1.9.0
+  Downloaded ed25519 v1.5.3
+  Downloaded solana-clap-utils v1.17.0
+  Downloaded dlopen2 v0.5.0
+  Downloaded solana-rpc-client-api v1.17.0
+  Downloaded spl-pod v0.1.0
+  Downloaded solana-tpu-client v1.17.0
+  Downloaded spl-program-error-derive v0.3.1
+  Downloaded httparse v1.8.0
+  Downloaded smallvec v1.11.1
+  Downloaded sized-chunks v0.6.5
+  Downloaded spl-transfer-hook-interface v0.3.0
+  Downloaded aes v0.7.5
+  Downloaded subtle v2.4.1
+  Downloaded sha2 v0.9.9
+  Downloaded heck v0.3.3
+  Downloaded serde_yaml v0.9.25
+  Downloaded spl-tlv-account-resolution v0.4.0
+  Downloaded libsecp256k1 v0.6.0
+  Downloaded strsim v0.8.0
+  Downloaded hyper-rustls v0.24.1
+  Downloaded serde_derive v1.0.188
+  Downloaded strsim v0.10.0
+  Downloaded spl-discriminator v0.1.0
+  Downloaded solana-metrics v1.17.0
+  Downloaded rayon-core v1.12.0
+  Downloaded solana-transaction-status v1.17.0
+  Downloaded solana-streamer v1.17.0
+  Downloaded solana-program-runtime v1.17.0
+  Downloaded scopeguard v1.2.0
+  Downloaded tinyvec_macros v0.1.1
+  Downloaded time-core v0.1.2
+  Downloaded string_cache v0.8.7
+  Downloaded tokio-macros v2.1.0
+  Downloaded futures-executor v0.3.28
+  Downloaded rusticata-macros v4.1.0
+  Downloaded rand v0.8.5
+  Downloaded tempfile v3.8.0
+  Downloaded unreachable v1.0.0
+  Downloaded tower-service v0.3.2
+  Downloaded thiserror v1.0.49
+  Downloaded universal-hash v0.4.1
+  Downloaded try-lock v0.2.4
+  Downloaded solang-parser v0.3.2
+  Downloaded termcolor v1.3.0
+  Downloaded socket2 v0.5.4
+  Downloaded shell-words v1.1.0
+  Downloaded synstructure v0.12.6
+  Downloaded solana-rpc-client v1.17.0
+  Downloaded tokio-tungstenite v0.20.1
+  Downloaded want v0.3.1
+  Downloaded void v1.0.2
+  Downloaded version_check v0.9.4
+  Downloaded vec_map v0.8.2
+  Downloaded tracing-attributes v0.1.26
+  Downloaded unicode-width v0.1.11
+  Downloaded aho-corasick v1.1.1
+  Downloaded unicase v2.7.0
+  Downloaded iana-time-zone v0.1.57
+  Downloaded ed25519-dalek v1.0.1
+  Downloaded zeroize_derive v1.4.2
+  Downloaded untrusted v0.7.1
+  Downloaded tokio-rustls v0.24.1
+  Downloaded zeroize v1.3.0
+  Downloaded xattr v1.0.1
+  Downloaded tar v0.4.40
+  Downloaded textwrap v0.16.0
+  Downloaded brotli-decompressor v2.5.0
+  Downloaded zstd v0.11.2+zstd.1.5.2
+  Downloaded thiserror-impl v1.0.49
+  Downloaded spl-type-length-value v0.3.0
+  Downloaded unicode-ident v1.0.12
+  Downloaded clap v3.2.25
+  Downloaded unicode-bidi v0.3.13
+  Downloaded hmac v0.12.1
+  Downloaded tungstenite v0.20.1
+  Downloaded clap v2.34.0
+  Downloaded serde_json v1.0.107
+  Downloaded unsafe-libyaml v0.2.9
+  Downloaded url v2.4.1
+  Downloaded solana-sdk v1.17.0
+  Downloaded tokio-util v0.7.9
+  Downloaded x509-parser v0.14.0
+  Downloaded toml_datetime v0.6.3
+  Downloaded solana_rbpf v0.7.2
+  Downloaded unicode-xid v0.2.4
+  Downloaded solana-program v1.17.0
+  Downloaded solana-net-utils v1.17.0
+  Downloaded winnow v0.5.15
+  Downloaded wasm-bindgen-shared v0.2.87
+  Downloaded rustls v0.21.7
+  Downloaded libsecp256k1-core v0.2.2
+  Downloaded syn v2.0.37
+  Downloaded getrandom v0.2.10
+  Downloaded regex-syntax v0.7.5
+  Downloaded syn v1.0.109
+  Downloaded textwrap v0.11.0
+  Downloaded der-parser v8.2.0
+  Downloaded rustix v0.38.15
+  Downloaded indicatif v0.17.7
+  Downloaded getrandom v0.1.16
+  Downloaded wasm-bindgen-macro v0.2.87
+  Downloaded regex v1.9.6
+  Downloaded signal-hook-registry v1.4.1
+  Downloaded shellexpand v2.1.2
+  Downloaded sha3 v0.9.1
+  Downloaded rustls-pemfile v1.0.3
+  Downloaded zstd-safe v5.0.2+zstd.1.5.2
+  Downloaded wasm-bindgen-macro-support v0.2.87
+  Downloaded wasm-bindgen-backend v0.2.87
+  Downloaded darling_core v0.20.3
+  Downloaded spl-token v4.0.0
+  Downloaded time v0.3.29
+  Downloaded term v0.7.0
+  Downloaded quinn v0.10.2
+  Downloaded once_cell v1.18.0
+  Downloaded quinn-proto v0.10.5
+  Downloaded indexmap v2.0.2
+  Downloaded petgraph v0.6.4
+  Downloaded zstd-sys v2.0.8+zstd.1.5.5
+  Downloaded typenum v1.17.0
+  Downloaded indexmap v1.9.3
+  Downloaded unicode-segmentation v1.10.1
+  Downloaded tiny-bip39 v0.8.2
+  Downloaded yasna v0.5.2
+  Downloaded flate2 v1.0.27
+  Downloaded humantime v2.1.0
+  Downloaded chrono v0.4.31
+  Downloaded futures v0.3.28
+  Downloaded tracing-core v0.1.31
+  Downloaded toml v0.7.8
+  Downloaded tokio-stream v0.1.14
+  Downloaded env_logger v0.9.3
+  Downloaded diff v0.1.13
+  Downloaded toml v0.5.11
+  Downloaded uriparse v0.6.4
+  Downloaded spl-token-metadata-interface v0.2.0
+  Downloaded spl-memo v4.0.0
+  Downloaded spin v0.5.2
+  Downloaded rustc_version v0.4.0
+  Downloaded rand_xoshiro v0.6.0
+  Downloaded pkcs8 v0.8.0
+  Downloaded num_enum_derive v0.7.0
+  Downloaded num_enum v0.7.0
+  Downloaded num-complex v0.2.4
+  Downloaded brotli v3.4.0
+  Downloaded blake3 v1.5.0
+  Downloaded hashbrown v0.13.2
+  Downloaded http v0.2.9
+  Downloaded hashbrown v0.11.2
+  Downloaded walkdir v2.4.0
+  Downloaded tracing v0.1.37
+  Downloaded serde v1.0.188
+  Downloaded rand v0.7.3
+  Downloaded tinyvec v1.6.0
+  Downloaded utf8parse v0.2.1
+  Downloaded utf-8 v0.7.6
+  Downloaded spl-discriminator-syn v0.1.1
+  Downloaded solana-connection-cache v1.17.0
+  Downloaded tiny-keccak v2.0.2
+  Downloaded time-macros v0.2.15
+  Downloaded num-bigint v0.4.4
+  Downloaded solana-config-program v1.17.0
+  Downloaded itertools v0.10.5
+  Downloaded toml_edit v0.19.15
+  Downloaded im v15.1.0
+  Downloaded hashbrown v0.12.3
+  Downloaded itertools v0.11.0
+  Downloaded hashbrown v0.14.1
+  Downloaded siphasher v0.3.11
+  Downloaded nom v7.1.3
+  Downloaded dialoguer v0.10.4
+  Downloaded der v0.5.1
+  Downloaded solana-vote-program v1.17.0
+  Downloaded spl-token-2022 v0.9.0
+  Downloaded derivative v2.2.0
+  Downloaded clap_builder v4.4.6
+  Downloaded jobserver v0.1.26
+  Downloaded futures-sink v0.3.28
+  Downloaded serde_with v2.3.3
+  Downloaded unicode-normalization v0.1.22
+  Downloaded h2 v0.3.21
+  Downloaded portable-atomic v1.4.3
+  Downloaded socket2 v0.4.9
+  Downloaded minimal-lexical v0.2.1
+  Downloaded ryu v1.0.15
+  Downloaded solana-remote-wallet v1.17.0
+  Downloaded ipnet v2.8.0
+  Downloaded futures-util v0.3.28
+  Downloaded reqwest v0.11.21
+  Downloaded goblin v0.5.4
+  Downloaded solana-perf v1.17.0
+  Downloaded futures-channel v0.3.28
+  Downloaded data-encoding v2.4.0
+  Downloaded spl-associated-token-account v2.2.0
+  Downloaded spki v0.5.4
+  Downloaded solana-version v1.17.0
+  Downloaded solana-udp-client v1.17.0
+  Downloaded solana-thin-client v1.17.0
+  Downloaded solana-sdk-macro v1.17.0
+  Downloaded solana-account-decoder v1.17.0
+  Downloaded digest v0.10.7
+  Downloaded solana-zk-token-sdk v1.17.0
+  Downloaded rayon v1.8.0
+  Downloaded rustls-native-certs v0.6.3
+  Downloaded wasm-bindgen v0.2.87
+  Downloaded rustls-webpki v0.101.6
+  Downloaded lalrpop v0.20.0
+  Downloaded hyper v0.14.27
+  Downloaded idna v0.4.0
+  Downloaded qstring v0.7.2
+  Downloaded num-bigint v0.2.6
+  Downloaded nix v0.26.4
+  Downloaded webpki-roots v0.25.2
+  Downloaded webpki-roots v0.24.0
+  Downloaded solana-quic-client v1.17.0
+  Downloaded solana-pubsub-client v1.17.0
+  Downloaded rcgen v0.10.0
+  Downloaded qualifier_attr v0.2.2
+  Downloaded semver v1.0.19
+  Downloaded rustc-hash v1.1.0
+  Downloaded mio v0.8.8
+  Downloaded memchr v2.6.4
+  Downloaded bumpalo v3.14.0
+  Downloaded solana-frozen-abi-macro v1.17.0
+  Downloaded solana-frozen-abi v1.17.0
+  Downloaded light-poseidon v0.1.1
+  Downloaded solana-cli-config v1.17.0
+  Downloaded sct v0.7.0
+  Downloaded proc-macro2 v1.0.67
+  Downloaded num_enum_derive v0.6.1
+  Downloaded keccak v0.1.4
+  Downloaded rand_core v0.6.4
+  Downloaded rand_core v0.5.1
+  Downloaded http-body v0.4.5
+  Downloaded serde_bytes v0.11.12
+  Downloaded dashmap v4.0.2
+  Downloaded cc v1.0.83
+  Downloaded asn1-rs v0.5.2
+  Downloaded phf_generator v0.11.2
+  Downloaded phf v0.11.2
+  Downloaded bincode v1.3.3
+  Downloaded percentage v0.1.0
+  Downloaded num_enum v0.6.1
+  Downloaded hmac v0.8.1
+  Downloaded bytes v1.5.0
+  Downloaded ark-ff v0.4.2
+  Downloaded pbkdf2 v0.11.0
+  Downloaded pbkdf2 v0.4.0
+  Downloaded heck v0.4.1
+  Downloaded hash32 v0.2.1
+  Downloaded ctr v0.8.0
+  Downloaded clap v4.4.6
+  Downloaded cargo_toml v0.15.3
+  Downloaded bytemuck_derive v1.5.0
+  Downloaded bs58 v0.5.0
+  Downloaded bitflags v1.3.2
+  Downloaded curve25519-dalek v3.2.1
+  Downloaded number_prefix v0.4.0
+  Downloaded lazy_static v1.4.0
+  Downloaded bytemuck v1.14.0
+  Downloaded hmac-drbg v0.3.0
+  Downloaded futures-macro v0.3.28
+  Downloaded futures-core v0.3.28
+  Downloaded crossbeam-deque v0.8.3
+  Downloaded caps v0.5.5
+  Downloaded bitmaps v2.1.0
+  Downloaded bitflags v2.4.0
+  Downloaded bit-vec v0.6.3
+  Downloaded ark-poly v0.4.2
+  Downloaded borsh v0.9.3
+  Downloaded adler v1.0.2
+  Downloaded regex-automata v0.3.9
+  Downloaded asn1-rs-impl v0.1.0
+  Downloaded ark-bn254 v0.4.0
+  Downloaded libc v0.2.148
+  Downloaded ahash v0.7.6
+  Downloaded tokio v1.32.0
+  Downloaded sha3 v0.10.8
+  Downloaded ring v0.16.20
+  Downloaded encoding_rs v0.8.33
+  Downloaded linux-raw-sys v0.4.8
+  Downloaded 454 crates (33.1MiB) in 2.91s (largest was `ring` at 4.8MiB)
+   Compiling proc-macro2 v1.0.67
+   Compiling unicode-ident v1.0.12
+   Compiling libc v0.2.148
+   Compiling serde v1.0.188
+   Compiling autocfg v1.1.0
+   Compiling version_check v0.9.4
+   Compiling cfg-if v1.0.0
+   Compiling typenum v1.17.0
+   Compiling syn v1.0.109
+   Compiling once_cell v1.18.0
+   Compiling thiserror v1.0.49
+   Compiling subtle v2.4.1
+   Compiling ppv-lite86 v0.2.17
+   Compiling semver v1.0.19
+   Compiling itoa v1.0.9
+   Compiling scopeguard v1.2.0
+   Compiling log v0.4.20
+   Compiling memchr v2.6.4
+   Compiling serde_json v1.0.107
+   Compiling crunchy v0.2.2
+   Compiling anyhow v1.0.75
+   Compiling generic-array v0.14.7
+   Compiling num-traits v0.2.16
+   Compiling num-integer v0.1.45
+   Compiling cpufeatures v0.2.9
+   Compiling num-bigint v0.4.4
+   Compiling either v1.9.0
+   Compiling crossbeam-utils v0.8.16
+   Compiling byteorder v1.4.3
+   Compiling tinyvec_macros v0.1.1
+   Compiling getrandom v0.1.16
+   Compiling tinyvec v1.6.0
+   Compiling ahash v0.8.3
+   Compiling rustc_version v0.4.0
+   Compiling lazy_static v1.4.0
+   Compiling opaque-debug v0.3.0
+   Compiling memoffset v0.9.0
+   Compiling crossbeam-epoch v0.9.15
+   Compiling paste v1.0.14
+   Compiling equivalent v1.0.1
+   Compiling quote v1.0.33
+   Compiling hashbrown v0.14.1
+   Compiling ryu v1.0.15
+   Compiling block-padding v0.2.1
+   Compiling wasm-bindgen-shared v0.2.87
+   Compiling syn v2.0.37
+   Compiling itertools v0.10.5
+   Compiling lock_api v0.4.10
+   Compiling base64 v0.21.4
+   Compiling unicode-normalization v0.1.22
+   Compiling parking_lot_core v0.9.8
+   Compiling rayon-core v1.12.0
+   Compiling crossbeam-deque v0.8.3
+   Compiling indexmap v2.0.2
+   Compiling ahash v0.7.6
+   Compiling feature-probe v0.1.1
+   Compiling jobserver v0.1.26
+   Compiling bumpalo v3.14.0
+   Compiling getrandom v0.2.10
+   Compiling cc v1.0.83
+   Compiling bv v0.11.1
+   Compiling rand_core v0.5.1
+   Compiling rand_core v0.6.4
+   Compiling bitmaps v2.1.0
+   Compiling solana-frozen-abi-macro v1.17.0
+error[E0635]: unknown feature `stdsimd`
+  --> /home/tobiyahtafari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.3/src/lib.rs:99:42
+   |
+99 | #![cfg_attr(feature = "stdsimd", feature(stdsimd))]
+   |                                          ^^^^^^^
+
+   Compiling rand_chacha v0.2.2
+   Compiling rand_chacha v0.3.1
+   Compiling im v15.1.0
+   Compiling fnv v1.0.7
+   Compiling rustc-hash v1.1.0
+For more information about this error, try `rustc --explain E0635`.
+error: could not compile `ahash` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: failed to compile `anchor-cli v0.29.0 (https://github.com/coral-xyz/anchor?tag=v0.29.0#fc9fd6d2)`, intermediate artifacts can be found at `/tmp/cargo-installLZPk8m`.
+To reuse those artifacts with a future compilation, set the environment variable `CARGO_BUILD_BUILD_DIR` to that path.
+bash: /home/tobiyahtafari/.cargo/bin/anchor: No such file or directory
