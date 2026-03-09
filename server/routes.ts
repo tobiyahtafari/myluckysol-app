@@ -226,12 +226,11 @@ export async function registerRoutes(
         }
       }
 
-      // TRANSACTION REPLAY PROTECTION
+      // TRANSACTION REPLAY PROTECTION (check only — mark after successful join)
       const isUsed = await storage.isTransactionUsed(txSignature);
       if (isUsed) {
         return res.status(400).json({ error: "Transaction already used" });
       }
-      await storage.markTransactionUsed(txSignature, walletAddress);
       
       // Check if program is deployed - use appropriate validation
       const programDeployed = await solanaClient.isProgramDeployed();
@@ -295,13 +294,6 @@ export async function registerRoutes(
       txVerified = true;
       console.log(`[ON-CHAIN] Transaction ${txSignature.slice(0, 16)}... verified on slot ${verification.slot}`);
 
-      // REPLAY PROTECTION: Ensure this tx signature hasn't been used before
-      const alreadyUsed = await storage.isTransactionUsed(txSignature);
-      if (alreadyUsed) {
-        return res.status(400).json({ error: "Transaction already used. Cannot join a game twice with the same transaction." });
-      }
-      await storage.markTransactionUsed(txSignature, walletAddress);
-
       // Join the game with real wallet (only after tx verified)
       console.log(`[JOIN] Attempting to join game ${game.id} for wallet ${walletAddress}`);
       const updatedGame = await storage.joinGame(game.id, walletAddress, txSignature);
@@ -310,6 +302,9 @@ export async function registerRoutes(
         console.error(`[JOIN] Failed to join game ${game.id} for wallet ${walletAddress} even though TX was verified!`);
         return res.status(400).json({ error: "Failed to join game. Please contact support with your transaction signature." });
       }
+
+      // Mark transaction as used ONLY after successful join — prevents permanent lockout on failed joins
+      await storage.markTransactionUsed(txSignature, walletAddress);
 
       console.log(`[ON-CHAIN] Player ${walletAddress.slice(0, 8)}... successfully joined game ${updatedGame.id}. Total players: ${updatedGame.players.length}`);
 
