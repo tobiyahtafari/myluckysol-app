@@ -1,0 +1,145 @@
+tobiyahtafari@TobiyahTUF:~/projects/myluckysol/program$ cd ~/projects/myluckysol/program
+rm -rf ~/.cargo/registry/src/index.crates.io-*
+rm -rf ~/.cargo/registry/cache/index.crates.io-*
+RUSTUP_TOOLCHAIN=nightly anchor build
+  Downloaded anchor-attribute-constant v0.30.1
+  Downloaded anchor-lang-idl-spec v0.1.0
+  Downloaded anchor-derive-serde v0.30.1
+  Downloaded anchor-attribute-account v0.30.1
+  Downloaded ark-ff-macros v0.4.2
+  Downloaded anchor-derive-accounts v0.30.1
+  Downloaded anchor-derive-space v0.30.1
+  Downloaded anchor-attribute-error v0.30.1
+  Downloaded anchor-attribute-event v0.30.1
+  Downloaded ark-ff-asm v0.4.2
+  Downloaded anchor-lang-idl v0.1.2
+  Downloaded anchor-attribute-access-control v0.30.1
+  Downloaded anchor-attribute-program v0.30.1
+  Downloaded ark-bn254 v0.4.0
+  Downloaded anyhow v1.0.102
+  Downloaded anchor-lang v0.30.1
+  Downloaded ark-serialize-derive v0.4.2
+  Downloaded block-buffer v0.10.4
+  Downloaded subtle v2.6.1
+  Downloaded rustc-hash v1.1.0
+  Downloaded pbkdf2 v0.4.0
+  Downloaded solana-frozen-abi-macro v1.18.26
+  Downloaded tinyvec_macros v0.1.1
+  Downloaded wasm-bindgen-shared v0.2.114
+  Downloaded ark-serialize v0.4.2
+  Downloaded zeroize_derive v1.4.3
+  Downloaded solana-sdk-macro v1.18.26
+  Downloaded rand_chacha v0.2.2
+  Downloaded borsh-derive v0.10.4
+  Downloaded solana-frozen-abi v1.18.26
+  Downloaded block-buffer v0.9.0
+  Downloaded borsh-derive-internal v0.9.3
+  Downloaded version_check v0.9.5
+  Downloaded borsh-derive-internal v0.10.4
+  Downloaded wasm-bindgen-macro v0.2.114
+  Downloaded serde_bytes v0.11.19
+  Downloaded rand_chacha v0.3.1
+  Downloaded hmac-drbg v0.3.0
+  Downloaded crypto-mac v0.8.0
+  Downloaded opaque-debug v0.3.1
+  Downloaded zeroize v1.3.0
+  Downloaded hmac v0.8.1
+  Downloaded digest v0.9.0
+  Downloaded cfg_aliases v0.2.1
+  Downloaded crunchy v0.2.4
+  Downloaded rustversion v1.0.22
+  Downloaded libsecp256k1-gen-genmult v0.2.1
+  Downloaded libsecp256k1-gen-ecmult v0.2.1
+  Downloaded zmij v1.0.21
+  Downloaded cfg-if v1.0.4
+  Downloaded toml_datetime v1.0.0+spec-1.1.0
+  Downloaded thiserror-impl v1.0.69
+  Downloaded sha2 v0.10.9
+  Downloaded sha2 v0.9.9
+  Downloaded quote v1.0.45
+  Downloaded semver v1.0.27
+  Downloaded rand_core v0.5.1
+  Downloaded proc-macro-crate v3.5.0
+  Downloaded keccak v0.1.6
+  Downloaded borsh-schema-derive-internal v0.9.3
+  Downloaded paste v1.0.15
+  Downloaded proc-macro-crate v0.1.5
+  Downloaded heck v0.3.3
+  Downloaded num-derive v0.4.2
+  Downloaded lazy_static v1.5.0
+  Downloaded feature-probe v0.1.1
+  Downloaded rand_xoshiro v0.6.0
+  Downloaded num-integer v0.1.46
+  Downloaded borsh-schema-derive-internal v0.10.4
+  Downloaded equivalent v1.0.2
+  Downloaded memoffset v0.9.1
+  Downloaded itoa v1.0.17
+  Downloaded rustc_version v0.4.1
+  Downloaded thiserror v1.0.69
+  Downloaded sized-chunks v0.6.5
+  Downloaded once_cell v1.21.3
+  Downloaded borsh-derive v1.6.0
+  Downloaded toml_parser v1.0.9+spec-1.1.0
+  Downloaded crypto-common v0.1.7
+  Downloaded borsh-derive v0.9.3
+  Downloaded arrayref v0.3.9
+  Downloaded arrayvec v0.7.6
+  Downloaded ark-ec v0.4.2
+  Downloaded ark-poly v0.4.2
+  Downloaded ahash v0.7.8
+  Downloaded borsh v0.10.4
+  Downloaded bincode v1.3.3
+  Downloaded generic-array v0.14.7
+  Downloaded ark-std v0.4.0
+  Downloaded shlex v1.3.0
+  Downloaded toml v0.5.11
+  Downloaded proc-macro2 v1.0.106
+  Downloaded libsecp256k1-core v0.2.2
+  Downloaded unicode-ident v1.0.24
+  Downloaded serde_core v1.0.228
+  Downloaded either v1.15.0
+  Downloaded cpufeatures v0.2.17
+  Downloaded serde_derive v1.0.228
+  Downloaded byteorder v1.5.0
+  Downloaded bs58 v0.4.0
+  Downloaded bytemuck_derive v1.10.2
+  Downloaded tinyvec v1.10.0
+  Downloaded find-msvc-tools v0.1.9
+  Downloaded jobserver v0.1.34
+  Downloaded getrandom v0.1.16
+  Downloaded wasm-bindgen-macro-support v0.2.114
+  Downloaded rayon-core v1.13.0
+  Downloaded rand v0.7.3
+  Downloaded toml_edit v0.25.4+spec-1.1.0
+  Downloaded bitflags v2.11.0
+  Downloaded rand_core v0.6.4
+  Downloaded borsh v0.9.3
+  Downloaded autocfg v1.5.0
+  Downloaded ppv-lite86 v0.2.21
+  Downloaded wasm-bindgen v0.2.114
+  Downloaded rand v0.8.5
+  Downloaded libsecp256k1 v0.6.0
+  Downloaded base64 v0.12.3
+  Downloaded ark-ff v0.4.2
+  Downloaded serde v1.0.228
+  Downloaded unicode-segmentation v1.12.0
+  Downloaded tiny-bip39 v0.8.2
+  Downloaded crossbeam-epoch v0.9.18
+  Downloaded anchor-syn v0.30.1
+  Downloaded ahash v0.8.12
+  Downloaded typenum v1.19.0
+  Downloaded bs58 v0.5.1
+  Downloaded unicode-normalization v0.1.25
+  Downloaded crossbeam-deque v0.8.6
+  Downloaded constant_time_eq v0.4.2
+error: failed to download replaced source registry `crates-io`
+
+Caused by:
+  failed to parse manifest at `/home/tobiyahtafari/.cargo/registry/src/index.crates.io-6f17d22bba15001f/constant_time_eq-0.4.2/Cargo.toml`
+
+Caused by:
+  feature `edition2024` is required
+
+  The package requires the Cargo feature called `edition2024`, but that feature is not stabilized in this version of Cargo (1.75.0 (827d7a4d2 2024-02-16)).
+  Consider trying a more recent nightly release.
+  See https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#edition-2024 for more information about the status of this feature.
