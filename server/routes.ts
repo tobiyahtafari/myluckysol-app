@@ -303,10 +303,12 @@ export async function registerRoutes(
       await storage.markTransactionUsed(txSignature, walletAddress);
 
       // Join the game with real wallet (only after tx verified)
+      console.log(`[JOIN] Attempting to join game ${game.id} for wallet ${walletAddress}`);
       const updatedGame = await storage.joinGame(game.id, walletAddress, txSignature);
 
       if (!updatedGame) {
-        return res.status(400).json({ error: "Failed to join game" });
+        console.error(`[JOIN] Failed to join game ${game.id} for wallet ${walletAddress} even though TX was verified!`);
+        return res.status(400).json({ error: "Failed to join game. Please contact support with your transaction signature." });
       }
 
       console.log(`[ON-CHAIN] Player ${walletAddress.slice(0, 8)}... successfully joined game ${updatedGame.id}. Total players: ${updatedGame.players.length}`);

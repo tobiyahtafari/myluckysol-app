@@ -755,9 +755,20 @@ export class PgStorage implements IStorage {
 
   async getGame(id: string): Promise<Game | undefined> {
     const inMem = this.games.get(id);
-    if (inMem) return inMem;
+    if (inMem) {
+      // Ensure in-memory state is always an object with players array
+      if (!inMem.players) inMem.players = [];
+      return inMem;
+    }
     const { rows } = await pool.query("SELECT data FROM games WHERE id = $1", [id]);
-    return rows[0] ? (rows[0].data as Game) : undefined;
+    if (rows[0]) {
+      const game = rows[0].data as Game;
+      if (!game.players) game.players = [];
+      // Populate in-memory map for performance and consistency
+      this.games.set(id, game);
+      return game;
+    }
+    return undefined;
   }
 
   async getLiveGames(): Promise<Game[]> {
@@ -820,7 +831,7 @@ export class PgStorage implements IStorage {
   }
 
   async updateGameStatus(id: string, status: string): Promise<Game | undefined> {
-    const game = this.games.get(id);
+    const game = await this.getGame(id);
     if (!game) return undefined;
     game.status = status as Game["status"];
 
@@ -837,13 +848,30 @@ export class PgStorage implements IStorage {
 
   async findAvailableGame(mode: GameModeKey, wager: WagerTier): Promise<Game | undefined> {
     const config = GAME_MODES[mode];
-    return Array.from(this.games.values()).find(
+    // First check in-memory
+    const inMem = Array.from(this.games.values()).find(
       g => g.mode === mode && g.wager === wager && g.status === "waiting" && g.players.length < config.players
     );
+    if (inMem) return inMem;
+
+    // Fallback to DB
+    const { rows } = await pool.query(
+      "SELECT data FROM games WHERE status = 'waiting' AND (data->>'mode') = $1 AND (data->>'wager')::float = $2",
+      [mode, wager]
+    );
+
+    for (const row of rows) {
+      const g = row.data as Game;
+      if (g.players.length < config.players) {
+        this.games.set(g.id, g);
+        return g;
+      }
+    }
+    return undefined;
   }
 
   async joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined> {
-    const game = this.games.get(gameId);
+    const game = await this.getGame(gameId);
     if (!game) return undefined;
 
     const config = GAME_MODES[game.mode];
@@ -906,7 +934,7 @@ export class PgStorage implements IStorage {
   }
 
   private async startGame(gameId: string): Promise<void> {
-    const game = this.games.get(gameId);
+    const game = await this.getGame(gameId);
     if (!game || game.status !== "countdown") return;
     const config = GAME_MODES[game.mode];
     const now = Date.now();
@@ -920,7 +948,7 @@ export class PgStorage implements IStorage {
   }
 
   private async simulateGame(gameId: string): Promise<void> {
-    const game = this.games.get(gameId);
+    const game = await this.getGame(gameId);
     if (!game) return;
 
     const clientSeed = game.players.map(p => p.walletAddress.substring(0, 8)).join("-");
@@ -943,7 +971,7 @@ export class PgStorage implements IStorage {
     for (let round = 1; round <= config.rounds; round++) {
       await new Promise(r => setTimeout(r, roundDuration));
 
-      const currentGame = this.games.get(gameId);
+      const currentGame = await this.getGame(gameId);
       if (!currentGame || currentGame.status === "completed") return;
 
       const winners: typeof remainingPlayers = [];
@@ -1019,10 +1047,12 @@ export class PgStorage implements IStorage {
       remainingPlayers = winners;
       if (remainingPlayers.length > 1) currentGame.roundEndsAt = Date.now() + roundDuration;
       this.games.set(gameId, currentGame);
+      // Sync to DB after each round
+      await pool.query("UPDATE games SET data=$2 WHERE id=$1", [gameId, JSON.stringify(currentGame)]);
       if (remainingPlayers.length === 1) break;
     }
 
-    const finalGame = this.games.get(gameId);
+    const finalGame = await this.getGame(gameId);
     if (!finalGame) return;
 
     const winner = remainingPlayers[0];
