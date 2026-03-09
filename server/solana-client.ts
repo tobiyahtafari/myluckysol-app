@@ -14,7 +14,7 @@ import {
   TOKEN_PROGRAM_ID,
   getMint
 } from "@solana/spl-token";
-import { FOUNDATION_TREASURY_WALLET, MYLUCKYSOL_PROGRAM_ID, WAGA_TOKEN_MINT, WAGA_REWARDS_VAULT } from "@shared/constants";
+import { FOUNDATION_TREASURY_WALLET, GIVEAWAY_WALLET, MYLUCKYSOL_PROGRAM_ID, WAGA_TOKEN_MINT, WAGA_REWARDS_VAULT } from "@shared/constants";
 import bs58 from "bs58";
 import { createHash } from "crypto";
 
