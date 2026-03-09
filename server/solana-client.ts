@@ -61,8 +61,9 @@ export class SolanaGameClient {
   private authorityKeypair: Keypair | null = null;
 
   constructor() {
-    // Hardcoded to mainnet — do not use SOLANA_RPC_URL to avoid env var truncation issues
-    const rpcUrl = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
+    // Use SOLANA_RPC_URL env var if set (set it to a valid Helius or other RPC URL)
+    // Falls back to public mainnet RPC
+    const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
     this.connection = new Connection(rpcUrl, "confirmed");
     console.log(`[SOLANA] Connected to mainnet via ${rpcUrl}`);
     this.programId = new PublicKey(MYLUCKYSOL_PROGRAM_ID);

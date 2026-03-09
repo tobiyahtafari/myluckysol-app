@@ -26,7 +26,7 @@ import {
 } from "./borsh-layouts";
 
 export const DEVNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com";
-export const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
+export const MAINNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 
 export const getActiveRpc = (rpcUrl: string): string => {
   return MAINNET_RPC;

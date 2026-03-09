@@ -1,7 +1,7 @@
 import { Connection, PublicKey, Keypair } from "@solana/web3.js";
 import { WAGA_ENTRY_MULTIPLIER, WAGA_WIN_MULTIPLIER } from "@shared/schema";
 
-const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
+const MAINNET_RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 const DEVNET_RPC = "https://api.devnet.solana.com";
 const WAGA_TOKEN_PROGRAM_ID = new PublicKey("9NWksMKpEd9brW31BU6eZKvbUykRuCZgtbYBpcT6oeho");
 
