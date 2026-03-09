@@ -11,8 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useSolPrice } from "@/lib/price-context";
 import { Progress } from "@/components/ui/progress";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
-import heroBgGif from "@assets/myluckysolbg_(1)_1771978388066.gif";
-import footerBgGif from "@assets/bg2_(1)_1772062359228.gif";
+const heroBgGif = "/herobg.gif";
+const footerBgGif = "/footerbg.gif";
 
 function formatCompact(value: number): string {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(value >= 10_000_000_000 ? 0 : value >= 1_000_000_000 ? 1 : 0).replace(/\.0$/, "")}B+`;

@@ -61,12 +61,10 @@ export class SolanaGameClient {
   private authorityKeypair: Keypair | null = null;
 
   constructor() {
-    // Use SOLANA_NETWORK env var to switch between devnet and mainnet
-    const network = process.env.SOLANA_NETWORK || "mainnet";
-    const rpcUrl = process.env.SOLANA_RPC_URL || 
-      "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
+    // Hardcoded to mainnet — do not use SOLANA_RPC_URL to avoid env var truncation issues
+    const rpcUrl = "https://mainnet.helius-rpc.com/?api-key=eefa5aa4-0358-4152-8a1d-60bacc3a2670";
     this.connection = new Connection(rpcUrl, "confirmed");
-    console.log(`[SOLANA] Connected to ${network} via ${rpcUrl}`);
+    console.log(`[SOLANA] Connected to mainnet via ${rpcUrl}`);
     this.programId = new PublicKey(MYLUCKYSOL_PROGRAM_ID);
     this.treasuryWallet = new PublicKey(FOUNDATION_TREASURY_WALLET);
 

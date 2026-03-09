@@ -17,8 +17,8 @@ class WagaService {
   private isInitialized: boolean = false;
 
   constructor() {
-    const rpcUrl = process.env.SOLANA_RPC_URL || MAINNET_RPC;
-    this.connection = new Connection(rpcUrl, "confirmed");
+    // Hardcoded to mainnet to avoid env var truncation overriding the correct key
+    this.connection = new Connection(MAINNET_RPC, "confirmed");
   }
 
   async initialize(): Promise<void> {
