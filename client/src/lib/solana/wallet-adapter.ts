@@ -192,14 +192,22 @@ export async function signAndSendTransaction(
     throw new Error("Wallet not connected");
   }
 
-  if (adapter.sendTransaction) {
-    return adapter.sendTransaction(transaction, connection);
+  // Sign client-side only, then submit through server RPC to avoid domain restrictions
+  const signedTransaction = await adapter.signTransaction(transaction);
+  const signedTx = Buffer.from(signedTransaction.serialize()).toString("base64");
+
+  const res = await fetch("/api/submit-tx", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ signedTx }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Transaction submission failed");
   }
 
-  const signedTransaction = await adapter.signTransaction(transaction);
-  const signature = await connection.sendRawTransaction(signedTransaction.serialize());
-  await connection.confirmTransaction(signature, "confirmed");
-  
+  const { signature } = await res.json();
   return signature;
 }
 

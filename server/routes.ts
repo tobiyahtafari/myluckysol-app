@@ -29,6 +29,26 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // Submit signed transaction via server-side RPC (avoids client-side domain restrictions)
+  app.post("/api/submit-tx", async (req, res) => {
+    try {
+      const { signedTx } = req.body;
+      if (!signedTx) return res.status(400).json({ error: "signedTx required" });
+      const { Transaction } = await import("@solana/web3.js");
+      const txBuffer = Buffer.from(signedTx, "base64");
+      const tx = Transaction.from(txBuffer);
+      const connection = solanaClient.getConnection();
+      const signature = await connection.sendRawTransaction(tx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+      });
+      await connection.confirmTransaction(signature, "confirmed");
+      return res.json({ signature });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // Latest blockhash via server-side RPC (avoids client-side domain restrictions)
   app.get("/api/blockhash", async (req, res) => {
     try {
