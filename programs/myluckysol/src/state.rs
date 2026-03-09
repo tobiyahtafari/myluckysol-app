@@ -94,6 +94,7 @@ pub struct Player {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct RoundResult {
     pub round_number: u8,
+    #[max_len(16)]
     pub eliminated_players: Vec<Pubkey>,
     pub vrf_seed: [u8; 32],
     pub timestamp: i64,
