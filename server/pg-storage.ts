@@ -848,6 +848,7 @@ export class PgStorage implements IStorage {
 
     const config = GAME_MODES[game.mode];
     if (game.players.length >= config.players) return undefined;
+    // Check if player already in this game - skip if already joined to avoid double rewards
     if (game.players.some(p => p.walletAddress === walletAddress)) return game;
 
     await this.checkAndExpireGodStreak(walletAddress);
@@ -867,6 +868,7 @@ export class PgStorage implements IStorage {
     game.players.push(player);
     game.poolAmount += game.wager;
 
+    // Deduplicate WAGA entry reward by checking if this is a new join
     await this.updateProfile(walletAddress, {
       wagaEarned: (profile.wagaEarned || 0) + entryWagaReward,
     });
