@@ -98,6 +98,38 @@ export class SolanaGameClient {
     }
   }
 
+  // Ensure giveaway wallet has enough SOL to be rent-exempt and receive payouts
+  async ensureGiveawayWalletFunded(): Promise<void> {
+    if (!this.authorityKeypair) return;
+    try {
+      const giveawayPubkey = new PublicKey(GIVEAWAY_WALLET);
+      const balance = await this.connection.getBalance(giveawayPubkey);
+      const RENT_EXEMPT_MIN = 890880;
+      const TARGET = 10_000_000; // 0.01 SOL to give comfortable headroom
+      if (balance < RENT_EXEMPT_MIN) {
+        console.log(`[SOLANA] Giveaway wallet has ${balance} lamports — below rent-exempt. Funding to 0.01 SOL...`);
+        const tx = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: this.authorityKeypair.publicKey,
+            toPubkey: giveawayPubkey,
+            lamports: TARGET - balance,
+          })
+        );
+        tx.feePayer = this.authorityKeypair.publicKey;
+        const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('confirmed');
+        tx.recentBlockhash = blockhash;
+        tx.sign(this.authorityKeypair);
+        const sig = await this.connection.sendRawTransaction(tx.serialize(), { skipPreflight: true });
+        await this.connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
+        console.log(`[SOLANA] Giveaway wallet funded. Tx: ${sig}`);
+      } else {
+        console.log(`[SOLANA] Giveaway wallet balance: ${balance} lamports — OK`);
+      }
+    } catch (e) {
+      console.error('[SOLANA] Failed to fund giveaway wallet:', e);
+    }
+  }
+
   getConnection(): Connection {
     return this.connection;
   }

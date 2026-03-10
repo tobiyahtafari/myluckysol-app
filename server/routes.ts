@@ -29,6 +29,9 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // Ensure giveaway wallet is rent-exempt on startup
+  solanaClient.ensureGiveawayWalletFunded().catch(e => console.error('[STARTUP] Giveaway wallet check failed:', e));
+
   // Submit signed transaction via server-side RPC (avoids client-side domain restrictions)
   app.post("/api/submit-tx", async (req, res) => {
     try {
