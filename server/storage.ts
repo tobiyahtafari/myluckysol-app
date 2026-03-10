@@ -63,6 +63,7 @@ export interface IStorage {
   updateGame(id: string, updates: Partial<Game>): Promise<Game | undefined>;
   updateGameStatus(id: string, status: string): Promise<Game | undefined>;
   findAvailableGame(mode: GameModeKey, wager: WagerTier): Promise<Game | undefined>;
+  findOrCreateGame(mode: GameModeKey, wager: WagerTier): Promise<Game>;
   joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined>;
   getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit?: number, period?: LeaderboardPeriod): Promise<LeaderboardEntry[]>;
   storeAvatarImage(walletAddress: string, data: Buffer, contentType: string): void;
@@ -507,6 +508,12 @@ export class MemStorage implements IStorage {
         g.status === "waiting" &&
         g.players.length < config.players
     );
+  }
+
+  async findOrCreateGame(mode: GameModeKey, wager: WagerTier): Promise<Game> {
+    const existing = await this.findAvailableGame(mode, wager);
+    if (existing) return existing;
+    return this.createGame({ mode, wager });
   }
 
   async updateGameStatus(id: string, status: string): Promise<Game | undefined> {

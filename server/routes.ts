@@ -91,11 +91,8 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Valid Solana wallet address required" });
       }
 
-      // Find or create a game
-      let game = await storage.findAvailableGame(mode, wager);
-      if (!game) {
-        game = await storage.createGame({ mode, wager });
-      }
+      // Atomically find or create a game (prevents race-condition double-game creation)
+      const game = await storage.findOrCreateGame(mode, wager);
 
       // Check if player already in this game
       if (game.players.some(p => p.walletAddress === walletAddress)) {
@@ -190,11 +187,8 @@ export async function registerRoutes(
           return res.status(404).json({ error: "Game not found" });
         }
       } else {
-        // Fallback: find or create game
-        game = await storage.findAvailableGame(mode, wager);
-        if (!game) {
-          game = await storage.createGame({ mode, wager });
-        }
+        // Fallback: atomically find or create game
+        game = await storage.findOrCreateGame(mode, wager);
       }
 
       // Check if player already in this game

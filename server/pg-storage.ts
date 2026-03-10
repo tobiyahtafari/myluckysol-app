@@ -858,18 +858,10 @@ export class PgStorage implements IStorage {
 
   async findAvailableGame(mode: GameModeKey, wager: WagerTier): Promise<Game | undefined> {
     const config = GAME_MODES[mode];
-    // First check in-memory
-    const inMem = Array.from(this.games.values()).find(
-      g => g.mode === mode && g.wager === wager && g.status === "waiting" && g.players.length < config.players
-    );
-    if (inMem) return inMem;
-
-    // Fallback to DB
     const { rows } = await pool.query(
-      "SELECT data FROM games WHERE status = 'waiting' AND (data->>'mode') = $1 AND (data->>'wager')::float = $2",
+      "SELECT data FROM games WHERE status = 'waiting' AND (data->>'mode') = $1 AND CAST(data->>'wager' AS FLOAT) = $2 ORDER BY created_at ASC",
       [mode, wager]
     );
-
     for (const row of rows) {
       const g = row.data as Game;
       if (g.players.length < config.players) {
@@ -878,6 +870,71 @@ export class PgStorage implements IStorage {
       }
     }
     return undefined;
+  }
+
+  // Atomically find an available game or create a new one — prevents race-condition
+  // double-game creation when two players hit /prepare simultaneously.
+  async findOrCreateGame(mode: GameModeKey, wager: WagerTier): Promise<Game> {
+    const config = GAME_MODES[mode];
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Lock any existing waiting game of this type so no other request grabs it
+      const { rows } = await client.query(
+        `SELECT data FROM games WHERE status = 'waiting'
+         AND (data->>'mode') = $1 AND CAST(data->>'wager' AS FLOAT) = $2
+         ORDER BY created_at ASC
+         LIMIT 1 FOR UPDATE SKIP LOCKED`,
+        [mode, wager]
+      );
+
+      if (rows[0]) {
+        const g = rows[0].data as Game;
+        if (g.players.length < config.players) {
+          await client.query("COMMIT");
+          this.games.set(g.id, g);
+          return g;
+        }
+      }
+
+      // No available game — create one inside the same transaction
+      const id = `game_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const onChainGameId = BigInt(Date.now());
+      const [escrowPDA] = solanaClient.getGamePoolPDA(onChainGameId);
+      const serverSeed = randomBytes(32).toString("hex");
+      const serverSeedHash = createHmac("sha256", "seed_salt").update(serverSeed).digest("hex");
+
+      const newGame: Game = {
+        id,
+        onChainGameId: onChainGameId.toString(),
+        escrowPDA: escrowPDA.toBase58(),
+        serverSeed,
+        serverSeedHash,
+        mode,
+        wager,
+        status: "waiting",
+        players: [],
+        rounds: [],
+        currentRound: 1,
+        poolAmount: 0,
+        createdAt: Date.now(),
+      };
+
+      await client.query(
+        "INSERT INTO games (id, data, status, created_at) VALUES ($1,$2,$3,$4)",
+        [id, JSON.stringify(newGame), "waiting", newGame.createdAt]
+      );
+      await client.query("COMMIT");
+
+      this.games.set(id, newGame);
+      return newGame;
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined> {
