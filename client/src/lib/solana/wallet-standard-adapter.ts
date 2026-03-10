@@ -138,8 +138,25 @@ export function wrapStandardWallet(wallet: StandardWallet): WalletAdapter {
       if (!feature?.signTransaction) {
         throw new Error(`${wallet.name} does not support solana:signTransaction`);
       }
-      const [result] = await feature.signTransaction({ transactions: [transaction] });
-      return result?.signedTransaction ?? transaction;
+
+      const account = wallet.accounts[0];
+      const isVersioned = "version" in transaction;
+      const serialized = isVersioned
+        ? (transaction as VersionedTransaction).serialize()
+        : (transaction as Transaction).serialize({ requireAllSignatures: false, verifySignatures: false });
+
+      const [result] = await feature.signTransaction({
+        account,
+        transaction: serialized,
+        chain: "solana:mainnet",
+      });
+
+      if (!result?.signedTransaction) throw new Error("No signed transaction returned");
+
+      if (isVersioned) {
+        return VersionedTransaction.deserialize(result.signedTransaction) as typeof transaction;
+      }
+      return Transaction.from(result.signedTransaction) as typeof transaction;
     },
 
     async signAllTransactions(transactions: (Transaction | VersionedTransaction)[]) {
@@ -147,8 +164,21 @@ export function wrapStandardWallet(wallet: StandardWallet): WalletAdapter {
       if (!feature?.signTransaction) {
         throw new Error(`${wallet.name} does not support solana:signTransaction`);
       }
-      const results = await feature.signTransaction({ transactions });
-      return results.map((r: any, i: number) => r?.signedTransaction ?? transactions[i]);
+      const account = wallet.accounts[0];
+      const results = await Promise.all(
+        transactions.map(async (tx) => {
+          const isVersioned = "version" in tx;
+          const serialized = isVersioned
+            ? (tx as VersionedTransaction).serialize()
+            : (tx as Transaction).serialize({ requireAllSignatures: false, verifySignatures: false });
+          const [res] = await feature.signTransaction({ account, transaction: serialized, chain: "solana:mainnet" });
+          if (!res?.signedTransaction) return tx;
+          return isVersioned
+            ? VersionedTransaction.deserialize(res.signedTransaction)
+            : Transaction.from(res.signedTransaction);
+        })
+      );
+      return results as typeof transactions;
     },
 
     async signMessage(message: Uint8Array) {
@@ -157,7 +187,7 @@ export function wrapStandardWallet(wallet: StandardWallet): WalletAdapter {
         throw new Error(`${wallet.name} does not support solana:signMessage`);
       }
       const account = wallet.accounts[0];
-      const [result] = await feature.signMessage({ messages: [{ message, account }] });
+      const [result] = await feature.signMessage({ account, message });
       const sig = result?.signature;
       return { signature: sig instanceof Uint8Array ? sig : new Uint8Array(sig) };
     },
