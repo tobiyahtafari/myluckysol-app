@@ -93,14 +93,18 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                       </div>
                       <div className="flex-1 text-left">
                         <div className="font-medium text-white">{wallet.displayName}</div>
-                        {!wallet.installed && (
+                        {wallet.warning ? (
+                          <div className="text-xs text-yellow-500/80">{wallet.warning}</div>
+                        ) : !wallet.installed ? (
                           <div className="text-xs text-gray-400 flex items-center gap-1">
                             Not installed <ExternalLink className="w-3 h-3" />
                           </div>
-                        )}
+                        ) : null}
                       </div>
                       {connectingWallet === wallet.name ? (
                         <Loader2 className="w-5 h-5 text-[#F5B800] animate-spin" />
+                      ) : wallet.warning ? (
+                        <div className="w-2 h-2 rounded-full bg-yellow-500" />
                       ) : wallet.installed ? (
                         <div className="w-2 h-2 rounded-full bg-green-500" />
                       ) : null}

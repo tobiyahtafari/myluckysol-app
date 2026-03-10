@@ -73,6 +73,7 @@ export interface WalletInfo {
   adapter: WalletAdapter | null;
   installed: boolean;
   url: string;
+  warning?: string;
 }
 
 export function getPhantomWallet(): PhantomProvider | null {
@@ -237,6 +238,15 @@ export function getAllWallets(): WalletInfo[] {
       adapter: metamask,
       installed: !!metamask,
       url: "https://metamask.io/",
+      warning:
+        metamask &&
+        typeof window !== "undefined" &&
+        window.ethereum &&
+        (window.ethereum as any).isMetaMask === true &&
+        !window.ethereum.solana &&
+        !(window.solana as any)
+          ? "Solana not available in MetaMask mobile. Use Phantom or OKX on mobile."
+          : undefined,
     },
   ];
 }
