@@ -11,8 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useSolPrice } from "@/lib/price-context";
 import { Progress } from "@/components/ui/progress";
 import heroLogo from "@assets/myluckysol-logo_1768583810647.png";
-const heroBgGif = "/herobg.gif";
-const footerBgGif = "/footerbg.gif";
+const heroBgGif = "/herobg.webm";
+const footerBgGif = "/footerbg.webm";
 
 function formatCompact(value: number): string {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(value >= 10_000_000_000 ? 0 : value >= 1_000_000_000 ? 1 : 0).replace(/\.0$/, "")}B+`;
@@ -204,9 +204,12 @@ export default function Home() {
         {/* Combined Hero and Why Choose Section with Shared Background */}
         <div className="absolute inset-0 z-0 overflow-hidden flex items-start justify-center pt-[48rem] md:pt-[38rem] lg:pt-[35rem]">
           <div className="relative w-full h-auto">
-            <img 
-              src={heroBgGif} 
-              alt="" 
+            <video
+              src={heroBgGif}
+              autoPlay
+              loop
+              muted
+              playsInline
               className="w-full min-w-[160%] md:min-w-full h-auto opacity-[0.77] md:opacity-20 block relative left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0"
               style={{ objectFit: 'contain' }}
             />
@@ -804,9 +807,12 @@ export default function Home() {
       <section className="py-24 relative overflow-hidden">
         {/* Background GIF with 50% opacity */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src={footerBgGif} 
-            alt="" 
+          <video
+            src={footerBgGif}
+            autoPlay
+            loop
+            muted
+            playsInline
             className="w-full h-full object-cover opacity-75"
           />
           {/* Diamond Mesh Grid Overlay */}
