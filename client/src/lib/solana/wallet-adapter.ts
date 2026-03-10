@@ -198,7 +198,34 @@ export async function getWalletByNameAsync(name: WalletName): Promise<WalletAdap
     const { getWalletConnectAdapter } = await import("./walletconnect-adapter");
     return getWalletConnectAdapter();
   }
+
+  if (name === "metamask") {
+    const { getStandardWallets, waitForStandardWallet, wrapStandardWallet } = await import("./wallet-standard-adapter");
+    const stWallets = getStandardWallets();
+    const mmStandard = stWallets.find(w =>
+      w.name.toLowerCase().includes("metamask") || w.name.toLowerCase().includes("meta mask")
+    );
+    if (mmStandard) return wrapStandardWallet(mmStandard);
+
+    const waited = await waitForStandardWallet("MetaMask", 1000);
+    if (waited) return wrapStandardWallet(waited);
+
+    return getMetaMaskWallet();
+  }
+
   return getWalletByName(name);
+}
+
+export async function detectMetaMaskStandardWallet(): Promise<WalletAdapter | null> {
+  const { getStandardWallets, waitForStandardWallet, wrapStandardWallet } = await import("./wallet-standard-adapter");
+  const stWallets = getStandardWallets();
+  const mmWallet = stWallets.find(w =>
+    w.name.toLowerCase().includes("metamask") || w.name.toLowerCase().includes("meta mask")
+  );
+  if (mmWallet) return wrapStandardWallet(mmWallet);
+  const waited = await waitForStandardWallet("MetaMask", 2000);
+  if (waited) return wrapStandardWallet(waited);
+  return null;
 }
 
 export function getAllWallets(): WalletInfo[] {
