@@ -6,32 +6,26 @@ import { useToast } from "@/hooks/use-toast";
 
 const CONTRACTS = [
   {
-    name: "MyLuckySol Game Program",
-    address: "MLKYs1v...placeholder...program",
-    description: "Core game logic and house management",
+    name: "MyLuckySol Authority Wallet",
+    address: "EGnpXpxC39WqQrY2XK8iG4mJUw9iyjWSKkAGF2dJnzJL",
+    description: "Central authority for game management and WAGA distribution",
     icon: Gamepad2
   },
   {
     name: "WAGA Token (WAGA)",
-    address: "WAGAtkn...placeholder...address",
-    description: "Utility token bridged from BSC (Fixed Supply)",
+    address: "He6oGbz2KLH1G1V1PVbCZWHru8rWiWR6UZUxX6z9um5F",
+    description: "Utility token for the MyLuckySol ecosystem",
     icon: Coins
   },
   {
-    name: "WAGA Rewards Escrow",
-    address: "ESCRWvlt...placeholder...escrow",
-    description: "Distribution point for wager and win bonuses",
-    icon: Landmark
-  },
-  {
     name: "Treasury Wallet",
-    address: "TRSRYwl...placeholder...wallet",
+    address: "7tdpmx5ePCUMFera2BtrGAnVMpW1Qn3csdx9KUycHYYE",
     description: "Foundation and platform maintenance funds (9%)",
     icon: Shield
   },
   {
     name: "Giveaway Treasury Wallet",
-    address: "FGY64g3Pt8wMrMR3A9abkVxSjwh2Yt4dT4BYkw6rU3yf",
+    address: "DpjsfZ3JjCYJo9ehFzCxt9gne5QeU1sUCoxqi492YERN",
     description: "Seasonal jackpot and lucky player rewards (1%)",
     icon: Landmark
   }
@@ -94,7 +88,7 @@ export default function Docs() {
                       <Copy className="w-4 h-4" />
                     </button>
                     <a
-                      href={`https://solscan.io/account/${contract.address}?cluster=devnet`}
+                      href={`https://solscan.io/account/${contract.address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1 hover:text-primary transition-colors"
@@ -119,11 +113,11 @@ export default function Docs() {
             </h3>
             <div className="prose prose-invert text-muted-foreground">
               <p>
-                WAGA is a fixed-supply utility token bridged from BSC. It is distributed via a dedicated rewards escrow to incentivize participation.
+                WAGA is a utility token used for rewarding players. It is distributed directly to players based on their participation and wins.
               </p>
               <ul className="list-disc list-inside space-y-2">
-                <li>100x SOL wager match reward (Escrow-paid)</li>
-                <li>1000x SOL win bonus (Escrow-paid, Vested)</li>
+                <li>100x SOL wager match reward</li>
+                <li>1000x SOL win bonus (Vested)</li>
                 <li>10% daily vesting for win rewards</li>
               </ul>
             </div>
