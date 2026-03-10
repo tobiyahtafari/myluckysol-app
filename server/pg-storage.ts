@@ -782,9 +782,13 @@ export class PgStorage implements IStorage {
   }
 
   async getLiveGames(): Promise<Game[]> {
-    return Array.from(this.games.values()).filter(
-      g => g.status === "waiting" || g.status === "countdown" || g.status === "in_progress"
+    const { rows } = await pool.query(
+      "SELECT data FROM games WHERE status IN ('waiting', 'countdown', 'in_progress') ORDER BY created_at DESC LIMIT 50"
     );
+    const games = rows.map(r => r.data as Game);
+    // Keep in-memory cache in sync
+    for (const g of games) this.games.set(g.id, g);
+    return games;
   }
 
   async createGame(game: InsertGame): Promise<Game> {
@@ -938,44 +942,80 @@ export class PgStorage implements IStorage {
   }
 
   async joinGame(gameId: string, walletAddress: string, txSignature?: string): Promise<Game | undefined> {
-    const game = await this.getGame(gameId);
-    if (!game) return undefined;
+    // Use a DB transaction with FOR UPDATE to prevent lost-update race conditions
+    // when two players join the same game concurrently.
+    const client = await pool.connect();
+    let game: Game;
+    try {
+      await client.query("BEGIN");
 
-    const config = GAME_MODES[game.mode];
-    if (game.players.length >= config.players) return undefined;
-    // Check if player already in this game - skip if already joined to avoid double rewards
-    if (game.players.some(p => p.walletAddress === walletAddress)) return game;
+      const { rows } = await client.query(
+        "SELECT data FROM games WHERE id = $1 FOR UPDATE",
+        [gameId]
+      );
+      if (!rows[0]) {
+        await client.query("ROLLBACK");
+        return undefined;
+      }
 
-    await this.checkAndExpireGodStreak(walletAddress);
+      game = rows[0].data as Game;
+      if (!game.players) game.players = [];
+
+      const config = GAME_MODES[game.mode];
+      if (game.players.length >= config.players) {
+        await client.query("ROLLBACK");
+        return undefined;
+      }
+      // Already joined — idempotent return
+      if (game.players.some(p => p.walletAddress === walletAddress)) {
+        await client.query("ROLLBACK");
+        return game;
+      }
+
+      await this.checkAndExpireGodStreak(walletAddress);
+      const profile = await this.getOrCreateProfile(walletAddress);
+      const entryWagaReward = calculateWagaReward(game.wager, WAGA_ENTRY_MULTIPLIER);
+
+      const player = {
+        id: `player_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        walletAddress,
+        username: profile.username,
+        avatarUrl: profile.avatarUrl,
+        joinedAt: Date.now(),
+        isEliminated: false,
+        txSignature,
+      };
+
+      game.players.push(player);
+      game.poolAmount += game.wager;
+
+      await client.query(
+        "UPDATE games SET data=$2 WHERE id=$1",
+        [gameId, JSON.stringify(game)]
+      );
+      await client.query("COMMIT");
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    // Sync in-memory cache after the atomic DB write
+    this.games.set(gameId, game);
+
+    // WAGA entry reward and profile update (outside the DB transaction — safe to do async)
     const profile = await this.getOrCreateProfile(walletAddress);
     const entryWagaReward = calculateWagaReward(game.wager, WAGA_ENTRY_MULTIPLIER);
-
-    const player = {
-      id: `player_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      walletAddress,
-      username: profile.username,
-      avatarUrl: profile.avatarUrl,
-      joinedAt: Date.now(),
-      isEliminated: false,
-      txSignature,
-    };
-
-    game.players.push(player);
-    game.poolAmount += game.wager;
-
-    // Deduplicate WAGA entry reward by checking if this is a new join
     await this.updateProfile(walletAddress, {
       wagaEarned: (profile.wagaEarned || 0) + entryWagaReward,
     });
-
     if (entryWagaReward > 0 && solanaClient.hasAuthority()) {
       const wagaResult = await solanaClient.transferWagaFromVault(walletAddress, entryWagaReward);
       if (wagaResult.success) console.log(`[WAGA] Entry reward sent: ${wagaResult.txSig}`);
       else console.warn(`[WAGA] Entry reward failed: ${wagaResult.error}`);
     }
 
-    this.games.set(gameId, game);
-    await pool.query("UPDATE games SET data=$2 WHERE id=$1", [gameId, JSON.stringify(game)]);
     return game;
   }
 
