@@ -114,42 +114,59 @@ export function getBackpackWallet(): BackpackProvider | null {
 export function getMetaMaskWallet(): MetaMaskProvider | null {
   if (typeof window === "undefined") return null;
 
+  // Check if we're in MetaMask's mobile/desktop browser
+  const isMetaMaskBrowser = 
+    typeof navigator !== "undefined" && 
+    navigator.userAgent.includes("MetaMask");
+
   // Desktop MetaMask: window.ethereum.solana
   if (window.ethereum?.solana) {
     // Check if it's explicitly marked as MetaMask Solana
     if (window.ethereum.solana.isMetaMask === true) {
+      console.log("[MetaMask] Found via window.ethereum.solana.isMetaMask");
       return window.ethereum.solana;
     }
     // Or if the parent ethereum is MetaMask and has solana support
     if ((window.ethereum as any).isMetaMask === true) {
+      console.log("[MetaMask] Found via window.ethereum.isMetaMask with solana support");
       return window.ethereum.solana;
     }
   }
 
-  // Mobile MetaMask or alternative injection: window.solana with MetaMask marker
+  // Mobile MetaMask: window.solana directly (most common for in-app browser)
   if (window.solana) {
     const solana = window.solana as any;
-    // Check if solana provider is from MetaMask
-    if (solana.isMetaMask === true || solana._provider?.isMetaMask === true) {
+    // Check explicit MetaMask markers
+    if (solana.isMetaMask === true) {
+      console.log("[MetaMask] Found via window.solana.isMetaMask");
       return solana as MetaMaskProvider;
     }
-    // For mobile MetaMask in-app browser, check if it has the required methods
-    // and references MetaMask in some way
-    if (solana.isConnected !== undefined && solana.connect && solana.signTransaction) {
-      // Additional check: see if there's any MetaMask reference in the provider
-      if (
-        solana._metamask === true ||
-        (solana as any)._brand === "MetaMask" ||
-        (typeof navigator !== "undefined" && navigator.userAgent.includes("MetaMask"))
-      ) {
-        return solana as MetaMaskProvider;
-      }
+    // In MetaMask mobile browser, window.solana provider should be available
+    if (isMetaMaskBrowser && solana.connect && solana.signTransaction) {
+      console.log("[MetaMask] Found via MetaMask browser + window.solana with methods");
+      return solana as MetaMaskProvider;
     }
   }
 
-  // Ethereum object might have MetaMask's Solana support in mobile
-  if ((window.ethereum as any)?._provider?.solana?.isMetaMask === true) {
-    return (window.ethereum as any)._provider.solana;
+  // Fallback: if in MetaMask browser and we have any solana provider, use it
+  if (isMetaMaskBrowser) {
+    // Try window.solana first
+    if (window.solana && typeof (window.solana as any).connect === "function") {
+      console.log("[MetaMask] Detected MetaMask browser with window.solana provider");
+      return window.solana as MetaMaskProvider;
+    }
+    // Try window.ethereum.solana
+    if (window.ethereum?.solana && typeof (window.ethereum.solana as any).connect === "function") {
+      console.log("[MetaMask] Detected MetaMask browser with window.ethereum.solana provider");
+      return window.ethereum.solana as MetaMaskProvider;
+    }
+  }
+
+  if (window.ethereum?.solana) {
+    console.log("[MetaMask] window.ethereum.solana exists but no clear markers");
+  }
+  if (window.solana) {
+    console.log("[MetaMask] window.solana exists but no clear markers");
   }
 
   return null;
