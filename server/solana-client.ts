@@ -575,11 +575,26 @@ export class SolanaGameClient {
           );
         }
 
-        const signature = await sendAndConfirmTransaction(
-          this.connection,
-          transaction,
-          [this.authorityKeypair]
-        );
+        transaction.feePayer = this.authorityKeypair.publicKey;
+        const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('confirmed');
+        transaction.recentBlockhash = blockhash;
+
+        // Sign and send manually so we can extract simulation logs on failure
+        transaction.sign(this.authorityKeypair);
+        const rawTx = transaction.serialize();
+        let signature: string;
+        try {
+          signature = await this.connection.sendRawTransaction(rawTx, { skipPreflight: true, preflightCommitment: 'confirmed' });
+        } catch (sendErr: any) {
+          // Extract simulation logs if available
+          if (sendErr?.logs) {
+            console.error('[SOLANA] [FALLBACK] Simulation logs:', sendErr.logs);
+          } else if (typeof sendErr?.getLogs === 'function') {
+            try { const logs = await sendErr.getLogs(); console.error('[SOLANA] [FALLBACK] Simulation logs:', logs); } catch {}
+          }
+          throw sendErr;
+        }
+        await this.connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
         
         console.log(`[SOLANA] [FALLBACK] Payouts completed! Tx: ${signature}`);
         return { success: true, winnerTxSig: signature, treasuryTxSig: signature, giveawayTxSig: signature };
