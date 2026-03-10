@@ -6,6 +6,7 @@ import {
   SendOptions,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import { WALLET_ICONS } from "./wallet-icons";
 
 export interface WalletAdapter {
   publicKey: PublicKey | null;
@@ -64,7 +65,7 @@ declare global {
   }
 }
 
-export type WalletName = "phantom" | "solflare" | "okx" | "backpack" | "metamask" | "walletconnect";
+export type WalletName = "phantom" | "solflare" | "okx" | "backpack" | "metamask";
 
 export interface WalletInfo {
   name: WalletName;
@@ -186,19 +187,12 @@ export function getWalletByName(name: WalletName): WalletAdapter | null {
       return getBackpackWallet();
     case "metamask":
       return getMetaMaskWallet();
-    case "walletconnect":
-      return null;
     default:
       return null;
   }
 }
 
 export async function getWalletByNameAsync(name: WalletName): Promise<WalletAdapter | null> {
-  if (name === "walletconnect") {
-    const { getWalletConnectAdapter } = await import("./walletconnect-adapter");
-    return getWalletConnectAdapter();
-  }
-
   if (name === "metamask") {
     const { getStandardWallets, waitForStandardWallet, wrapStandardWallet } = await import("./wallet-standard-adapter");
     const stWallets = getStandardWallets();
@@ -234,13 +228,12 @@ export function getAllWallets(): WalletInfo[] {
   const okx = getOKXWallet();
   const backpack = getBackpackWallet();
   const metamask = getMetaMaskWallet();
-  const hasWCProjectId = !!(typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_WALLETCONNECT_PROJECT_ID);
 
   return [
     {
       name: "phantom",
       displayName: "Phantom",
-      icon: "https://phantom.app/img/phantom-logo.svg",
+      icon: WALLET_ICONS.phantom,
       adapter: phantom,
       installed: !!phantom,
       url: "https://phantom.app/",
@@ -248,7 +241,7 @@ export function getAllWallets(): WalletInfo[] {
     {
       name: "solflare",
       displayName: "Solflare",
-      icon: "https://solflare.com/favicon.ico",
+      icon: WALLET_ICONS.solflare,
       adapter: solflare,
       installed: !!solflare,
       url: "https://solflare.com/",
@@ -256,7 +249,7 @@ export function getAllWallets(): WalletInfo[] {
     {
       name: "okx",
       displayName: "OKX Wallet",
-      icon: "https://static.okx.com/cdn/assets/imgs/221/C5E8D9D5E0D48F8D.png",
+      icon: WALLET_ICONS.okx,
       adapter: okx,
       installed: !!okx,
       url: "https://www.okx.com/web3",
@@ -264,7 +257,7 @@ export function getAllWallets(): WalletInfo[] {
     {
       name: "backpack",
       displayName: "Backpack",
-      icon: "https://backpack.app/favicon.ico",
+      icon: WALLET_ICONS.backpack,
       adapter: backpack,
       installed: !!backpack,
       url: "https://backpack.app/",
@@ -272,27 +265,10 @@ export function getAllWallets(): WalletInfo[] {
     {
       name: "metamask",
       displayName: "MetaMask",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg",
+      icon: WALLET_ICONS.metamask,
       adapter: metamask,
       installed: !!metamask,
       url: "https://metamask.io/",
-      warning:
-        metamask &&
-        typeof window !== "undefined" &&
-        window.ethereum &&
-        (window.ethereum as any).isMetaMask === true &&
-        !window.ethereum.solana &&
-        !(window.solana as any)
-          ? "Solana not available directly. Use WalletConnect below to connect MetaMask."
-          : undefined,
-    },
-    {
-      name: "walletconnect",
-      displayName: "WalletConnect",
-      icon: "https://avatars.githubusercontent.com/u/37784886?s=200&v=4",
-      adapter: null,
-      installed: hasWCProjectId,
-      url: "https://walletconnect.com/",
     },
   ];
 }
