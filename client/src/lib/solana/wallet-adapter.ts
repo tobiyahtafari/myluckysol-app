@@ -6,6 +6,7 @@ import {
   SendOptions,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import { getWalletConnectAdapter } from "./walletconnect-adapter";
 
 export interface WalletAdapter {
   publicKey: PublicKey | null;
@@ -64,7 +65,7 @@ declare global {
   }
 }
 
-export type WalletName = "phantom" | "solflare" | "okx" | "backpack" | "metamask";
+export type WalletName = "phantom" | "solflare" | "okx" | "backpack" | "metamask" | "walletconnect";
 
 export interface WalletInfo {
   name: WalletName;
@@ -186,6 +187,8 @@ export function getWalletByName(name: WalletName): WalletAdapter | null {
       return getBackpackWallet();
     case "metamask":
       return getMetaMaskWallet();
+    case "walletconnect":
+      return getWalletConnectAdapter();
     default:
       return null;
   }
@@ -197,6 +200,7 @@ export function getAllWallets(): WalletInfo[] {
   const okx = getOKXWallet();
   const backpack = getBackpackWallet();
   const metamask = getMetaMaskWallet();
+  const walletconnect = getWalletConnectAdapter();
 
   return [
     {
@@ -245,8 +249,19 @@ export function getAllWallets(): WalletInfo[] {
         (window.ethereum as any).isMetaMask === true &&
         !window.ethereum.solana &&
         !(window.solana as any)
-          ? "Solana not available in MetaMask mobile. Use Phantom or OKX on mobile."
+          ? "Solana not available directly. Use WalletConnect below to connect MetaMask."
           : undefined,
+    },
+    {
+      name: "walletconnect",
+      displayName: "WalletConnect",
+      icon: "https://avatars.githubusercontent.com/u/37784886?s=200&v=4",
+      adapter: walletconnect,
+      installed: !!walletconnect,
+      url: "https://walletconnect.com/",
+      warning: !walletconnect
+        ? "Set VITE_WALLETCONNECT_PROJECT_ID to enable"
+        : undefined,
     },
   ];
 }
