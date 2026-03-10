@@ -112,16 +112,46 @@ export function getBackpackWallet(): BackpackProvider | null {
 }
 
 export function getMetaMaskWallet(): MetaMaskProvider | null {
-  if (typeof window !== "undefined" && window.ethereum) {
-    // MetaMask exposes Solana support via ethereum.solana
-    if (window.ethereum.solana?.isMetaMask === true) {
+  if (typeof window === "undefined") return null;
+
+  // Desktop MetaMask: window.ethereum.solana
+  if (window.ethereum?.solana) {
+    // Check if it's explicitly marked as MetaMask Solana
+    if (window.ethereum.solana.isMetaMask === true) {
       return window.ethereum.solana;
     }
-    // Fallback: check if ethereum itself has Solana capability
-    if ((window.ethereum as any).isMetaMask === true && window.ethereum.solana) {
+    // Or if the parent ethereum is MetaMask and has solana support
+    if ((window.ethereum as any).isMetaMask === true) {
       return window.ethereum.solana;
     }
   }
+
+  // Mobile MetaMask or alternative injection: window.solana with MetaMask marker
+  if (window.solana) {
+    const solana = window.solana as any;
+    // Check if solana provider is from MetaMask
+    if (solana.isMetaMask === true || solana._provider?.isMetaMask === true) {
+      return solana as MetaMaskProvider;
+    }
+    // For mobile MetaMask in-app browser, check if it has the required methods
+    // and references MetaMask in some way
+    if (solana.isConnected !== undefined && solana.connect && solana.signTransaction) {
+      // Additional check: see if there's any MetaMask reference in the provider
+      if (
+        solana._metamask === true ||
+        (solana as any)._brand === "MetaMask" ||
+        (typeof navigator !== "undefined" && navigator.userAgent.includes("MetaMask"))
+      ) {
+        return solana as MetaMaskProvider;
+      }
+    }
+  }
+
+  // Ethereum object might have MetaMask's Solana support in mobile
+  if ((window.ethereum as any)?._provider?.solana?.isMetaMask === true) {
+    return (window.ethereum as any)._provider.solana;
+  }
+
   return null;
 }
 
