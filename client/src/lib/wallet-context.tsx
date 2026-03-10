@@ -10,6 +10,7 @@ import {
   getAllWallets,
   getAvailableWallets,
   getWalletByName,
+  getWalletByNameAsync,
   connectWallet,
   disconnectWallet,
   getConnection,
@@ -244,7 +245,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, connecting: true }));
     
     try {
-      const walletAdapter = getWalletByName(walletName);
+      const walletAdapter = await getWalletByNameAsync(walletName);
       
       if (!walletAdapter) {
         const allWallets = getAllWallets();

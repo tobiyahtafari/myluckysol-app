@@ -6,7 +6,6 @@ import {
   SendOptions,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import { getWalletConnectAdapter } from "./walletconnect-adapter";
 
 export interface WalletAdapter {
   publicKey: PublicKey | null;
@@ -188,10 +187,18 @@ export function getWalletByName(name: WalletName): WalletAdapter | null {
     case "metamask":
       return getMetaMaskWallet();
     case "walletconnect":
-      return getWalletConnectAdapter();
+      return null;
     default:
       return null;
   }
+}
+
+export async function getWalletByNameAsync(name: WalletName): Promise<WalletAdapter | null> {
+  if (name === "walletconnect") {
+    const { getWalletConnectAdapter } = await import("./walletconnect-adapter");
+    return getWalletConnectAdapter();
+  }
+  return getWalletByName(name);
 }
 
 export function getAllWallets(): WalletInfo[] {
@@ -200,7 +207,7 @@ export function getAllWallets(): WalletInfo[] {
   const okx = getOKXWallet();
   const backpack = getBackpackWallet();
   const metamask = getMetaMaskWallet();
-  const walletconnect = getWalletConnectAdapter();
+  const hasWCProjectId = !!(typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_WALLETCONNECT_PROJECT_ID);
 
   return [
     {
@@ -256,12 +263,9 @@ export function getAllWallets(): WalletInfo[] {
       name: "walletconnect",
       displayName: "WalletConnect",
       icon: "https://avatars.githubusercontent.com/u/37784886?s=200&v=4",
-      adapter: walletconnect,
-      installed: !!walletconnect,
+      adapter: null,
+      installed: hasWCProjectId,
       url: "https://walletconnect.com/",
-      warning: !walletconnect
-        ? "Set VITE_WALLETCONNECT_PROJECT_ID to enable"
-        : undefined,
     },
   ];
 }
