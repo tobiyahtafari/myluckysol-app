@@ -41,6 +41,10 @@ export interface BackpackProvider extends WalletAdapter {
   isBackpack?: boolean;
 }
 
+export interface MetaMaskProvider extends WalletAdapter {
+  isMetaMask?: boolean;
+}
+
 declare global {
   interface Window {
     phantom?: {
@@ -54,10 +58,13 @@ declare global {
     xnft?: {
       solana?: BackpackProvider;
     };
+    ethereum?: MetaMaskProvider & {
+      solana?: MetaMaskProvider;
+    };
   }
 }
 
-export type WalletName = "phantom" | "solflare" | "okx" | "backpack";
+export type WalletName = "phantom" | "solflare" | "okx" | "backpack" | "metamask";
 
 export interface WalletInfo {
   name: WalletName;
@@ -104,6 +111,20 @@ export function getBackpackWallet(): BackpackProvider | null {
   return null;
 }
 
+export function getMetaMaskWallet(): MetaMaskProvider | null {
+  if (typeof window !== "undefined" && window.ethereum) {
+    // MetaMask exposes Solana support via ethereum.solana
+    if (window.ethereum.solana?.isMetaMask === true) {
+      return window.ethereum.solana;
+    }
+    // Fallback: check if ethereum itself has Solana capability
+    if ((window.ethereum as any).isMetaMask === true && window.ethereum.solana) {
+      return window.ethereum.solana;
+    }
+  }
+  return null;
+}
+
 export function getWalletByName(name: WalletName): WalletAdapter | null {
   switch (name) {
     case "phantom":
@@ -114,6 +135,8 @@ export function getWalletByName(name: WalletName): WalletAdapter | null {
       return getOKXWallet();
     case "backpack":
       return getBackpackWallet();
+    case "metamask":
+      return getMetaMaskWallet();
     default:
       return null;
   }
@@ -124,6 +147,7 @@ export function getAllWallets(): WalletInfo[] {
   const solflare = getSolflareWallet();
   const okx = getOKXWallet();
   const backpack = getBackpackWallet();
+  const metamask = getMetaMaskWallet();
 
   return [
     {
@@ -157,6 +181,14 @@ export function getAllWallets(): WalletInfo[] {
       adapter: backpack,
       installed: !!backpack,
       url: "https://backpack.app/",
+    },
+    {
+      name: "metamask",
+      displayName: "MetaMask",
+      icon: "https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg",
+      adapter: metamask,
+      installed: !!metamask,
+      url: "https://metamask.io/",
     },
   ];
 }
