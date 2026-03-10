@@ -42,6 +42,17 @@ import type { IStorage } from "./storage";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+function calculateLuckScore(gamesWon: number, gamesPlayed: number): number {
+  if (gamesPlayed === 0) return 0;
+  const expectedWinRate = 0.35;
+  const actualWinRate = gamesWon / gamesPlayed;
+  const luckFactor = actualWinRate / expectedWinRate;
+  const luckScore = luckFactor >= 1
+    ? 50 + (50 * Math.min(1, (luckFactor - 1) / 1.5))
+    : 50 * luckFactor;
+  return Math.round(Math.max(0, Math.min(100, luckScore)));
+}
+
 function rowToProfile(row: any): PlayerProfile {
   return {
     walletAddress: row.wallet_address,
@@ -64,7 +75,7 @@ function rowToProfile(row: any): PlayerProfile {
     wagaVestingLastClaim: row.waga_vesting_last_claim ? Number(row.waga_vesting_last_claim) : undefined,
     currentStreak: row.current_streak || 0,
     bestStreak: row.best_streak || 0,
-    luckScore: row.luck_score || 50,
+    luckScore: calculateLuckScore(row.games_won || 0, row.games_played || 0),
     godStreakActive: row.god_streak_active || false,
     godStreakLength: row.god_streak_length || 0,
     godStreakGamesRemaining: row.god_streak_games_remaining || 0,
@@ -470,10 +481,14 @@ export class PgStorage implements IStorage {
   // ---------------------------------------------------------------------------
 
   async getGiveawayStats(): Promise<GiveawayStats> {
-    const { rows } = await pool.query("SELECT * FROM giveaway_stats WHERE id = 1");
+    const [{ rows }, { rows: gameCountRows }] = await Promise.all([
+      pool.query("SELECT * FROM giveaway_stats WHERE id = 1"),
+      pool.query("SELECT COUNT(*) as count FROM games WHERE status = 'completed'"),
+    ]);
+    const actualGamesPlayed = parseInt(gameCountRows[0]?.count) || 0;
     if (!rows[0]) {
       return {
-        totalGamesPlayed: 0,
+        totalGamesPlayed: actualGamesPlayed,
         cycleStartGameCount: 0,
         giveawayWalletBalance: 0,
         lastUpdatedAt: Date.now(),
@@ -483,7 +498,7 @@ export class PgStorage implements IStorage {
     }
     const r = rows[0];
     return {
-      totalGamesPlayed: r.total_games_played || 0,
+      totalGamesPlayed: actualGamesPlayed,
       cycleStartGameCount: r.cycle_start_game_count || 0,
       giveawayWalletBalance: parseFloat(r.giveaway_wallet_balance) || 0,
       lastUpdatedAt: Number(r.last_updated_at) || 0,
@@ -580,14 +595,7 @@ export class PgStorage implements IStorage {
   // ---------------------------------------------------------------------------
 
   private calculateLuckScore(gamesWon: number, gamesPlayed: number): number {
-    if (gamesPlayed < 3) return 50;
-    const expectedWinRate = 0.35;
-    const actualWinRate = gamesWon / gamesPlayed;
-    const luckFactor = actualWinRate / expectedWinRate;
-    let luckScore = luckFactor >= 1
-      ? 50 + (50 * Math.min(1, (luckFactor - 1) / 1.5))
-      : 50 * luckFactor;
-    return Math.round(Math.max(0, Math.min(100, luckScore)));
+    return calculateLuckScore(gamesWon, gamesPlayed);
   }
 
   async getLeaderboard(sortBy: "earnings" | "luck" | "streaks", limit: number = 50, period: LeaderboardPeriod = "all"): Promise<LeaderboardEntry[]> {
@@ -696,9 +704,11 @@ export class PgStorage implements IStorage {
     const { rows: statsRows } = await pool.query(
       "SELECT SUM(total_won) as sol_won, COUNT(*) FILTER (WHERE games_played > 0) as players, SUM(waga_earned + waga_vesting_total) as waga FROM player_profiles"
     );
-    const giveaway = await this.getGiveawayStats();
+    const { rows: gamesRows } = await pool.query(
+      "SELECT COUNT(*) as count FROM games WHERE status = 'completed'"
+    );
     return {
-      gamesPlayed: giveaway.totalGamesPlayed,
+      gamesPlayed: parseInt(gamesRows[0]?.count) || 0,
       solWon: parseFloat(statsRows[0]?.sol_won) || 0,
       playersCount: parseInt(statsRows[0]?.players) || 0,
       wagaRewarded: parseFloat(statsRows[0]?.waga) || 0,
