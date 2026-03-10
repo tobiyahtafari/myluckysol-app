@@ -114,67 +114,58 @@ export function getBackpackWallet(): BackpackProvider | null {
 export function getMetaMaskWallet(): MetaMaskProvider | null {
   if (typeof window === "undefined") return null;
 
-  const isMetaMaskBrowser = 
-    typeof navigator !== "undefined" && 
-    navigator.userAgent.includes("MetaMask");
-
-  // Desktop: window.ethereum.solana with MetaMask flag
-  if (window.ethereum?.solana) {
-    if ((window.ethereum as any).isMetaMask === true) {
-      return window.ethereum.solana;
-    }
+  // Desktop MetaMask extension: injects window.ethereum.solana with isMetaMask flag
+  if (window.ethereum?.solana && (window.ethereum as any).isMetaMask === true) {
+    return window.ethereum.solana;
   }
 
-  // Desktop: window.solana with MetaMask flag
-  if (window.solana) {
-    if ((window.solana as any).isMetaMask === true) {
-      return window.solana as MetaMaskProvider;
-    }
+  // window.solana explicitly from MetaMask
+  if (window.solana && (window.solana as any).isMetaMask === true) {
+    return window.solana as MetaMaskProvider;
   }
 
-  // Mobile MetaMask browser: Create a lazy proxy that will connect to MetaMask when called
-  // MetaMask mobile may not inject immediately, so we return a provider stub that
-  // will work once the user interacts with the page
-  if (isMetaMaskBrowser) {
-    // Return a proxy that will attempt to find the provider when methods are called
+  // Mobile MetaMask browser (and desktop MetaMask without Solana sub-provider):
+  // MetaMask injects window.ethereum with isMetaMask=true in its mobile in-app browser.
+  // NOTE: MetaMask mobile UA is standard Chrome — do NOT use navigator.userAgent to detect.
+  if (window.ethereum && (window.ethereum as any).isMetaMask === true) {
+    const lazyGetSolana = () =>
+      ((window.solana as any) ?? (window.ethereum as any)?.solana) ?? null;
+
     return {
       publicKey: null,
       connected: false,
       connecting: false,
-      connect: async function() {
-        // On mobile MetaMask, Solana might be available at window.solana or window.ethereum.solana
-        const provider = (window.solana as any) || (window.ethereum as any)?.solana;
-        if (!provider || !provider.connect) {
-          throw new Error("MetaMask Solana provider not available. Please ensure MetaMask is properly installed.");
+      connect: async function () {
+        const p = lazyGetSolana();
+        if (!p || typeof p.connect !== "function") {
+          throw new Error(
+            "MetaMask does not expose a Solana provider in this browser. " +
+            "Please use Phantom, OKX, or another Solana-native wallet on mobile."
+          );
         }
-        return provider.connect();
+        return p.connect();
       },
-      disconnect: async function() {
-        const provider = (window.solana as any) || (window.ethereum as any)?.solana;
-        if (provider?.disconnect) {
-          return provider.disconnect();
-        }
+      disconnect: async function () {
+        const p = lazyGetSolana();
+        if (p?.disconnect) await p.disconnect();
       },
-      signTransaction: async function(tx) {
-        const provider = (window.solana as any) || (window.ethereum as any)?.solana;
-        if (!provider?.signTransaction) {
-          throw new Error("MetaMask Solana provider not available");
-        }
-        return provider.signTransaction(tx);
+      signTransaction: async function (tx: any) {
+        const p = lazyGetSolana();
+        if (!p?.signTransaction)
+          throw new Error("MetaMask Solana provider unavailable");
+        return p.signTransaction(tx);
       },
-      signAllTransactions: async function(txs) {
-        const provider = (window.solana as any) || (window.ethereum as any)?.solana;
-        if (!provider?.signAllTransactions) {
-          throw new Error("MetaMask Solana provider not available");
-        }
-        return provider.signAllTransactions(txs);
+      signAllTransactions: async function (txs: any[]) {
+        const p = lazyGetSolana();
+        if (!p?.signAllTransactions)
+          throw new Error("MetaMask Solana provider unavailable");
+        return p.signAllTransactions(txs);
       },
-      signMessage: async function(msg) {
-        const provider = (window.solana as any) || (window.ethereum as any)?.solana;
-        if (!provider?.signMessage) {
-          throw new Error("MetaMask Solana provider not available");
-        }
-        return provider.signMessage(msg);
+      signMessage: async function (msg: any) {
+        const p = lazyGetSolana();
+        if (!p?.signMessage)
+          throw new Error("MetaMask Solana provider unavailable");
+        return p.signMessage(msg);
       },
     } as unknown as MetaMaskProvider;
   }

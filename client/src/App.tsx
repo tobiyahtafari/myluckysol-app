@@ -21,6 +21,7 @@ import Fairness from "@/pages/Fairness";
 import Giveaway from "@/pages/Giveaway";
 import Chat from "@/pages/Chat";
 import ReferralTracking from "@/pages/ReferralTracking";
+import WalletDebug from "@/pages/WalletDebug";
 import NotFound from "@/pages/not-found";
 import { GameNotificationManager } from "@/components/GameNotification";
 
@@ -52,6 +53,7 @@ function Router() {
         <Route path="/giveaway" component={Giveaway} />
         <Route path="/chat" component={Chat} />
         <Route path="/profile/referrals" component={ReferralTracking} />
+        <Route path="/wallet-debug" component={WalletDebug} />
         <Route component={NotFound} />
       </Switch>
     </>
