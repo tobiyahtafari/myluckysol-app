@@ -67,6 +67,17 @@ MyLuckySol is a casino-grade, provably fair decentralized application (DApp) on 
 - **Username Change Cooldown**: 72-hour cooldown on username changes.
 - **Strict Payment Verification**: Backend validates SOL transfers for username updates to prevent abuse.
 
+## Android App (Solana dApp Store)
+
+A native Android WebView wrapper is in the `android/` directory, ready for submission to the Solana dApp Store for Seeker devices.
+
+- **Package ID**: `fun.myluckysol.app`
+- **Min SDK**: 26 (Android 8.0)
+- **Build**: GitHub Actions workflow at `.github/workflows/build-apk.yml` — auto-builds APK on push to main
+- **Launcher icons**: Generated from favicon at all mipmap densities (mdpi → xxxhdpi)
+- **Deep links**: `myluckysol://` and `https://myluckysol.fun` App Links registered
+- **Signing**: Signed release APK requires `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` GitHub secrets
+
 ## External Dependencies
 - **Solana Blockchain**: Core platform for transactions, smart contracts (program), and token (WAGA) operations.
 - **Phantom, OKX Wallet, Solflare, Backpack**: Supported wallets for user interaction with the Solana blockchain.

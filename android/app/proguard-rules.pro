@@ -1,0 +1,4 @@
+-keep class fun.myluckysol.app.** { *; }
+-keepattributes *Annotation*
+-dontwarn okhttp3.**
+-dontwarn okio.**
