@@ -99,7 +99,7 @@ function PayoutTable({
           {entries.length === 0 && (
             <tr>
               <td colSpan={5} className="text-center py-8 text-muted-foreground">
-                No players yet. Be the first to play!
+                {isLuck ? "(Must have 100 Games or More.)" : "No players yet. Be the first to play!"}
               </td>
             </tr>
           )}

@@ -194,7 +194,9 @@ export default function Leaderboard() {
               <Users className="w-12 h-12 mb-4 opacity-50" />
               <p className="text-lg font-medium">No players yet</p>
               <p className="text-sm">
-                {activePeriod === "all" 
+                {activeTab === "luck"
+                  ? "(Must have 100 Games or More.)"
+                  : activePeriod === "all" 
                   ? "Be the first to play and claim the top spot!" 
                   : `No games played this ${activePeriod === "daily" ? "day" : activePeriod === "weekly" ? "week" : "month"} yet.`}
               </p>
