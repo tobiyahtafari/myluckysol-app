@@ -604,9 +604,11 @@ export class PgStorage implements IStorage {
         : sortBy === "luck" ? "luck_score DESC"
         : "best_streak DESC";
 
+      // For luck score leaderboard, require at least 100 games played
+      const minGamesFilter = sortBy === "luck" ? "100" : "0";
       const { rows } = await pool.query(
-        `SELECT * FROM player_profiles WHERE games_played > 0 ORDER BY ${orderBy} LIMIT $1`,
-        [limit]
+        `SELECT * FROM player_profiles WHERE games_played > $2 ORDER BY ${orderBy} LIMIT $1`,
+        [limit, minGamesFilter]
       );
 
       return rows.map((row: any, i: number) => {
@@ -674,7 +676,9 @@ export class PgStorage implements IStorage {
       : sortBy === "luck" ? b.luckScore - a.luckScore
       : b.bestStreak - a.bestStreak);
 
-    return entries.slice(0, limit).map((e, i) => ({ ...e, rank: i + 1 }));
+    // For luck score leaderboard, require at least 100 games played
+    const filtered = sortBy === "luck" ? entries.filter(e => e.gamesPlayed >= 100) : entries;
+    return filtered.slice(0, limit).map((e, i) => ({ ...e, rank: i + 1 }));
   }
 
   private getPeriodStartTime(period: LeaderboardPeriod): number {
