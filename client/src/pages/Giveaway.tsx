@@ -84,7 +84,7 @@ function PayoutTable({
 }) {
   const isLuck = type === "luck";
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border/50">
