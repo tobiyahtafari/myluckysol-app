@@ -84,8 +84,8 @@ function PayoutTable({
 }) {
   const isLuck = type === "luck";
   return (
-    <div className="w-full flex justify-center overflow-x-auto">
-      <table className="w-full text-sm min-w-min">
+    <div className="w-full overflow-x-auto">
+      <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border/50">
             <th className="text-left py-3 px-2 text-muted-foreground font-medium">Rank</th>
