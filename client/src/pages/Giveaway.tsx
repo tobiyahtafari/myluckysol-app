@@ -415,7 +415,7 @@ export default function Giveaway() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                         Luck Leaderboard (50% of pot)
@@ -425,15 +425,15 @@ export default function Giveaway() {
                           const payoutSol = (jackpot / 2) * (pct / 100);
                           const payoutUsd = solPrice ? payoutSol * solPrice : null;
                           return (
-                            <div key={i} className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">#{i + 1}</span>
-                              <div className="flex-1 mx-3">
+                            <div key={i} className="flex items-center justify-between text-sm gap-2">
+                              <span className="text-muted-foreground flex-shrink-0">#{i + 1}</span>
+                              <div className="flex-1 mx-1 md:mx-3 min-w-0">
                                 <div
                                   className="h-1.5 rounded-full bg-primary/30"
                                   style={{ width: `${(pct / 22) * 100}%` }}
                                 />
                               </div>
-                              <span className="font-mono text-foreground w-32 text-right">
+                              <span className="font-mono text-foreground text-xs md:text-sm text-right flex-shrink-0 w-24 md:w-32">
                                 {pct}% → {payoutSol.toFixed(1)} SOL
                                 {payoutUsd && (
                                   <span className="block text-[10px] text-[#c1ff72] font-bold">
@@ -455,15 +455,15 @@ export default function Giveaway() {
                           const payoutSol = (jackpot / 2) * (pct / 100);
                           const payoutUsd = solPrice ? payoutSol * solPrice : null;
                           return (
-                            <div key={i} className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">#{i + 1}</span>
-                              <div className="flex-1 mx-3">
+                            <div key={i} className="flex items-center justify-between text-sm gap-2">
+                              <span className="text-muted-foreground flex-shrink-0">#{i + 1}</span>
+                              <div className="flex-1 mx-1 md:mx-3 min-w-0">
                                 <div
                                   className="h-1.5 rounded-full bg-secondary/30"
                                   style={{ width: `${(pct / 22) * 100}%` }}
                                 />
                               </div>
-                              <span className="font-mono text-foreground w-32 text-right">
+                              <span className="font-mono text-foreground text-xs md:text-sm text-right flex-shrink-0 w-24 md:w-32">
                                 {pct}% → {payoutSol.toFixed(1)} SOL
                                 {payoutUsd && (
                                   <span className="block text-[10px] text-[#c1ff72] font-bold">
