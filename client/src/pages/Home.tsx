@@ -834,7 +834,7 @@ export default function Home() {
                       <span className="text-2xl font-bold text-white uppercase tracking-wider drop-shadow-lg">Click To Watch</span>
                     </div>
                     <img 
-                      src="https://img.youtube.com/vi/dolUeDh6Ih8/maxresdefault.jpg" 
+                      src="https://img.youtube.com/vi/-2JNOO2uZSc/maxresdefault.jpg" 
                       alt="Video Thumbnail"
                       className="w-full h-full object-cover"
                     />
@@ -850,7 +850,7 @@ export default function Home() {
                       id="third-youtube-player"
                       width="100%" 
                       height="100%" 
-                      src="https://www.youtube.com/embed/dolUeDh6Ih8?autoplay=1&enablejsapi=1&si=GB02YeQG9ERbqFhS&controls=0&modestbranding=1&rel=0&iv_load_policy=3" 
+                      src="https://www.youtube.com/embed/-2JNOO2uZSc?autoplay=1&enablejsapi=1&si=GB02YeQG9ERbqFhS&controls=0&modestbranding=1&rel=0&iv_load_policy=3" 
                       title="YouTube video player" 
                       frameBorder="0" 
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
