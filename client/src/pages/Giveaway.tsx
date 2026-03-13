@@ -365,7 +365,7 @@ export default function Giveaway() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="space-y-10"
+              className="w-full space-y-10"
             >
               {/* How it works */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
