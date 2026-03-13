@@ -190,10 +190,10 @@ export default function Leaderboard() {
               <p>Loading leaderboard...</p>
             </div>
           ) : displayLeaderboard.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground px-4">
               <Users className="w-12 h-12 mb-4 opacity-50" />
               <p className="text-lg font-medium">No players yet</p>
-              <p className="text-sm">
+              <p className="text-xs sm:text-sm text-center max-w-xs">
                 {activeTab === "luck"
                   ? "(Must have 100 Games or More.)"
                   : activePeriod === "all" 

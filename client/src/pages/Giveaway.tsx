@@ -84,8 +84,8 @@ function PayoutTable({
 }) {
   const isLuck = type === "luck";
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="w-full flex justify-center overflow-x-auto">
+      <table className="w-full text-sm min-w-min">
         <thead>
           <tr className="border-b border-border/50">
             <th className="text-left py-3 px-2 text-muted-foreground font-medium">Rank</th>
@@ -98,7 +98,7 @@ function PayoutTable({
         <tbody>
           {entries.length === 0 && (
             <tr>
-              <td colSpan={5} className="text-center py-8 text-muted-foreground">
+              <td colSpan={5} className="text-center py-8 text-muted-foreground text-xs sm:text-sm px-2">
                 {isLuck ? "(Must have 100 Games or More.)" : "No players yet. Be the first to play!"}
               </td>
             </tr>
