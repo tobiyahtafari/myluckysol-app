@@ -33,11 +33,14 @@ export default function Home() {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [showGiveawayVideo, setShowGiveawayVideo] = useState(false);
+  const [showThirdVideo, setShowThirdVideo] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
   const [giveawayVideoEnded, setGiveawayVideoEnded] = useState(false);
+  const [thirdVideoEnded, setThirdVideoEnded] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
   const playerRef = useRef<any>(null);
   const giveawayPlayerRef = useRef<any>(null);
+  const thirdPlayerRef = useRef<any>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobileView(window.innerWidth < 1024);
@@ -66,6 +69,9 @@ export default function Home() {
       if (giveawayPlayerRef.current) {
         giveawayPlayerRef.current.destroy();
       }
+      if (thirdPlayerRef.current) {
+        thirdPlayerRef.current.destroy();
+      }
     };
   }, []);
 
@@ -86,6 +92,12 @@ export default function Home() {
     }
   };
 
+  const onThirdPlayerStateChange = (event: any) => {
+    if (event.data === 0) {
+      setThirdVideoEnded(true);
+    }
+  };
+
   const initPlayer = (elementId: string) => {
     if (window.YT && window.YT.Player) {
       playerRef.current = new window.YT.Player(elementId, {
@@ -103,6 +115,17 @@ export default function Home() {
         events: {
           'onReady': onPlayerReady,
           'onStateChange': onGiveawayPlayerStateChange
+        }
+      });
+    }
+  };
+
+  const initThirdPlayer = (elementId: string) => {
+    if (window.YT && window.YT.Player) {
+      thirdPlayerRef.current = new window.YT.Player(elementId, {
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onThirdPlayerStateChange
         }
       });
     }
@@ -135,6 +158,21 @@ export default function Home() {
     setGiveawayVideoEnded(false);
     if (giveawayPlayerRef.current && giveawayPlayerRef.current.playVideo) {
       giveawayPlayerRef.current.playVideo();
+    }
+  };
+
+  const handleThirdPlayClick = () => {
+    setShowThirdVideo(true);
+    setThirdVideoEnded(false);
+    setTimeout(() => {
+      initThirdPlayer('third-youtube-player');
+    }, 50);
+  };
+
+  const handleThirdReplayClick = () => {
+    setThirdVideoEnded(false);
+    if (thirdPlayerRef.current && thirdPlayerRef.current.playVideo) {
+      thirdPlayerRef.current.playVideo();
     }
   };
 
@@ -767,6 +805,84 @@ export default function Home() {
 
       <section className="py-20">
         <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 max-w-4xl mx-auto"
+          >
+            <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-primary/20 shadow-2xl group cursor-pointer" 
+            onClick={() => { if (!showThirdVideo) handleThirdPlayClick(); }} 
+            data-testid="third-video-overlay">
+              <AnimatePresence mode="wait">
+                {!showThirdVideo ? (
+                  <motion.div 
+                    key="third-initial-overlay"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-10"
+                  >
+                    <div className="absolute inset-[-2px] bg-gradient-to-r from-primary via-secondary to-primary animate-pulse opacity-50 blur-sm group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4 group-hover:bg-black/40 transition-colors">
+                      <motion.div
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_30px_rgba(245,184,0,0.4)]"
+                      >
+                        <Play className="w-8 h-8 text-black fill-current translate-x-0.5" />
+                      </motion.div>
+                      <span className="text-2xl font-bold text-white uppercase tracking-wider drop-shadow-lg">Click To Watch</span>
+                    </div>
+                    <img 
+                      src="https://img.youtube.com/vi/dolUeDh6Ih8/maxresdefault.jpg" 
+                      alt="Video Thumbnail"
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="third-video-container"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 z-20"
+                  >
+                    <iframe 
+                      id="third-youtube-player"
+                      width="100%" 
+                      height="100%" 
+                      src="https://www.youtube.com/embed/dolUeDh6Ih8?autoplay=1&enablejsapi=1&si=GB02YeQG9ERbqFhS&controls=0&modestbranding=1&rel=0&iv_load_policy=3" 
+                      title="YouTube video player" 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                      referrerPolicy="strict-origin-when-cross-origin" 
+                      allowFullScreen
+                    ></iframe>
+                    <AnimatePresence>
+                      {thirdVideoEnded && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-4 cursor-pointer"
+                          onClick={handleThirdReplayClick}
+                        >
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_30px_rgba(245,184,0,0.6)]"
+                          >
+                            <RotateCcw className="w-8 h-8 text-black" />
+                          </motion.div>
+                          <span className="text-2xl font-bold text-white uppercase tracking-wider drop-shadow-lg">Watch Again</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
