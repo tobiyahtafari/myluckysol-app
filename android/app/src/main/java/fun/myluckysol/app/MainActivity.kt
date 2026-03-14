@@ -1,7 +1,10 @@
 package `fun`.myluckysol.app
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
@@ -13,11 +16,16 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Button
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var splashScreen: LinearLayout
+    private lateinit var offlineScreen: LinearLayout
+    private lateinit var retryButton: Button
     private val APP_URL = "https://myluckysol.fun"
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -26,6 +34,18 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webView)
+        splashScreen = findViewById(R.id.splashScreen)
+        offlineScreen = findViewById(R.id.offlineScreen)
+        retryButton = findViewById(R.id.retryButton)
+
+        retryButton.setOnClickListener {
+            if (isOnline()) {
+                offlineScreen.visibility = View.GONE
+                splashScreen.visibility = View.VISIBLE
+                webView.visibility = View.INVISIBLE
+                webView.loadUrl(APP_URL)
+            }
+        }
 
         with(webView.settings) {
             javaScriptEnabled = true
@@ -36,7 +56,8 @@ class MainActivity : AppCompatActivity() {
             allowContentAccess = true
             allowFileAccess = false
             setSupportMultipleWindows(true)
-            userAgentString = userAgentString + " MyLuckySolApp/1.0 SolanaSeeker"
+            mediaPlaybackRequiresUserGesture = false
+            userAgentString = "$userAgentString MyLuckySolApp/1.0 SolanaSeeker"
         }
 
         webView.webViewClient = object : WebViewClient() {
@@ -48,7 +69,8 @@ class MainActivity : AppCompatActivity() {
                         false
                     }
                     url.startsWith("solana:") || url.startsWith("phantom:") ||
-                    url.startsWith("solflare:") || url.startsWith("okx:") -> {
+                    url.startsWith("solflare:") || url.startsWith("okx:") ||
+                    url.startsWith("backpack:") -> {
                         try {
                             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                         } catch (e: Exception) {
@@ -61,6 +83,36 @@ class MainActivity : AppCompatActivity() {
                         true
                     }
                     else -> false
+                }
+            }
+
+            override fun onPageFinished(view: WebView, url: String) {
+                super.onPageFinished(view, url)
+                splashScreen.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction {
+                        splashScreen.visibility = View.GONE
+                        splashScreen.alpha = 1f
+                    }
+                    .start()
+                webView.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .withStartAction { webView.visibility = View.VISIBLE }
+                    .start()
+            }
+
+            override fun onReceivedError(
+                view: WebView,
+                errorCode: Int,
+                description: String,
+                failingUrl: String
+            ) {
+                if (!isOnline()) {
+                    splashScreen.visibility = View.GONE
+                    webView.visibility = View.GONE
+                    offlineScreen.visibility = View.VISIBLE
                 }
             }
         }
@@ -85,9 +137,21 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)
+            splashScreen.visibility = View.GONE
+            webView.visibility = View.VISIBLE
+        } else if (!isOnline()) {
+            splashScreen.visibility = View.GONE
+            offlineScreen.visibility = View.VISIBLE
         } else {
             webView.loadUrl(APP_URL)
         }
+    }
+
+    private fun isOnline(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

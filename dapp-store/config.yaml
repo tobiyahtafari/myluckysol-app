@@ -1,0 +1,63 @@
+publisher:
+  name: "MyLuckySol Foundation"
+  website: "https://myluckysol.fun"
+  email: "admin@myluckysol.fun"
+  # Your Solana publisher wallet address (fill in after portal registration)
+  address: ""
+
+app:
+  android_package: "fun.myluckysol.app"
+  name: "MyLuckySol"
+  urls:
+    website: "https://myluckysol.fun"
+    privacy_policy: "https://myluckysol.fun/privacy"
+    license_agreement: "https://myluckysol.fun/terms"
+  # NFT address assigned by the portal on first publish (fill in after first publish)
+  address: ""
+
+release:
+  version_code: 1
+  version_name: "1.0.0"
+  min_os_version: "8.0"
+
+  catalog:
+    name: "MyLuckySol"
+    short_description: "Provably fair Solana chance game — wager SOL, win 90% of the pool with WAGA token rewards."
+    long_description: |
+      MyLuckySol is a casino-grade provably fair decentralized game on the Solana blockchain.
+
+      HOW IT WORKS
+      - Choose a game mode (1v1, 4-player, 8-player, or 16-player tournament)
+      - Pick a wager tier (0.01, 0.1, 1, or 10 SOL)
+      - Win 90% of the game pool — 9% goes to treasury, 1% to the giveaway jackpot
+      - Every result is verifiable using HMAC-SHA256 with a server seed revealed after each game
+
+      WAGA TOKEN REWARDS
+      - Earn 100x your SOL wager in WAGA tokens just for entering a game
+      - Win a game and earn 1000x SOL won in vested WAGA rewards
+      - Refer friends for 100 WAGA each (both sides)
+
+      GIVEAWAY JACKPOT
+      - 1% of every game pool contributes to a seasonal jackpot (200 SOL minimum)
+      - Jackpot triggers at 1,000,000 games — split between top 10 luck scorers and top 10 streak holders
+
+      GOD MODE (Phase 2)
+      - Rare 50-in-1,000,000 chance to activate God Mode (95% win weight for 26–333 hidden games)
+      - Challenge a God to become a Streak Breaker — 25% chance to strip their advantage for a 75% win bonus
+
+      WALLET SUPPORT
+      - Phantom, Solflare, OKX Wallet, and Backpack
+      - Mainnet and Devnet switching
+
+    category: "games"
+    content_rating: "Everyone"
+
+  media:
+    # 512x512 icon — place at dapp-store/icon-512.png
+    icon: "dapp-store/icon-512.png"
+    # At least 4 screenshots minimum 1080px wide — place in dapp-store/screenshots/
+    screenshots:
+      - "dapp-store/screenshots/01-home.png"
+      - "dapp-store/screenshots/02-game.png"
+      - "dapp-store/screenshots/03-leaderboard.png"
+      - "dapp-store/screenshots/04-giveaway.png"
