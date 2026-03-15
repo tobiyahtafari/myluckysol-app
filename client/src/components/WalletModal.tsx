@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ExternalLink, Loader2, Wallet } from "lucide-react";
+import { X, ExternalLink, Loader2, Wallet, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet-context";
+import { isSeekerDevice } from "@/lib/solana/wallet-adapter";
 import type { WalletName } from "@/lib/solana/wallet-adapter";
 
 interface WalletModalProps {
@@ -14,6 +15,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const { connect, connecting, allWallets } = useWallet();
   const [connectingWallet, setConnectingWallet] = useState<WalletName | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const onSeeker = isSeekerDevice();
 
   const handleConnect = async (walletName: WalletName) => {
     setError(null);
@@ -28,6 +30,10 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
       setConnectingWallet(null);
     }
   };
+
+  // On Seeker, separate the Seeker wallet from the rest
+  const seekerWallet = allWallets.find(w => w.name === "seeker");
+  const otherWallets = allWallets.filter(w => w.name !== "seeker");
 
   return (
     <AnimatePresence>
@@ -64,8 +70,36 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                   </Button>
                 </div>
 
-                <div className="p-4 space-y-2">
-                  {allWallets.map((wallet) => (
+                <div className="p-4 space-y-3">
+                  {/* Seeker prominent connect button */}
+                  {onSeeker && seekerWallet && (
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => handleConnect("seeker")}
+                        disabled={connecting || connectingWallet !== null}
+                        className="w-full flex items-center justify-center gap-3 p-4 rounded-xl bg-[#F5B800] hover:bg-[#F5B800]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-testid="button-connect-seeker"
+                      >
+                        {connectingWallet === "seeker" ? (
+                          <Loader2 className="w-5 h-5 text-black animate-spin" />
+                        ) : (
+                          <Smartphone className="w-5 h-5 text-black" />
+                        )}
+                        <span className="font-bold text-black text-base">
+                          {connectingWallet === "seeker" ? "Connecting..." : "Connect Seeker Wallet"}
+                        </span>
+                      </button>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-px bg-white/10" />
+                        <span className="text-xs text-gray-500 uppercase tracking-wider">or select wallet</span>
+                        <div className="flex-1 h-px bg-white/10" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Standard wallet list */}
+                  {otherWallets.map((wallet) => (
                     <button
                       key={wallet.name}
                       onClick={() => handleConnect(wallet.name)}
@@ -110,6 +144,15 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                       ) : null}
                     </button>
                   ))}
+
+                  {/* Seeker install guidance if no wallet injected */}
+                  {onSeeker && (
+                    <div className="p-3 rounded-lg bg-[#F5B800]/5 border border-[#F5B800]/20">
+                      <p className="text-xs text-[#F5B800]/80 leading-relaxed">
+                        For the best experience on Seeker, install <strong>Phantom</strong> or <strong>Solflare</strong> from the Solana dApp Store.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {error && (

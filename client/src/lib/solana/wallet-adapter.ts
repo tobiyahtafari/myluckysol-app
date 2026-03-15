@@ -74,31 +74,105 @@ declare global {
 export function isSeekerDevice(): boolean {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  return ua.includes("SolanaSeeker") || ua.includes("Saga") || ua.includes("MyLuckySolApp");
+  // "MyLuckySolApp" is injected by our MainActivity.kt into the WebView UA
+  return ua.includes("MyLuckySolApp") || ua.includes("SolanaSeeker") || ua.includes("Saga");
 }
 
-export function getSeekerWallet(): SeekerProvider | null {
+// Returns the native Solana wallet injected into window.solana (non-Phantom)
+// or null if not available
+function getNativeWindowSolana(): SeekerProvider | null {
   if (typeof window === "undefined") return null;
-  
   const provider = window.solana;
-  
-  if (!provider) {
-    return null;
-  }
-  
-  // Must have connect — basic wallet interface check
-  if (typeof provider.connect !== "function") {
-    return null;
-  }
-  
-  // Exclude Phantom (it also injects window.solana but we don't want to double-list it)
-  if (provider.isPhantom) {
-    return null;
-  }
-  
-  // If we got here, window.solana exists, has connect, and isn't Phantom
-  // This is the Seeker native wallet (or another Solana-native wallet on the device)
+  if (!provider) return null;
+  if (typeof provider.connect !== "function") return null;
+  // Exclude Phantom — it also injects window.solana
+  if (provider.isPhantom) return null;
+  // Exclude Solflare — it also uses window.solana in some builds
+  if ((provider as any).isSolflare) return null;
   return provider as SeekerProvider;
+}
+
+// Creates a virtual adapter for Seeker devices.
+// On connect: tries window.solana first, then guides user to install a compatible wallet.
+function createSeekerAdapter(): SeekerProvider {
+  const events: Record<string, ((...args: any[]) => void)[]> = {};
+
+  return {
+    publicKey: null,
+    connected: false,
+    connecting: false,
+
+    connect: async function () {
+      // Try the natively injected wallet first
+      const native = getNativeWindowSolana();
+      if (native) {
+        await native.connect();
+        (this as any).publicKey = native.publicKey;
+        (this as any).connected = !!native.publicKey;
+        return;
+      }
+
+      // Check if any Solana provider exists at all
+      if (window.solana && typeof window.solana.connect === "function") {
+        await window.solana.connect();
+        (this as any).publicKey = window.solana.publicKey;
+        (this as any).connected = !!window.solana.publicKey;
+        return;
+      }
+
+      // No wallet found — throw a helpful message
+      throw new Error(
+        "No Solana wallet detected. Please install Phantom or Solflare from the Solana dApp Store, then reopen the app."
+      );
+    },
+
+    disconnect: async function () {
+      const native = getNativeWindowSolana();
+      if (native?.disconnect) await native.disconnect();
+      (this as any).publicKey = null;
+      (this as any).connected = false;
+    },
+
+    signTransaction: async function <T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
+      const native = getNativeWindowSolana() ?? window.solana;
+      if (!native || typeof (native as any).signTransaction !== "function") {
+        throw new Error("Wallet not available for signing");
+      }
+      return (native as any).signTransaction(tx);
+    },
+
+    signAllTransactions: async function <T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> {
+      const native = getNativeWindowSolana() ?? window.solana;
+      if (!native || typeof (native as any).signAllTransactions !== "function") {
+        throw new Error("Wallet not available for signing");
+      }
+      return (native as any).signAllTransactions(txs);
+    },
+
+    on: function (event: string, callback: (...args: any[]) => void) {
+      if (!events[event]) events[event] = [];
+      events[event].push(callback);
+      const native = getNativeWindowSolana() ?? window.solana;
+      if (native?.on) native.on(event, callback);
+    },
+
+    off: function (event: string, callback: (...args: any[]) => void) {
+      events[event] = (events[event] || []).filter(cb => cb !== callback);
+      const native = getNativeWindowSolana() ?? window.solana;
+      if (native?.off) native.off(event, callback);
+    },
+  };
+}
+
+let _seekerAdapterInstance: SeekerProvider | null = null;
+
+export function getSeekerWallet(): SeekerProvider | null {
+  if (!isSeekerDevice()) return null;
+  // Return cached instance so event listeners persist
+  if (!_seekerAdapterInstance) {
+    _seekerAdapterInstance = createSeekerAdapter();
+  }
+  return _seekerAdapterInstance;
 }
 
 export type WalletName = "seeker" | "phantom" | "solflare" | "okx" | "backpack" | "metamask";
@@ -272,15 +346,17 @@ export function getAllWallets(): WalletInfo[] {
   const metamask = getMetaMaskWallet();
 
   const wallets: WalletInfo[] = [];
+  const onSeeker = isSeekerDevice();
 
-  // Seeker native wallet — only show on Seeker devices, always first
-  if (isSeekerDevice()) {
+  // Seeker native wallet — always first on Seeker devices, always marked installed
+  // (the virtual adapter handles the "no wallet injected" case with a helpful error)
+  if (onSeeker) {
     wallets.push({
       name: "seeker",
       displayName: "Seeker Wallet",
       icon: WALLET_ICONS.seeker,
       adapter: seeker,
-      installed: !!seeker,
+      installed: true,
       url: "https://solanamobile.com/",
     });
   }
@@ -318,15 +394,19 @@ export function getAllWallets(): WalletInfo[] {
       installed: !!backpack,
       url: "https://backpack.app/",
     },
-    {
+  );
+
+  // MetaMask cannot sign Solana transactions on mobile — hide it on Seeker
+  if (!onSeeker) {
+    wallets.push({
       name: "metamask",
       displayName: "MetaMask",
       icon: WALLET_ICONS.metamask,
       adapter: metamask,
       installed: !!metamask,
       url: "https://metamask.io/",
-    },
-  );
+    });
+  }
 
   return wallets;
 }
