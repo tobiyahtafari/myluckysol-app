@@ -94,7 +94,7 @@ function getNativeWindowSolana(): SeekerProvider | null {
 }
 
 // Creates a virtual adapter for Seeker devices.
-// On connect: tries window.solana first, then guides user to install a compatible wallet.
+// On connect: tries window.solana first, then attempts deep link, then guides user to install a compatible wallet.
 function createSeekerAdapter(): SeekerProvider {
   const events: Record<string, ((...args: any[]) => void)[]> = {};
 
@@ -119,6 +119,37 @@ function createSeekerAdapter(): SeekerProvider {
         (this as any).publicKey = window.solana.publicKey;
         (this as any).connected = !!window.solana.publicKey;
         return;
+      }
+
+      // On Seeker, try to trigger the native wallet via deep link
+      // The wallet should inject into window.solana after user approves
+      if (typeof window !== "undefined") {
+        try {
+          console.log("[Seeker] Attempting deep link connection...");
+          // Try to open the Seeker wallet via deep link
+          // The wallet's callback will populate window.solana
+          window.location.href = "solanawallet://connect?return_url=" + encodeURIComponent(window.location.href);
+          
+          // Wait for wallet to inject
+          return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error("Wallet connection timeout. Please try again."));
+            }, 10000);
+            
+            const checkInterval = setInterval(() => {
+              const native = getNativeWindowSolana();
+              if (native?.publicKey) {
+                clearTimeout(timeout);
+                clearInterval(checkInterval);
+                (this as any).publicKey = native.publicKey;
+                (this as any).connected = true;
+                resolve(undefined);
+              }
+            }, 500);
+          });
+        } catch (e) {
+          console.log("[Seeker] Deep link failed, falling back to user guidance");
+        }
       }
 
       // No wallet found — throw a helpful message
