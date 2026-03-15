@@ -1,0 +1,158 @@
+Since your MyLuckySol game already works on web with wallets like Phantom, Solflare, Backpack, OKX Wallet, and MetaMask, the goal is to add Solana Mobile compatibility without breaking your existing wallet-adapter flow.
+
+The correct approach is a dual wallet connection layer:
+
+Desktop / normal mobile browsers → Wallet Adapter
+
+Solana Seeker installed app → Mobile Wallet Adapter (MWA)
+
+This lets the same dApp codebase support both environments.
+
+Recommended Architecture
+Wallet Connection Layer
+
+IF Solana Mobile device
+    → Mobile Wallet Adapter (SMS)
+ELSE
+    → Solana Wallet Adapter
+
+This keeps compatibility with your current wallets while enabling the Seeker phone connection model required for the Solana dApp Store.
+
+Step 1 — Install Mobile Wallet Adapter
+
+Add the Solana Mobile library:
+
+npm install @solana-mobile/mobile-wallet-adapter-protocol-web3js
+Step 2 — Detect Solana Mobile Environment
+
+Solana Mobile devices expose a capability flag.
+
+Example detection:
+
+function isSolanaMobile() {
+  return window.navigator.userAgent.includes("SolanaMobile");
+}
+
+Some teams also check:
+
+window.solana?.isMobileWalletAdapter
+Step 3 — Create a Universal Connect Function
+
+This is the cleanest pattern used by Solana mobile apps.
+
+import { transact } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
+
+async function connectWallet() {
+
+  if (isSolanaMobile()) {
+
+    const result = await transact(async (wallet) => {
+      const auth = await wallet.authorize({
+        cluster: "mainnet-beta",
+        identity: {
+          name: "MyLuckySol",
+          uri: "https://myluckysol.fun",
+        },
+      });
+
+      return auth.accounts[0].address;
+    });
+
+    return result;
+
+  } else {
+
+    // existing wallet adapter logic
+    await walletAdapter.connect();
+    return walletAdapter.publicKey.toString();
+
+  }
+}
+
+This allows one Connect Wallet button for both environments.
+
+Step 4 — Transaction Signing (Unified)
+
+Mobile Wallet Adapter signing:
+
+await transact(async (wallet) => {
+  const signed = await wallet.signTransactions({
+    transactions: [transaction],
+  });
+
+  return signed;
+});
+
+Your existing wallet adapter signing remains unchanged.
+
+Step 5 — Required for Solana dApp Store Submission
+
+To submit to the Seeker dApp Store, the app must:
+
+✔ Support Mobile Wallet Adapter
+✔ Avoid browser wallet extensions
+✔ Work as a PWA or installable web app
+✔ Use deep linking for wallet authorization
+✔ Provide an icon + manifest.json
+
+Typical manifest:
+
+{
+ "name": "MyLuckySol",
+ "short_name": "MyLuckySol",
+ "start_url": "/",
+ "display": "standalone",
+ "background_color": "#000000",
+ "theme_color": "#000000"
+}
+Step 6 — UX Change for Seeker Users
+
+Do not show multiple wallet options on Solana Mobile.
+
+Instead show:
+
+Connect Wallet
+
+The OS automatically opens whichever wallet is installed.
+
+This is the expected UX for Solana Mobile Stack apps.
+
+Step 7 — Recommended Wallet Strategy
+
+Keep Wallet Adapter with:
+
+Phantom
+
+Solflare
+
+Backpack
+
+OKX
+
+But hide EVM wallets like MetaMask when on Solana Mobile, because they cannot sign Solana transactions.
+
+Example:
+
+if (isSolanaMobile()) {
+   hideWallet("MetaMask");
+}
+Example Final Connection Logic
+User clicks Connect Wallet
+        ↓
+Detect device
+
+Desktop / Browser
+        ↓
+Wallet Adapter popup
+        ↓
+User selects Phantom / Solflare / Backpack
+
+Solana Seeker Phone
+        ↓
+Mobile Wallet Adapter
+        ↓
+Installed wallet opens automatically
+
+💡 Important for MyLuckySol specifically
+
+Because your game executes fast SOL wagers, the Mobile Wallet Adapter flow dramatically reduces friction compared to normal mobile wallet redirects. It feels much closer to a native mobile game.
