@@ -46,6 +46,11 @@ export interface MetaMaskProvider extends WalletAdapter {
   isMetaMask?: boolean;
 }
 
+export interface SeekerProvider extends WalletAdapter {
+  isSaga?: boolean;
+  isSeeker?: boolean;
+}
+
 declare global {
   interface Window {
     phantom?: {
@@ -62,10 +67,28 @@ declare global {
     ethereum?: MetaMaskProvider & {
       solana?: MetaMaskProvider;
     };
+    solana?: SeekerProvider & PhantomProvider & SolflareProvider;
   }
 }
 
-export type WalletName = "phantom" | "solflare" | "okx" | "backpack" | "metamask";
+export function isSeekerDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return navigator.userAgent.includes("SolanaSeeker");
+}
+
+export function getSeekerWallet(): SeekerProvider | null {
+  if (typeof window === "undefined") return null;
+  if (!isSeekerDevice()) return null;
+  const provider = window.solana;
+  if (!provider) return null;
+  // Must have connect/publicKey — basic wallet interface check
+  if (typeof provider.connect !== "function") return null;
+  // Exclude Phantom (it also injects window.solana but we don't want to double-list it)
+  if (provider.isPhantom) return null;
+  return provider as SeekerProvider;
+}
+
+export type WalletName = "seeker" | "phantom" | "solflare" | "okx" | "backpack" | "metamask";
 
 export interface WalletInfo {
   name: WalletName;
@@ -177,6 +200,8 @@ export function getMetaMaskWallet(): MetaMaskProvider | null {
 
 export function getWalletByName(name: WalletName): WalletAdapter | null {
   switch (name) {
+    case "seeker":
+      return getSeekerWallet();
     case "phantom":
       return getPhantomWallet();
     case "solflare":
@@ -193,6 +218,9 @@ export function getWalletByName(name: WalletName): WalletAdapter | null {
 }
 
 export async function getWalletByNameAsync(name: WalletName): Promise<WalletAdapter | null> {
+  if (name === "seeker") {
+    return getSeekerWallet();
+  }
   if (name === "metamask") {
     const { getStandardWallets, waitForStandardWallet, wrapStandardWallet } = await import("./wallet-standard-adapter");
     const stWallets = getStandardWallets();
@@ -223,13 +251,28 @@ export async function detectMetaMaskStandardWallet(): Promise<WalletAdapter | nu
 }
 
 export function getAllWallets(): WalletInfo[] {
+  const seeker = getSeekerWallet();
   const phantom = getPhantomWallet();
   const solflare = getSolflareWallet();
   const okx = getOKXWallet();
   const backpack = getBackpackWallet();
   const metamask = getMetaMaskWallet();
 
-  return [
+  const wallets: WalletInfo[] = [];
+
+  // Seeker native wallet — only show on Seeker devices, always first
+  if (isSeekerDevice()) {
+    wallets.push({
+      name: "seeker",
+      displayName: "Seeker Wallet",
+      icon: WALLET_ICONS.seeker,
+      adapter: seeker,
+      installed: !!seeker,
+      url: "https://solanamobile.com/",
+    });
+  }
+
+  wallets.push(
     {
       name: "phantom",
       displayName: "Phantom",
@@ -270,7 +313,9 @@ export function getAllWallets(): WalletInfo[] {
       installed: !!metamask,
       url: "https://metamask.io/",
     },
-  ];
+  );
+
+  return wallets;
 }
 
 export function getAvailableWallets(): WalletInfo[] {

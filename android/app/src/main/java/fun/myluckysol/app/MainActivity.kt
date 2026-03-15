@@ -68,9 +68,9 @@ class MainActivity : AppCompatActivity() {
                         view.loadUrl(url)
                         false
                     }
-                    url.startsWith("solana:") || url.startsWith("phantom:") ||
-                    url.startsWith("solflare:") || url.startsWith("okx:") ||
-                    url.startsWith("backpack:") -> {
+                    url.startsWith("solana:") || url.startsWith("solanawallet:") ||
+                    url.startsWith("phantom:") || url.startsWith("solflare:") ||
+                    url.startsWith("okx:") || url.startsWith("backpack:") -> {
                         try {
                             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                         } catch (e: Exception) {
