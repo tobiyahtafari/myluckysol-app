@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Loader2, Wallet, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/lib/wallet-context";
-import { isSeekerDevice } from "@/lib/solana/wallet-adapter";
 import type { WalletName } from "@/lib/solana/wallet-adapter";
 
 interface WalletModalProps {
@@ -15,7 +14,6 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const { connect, connecting, allWallets } = useWallet();
   const [connectingWallet, setConnectingWallet] = useState<WalletName | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const onSeeker = isSeekerDevice();
 
   const handleConnect = async (walletName: WalletName) => {
     setError(null);
@@ -31,9 +29,16 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
     }
   };
 
-  // On Seeker, separate the Seeker wallet from the rest
+  // Check if we're in a mobile/app context (WebView)
+  // Desktop detection: if UA doesn't have mobile/Android/iOS, it's desktop
+  const isMobileOrApp = /android|ios|iphone|ipad|mobile|webview|app/i.test(
+    typeof navigator !== "undefined" ? navigator.userAgent : ""
+  );
+
+  // Always show Seeker on mobile/app context, or if getAllWallets includes it
   const seekerWallet = allWallets.find(w => w.name === "seeker");
   const otherWallets = allWallets.filter(w => w.name !== "seeker");
+  const showSeekerProminent = isMobileOrApp || seekerWallet;
 
   return (
     <AnimatePresence>
@@ -71,8 +76,8 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                 </div>
 
                 <div className="p-4 space-y-3">
-                  {/* Seeker prominent connect button */}
-                  {onSeeker && seekerWallet && (
+                  {/* Seeker prominent connect button on mobile/app */}
+                  {showSeekerProminent && (
                     <div className="space-y-3">
                       <button
                         onClick={() => handleConnect("seeker")}
@@ -86,13 +91,13 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                           <Smartphone className="w-5 h-5 text-black" />
                         )}
                         <span className="font-bold text-black text-base">
-                          {connectingWallet === "seeker" ? "Connecting..." : "Connect Seeker Wallet"}
+                          {connectingWallet === "seeker" ? "Connecting..." : "Connect Wallet"}
                         </span>
                       </button>
 
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-px bg-white/10" />
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">or select wallet</span>
+                        <span className="text-xs text-gray-500 uppercase tracking-wider">or select installed wallet</span>
                         <div className="flex-1 h-px bg-white/10" />
                       </div>
                     </div>
@@ -145,11 +150,11 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                     </button>
                   ))}
 
-                  {/* Seeker install guidance if no wallet injected */}
-                  {onSeeker && (
+                  {/* Install guidance for mobile/app users */}
+                  {isMobileOrApp && (
                     <div className="p-3 rounded-lg bg-[#F5B800]/5 border border-[#F5B800]/20">
                       <p className="text-xs text-[#F5B800]/80 leading-relaxed">
-                        For the best experience on Seeker, install <strong>Phantom</strong> or <strong>Solflare</strong> from the Solana dApp Store.
+                        For the best experience, install <strong>Phantom</strong> or <strong>Solflare</strong> from the Solana dApp Store.
                       </p>
                     </div>
                   )}

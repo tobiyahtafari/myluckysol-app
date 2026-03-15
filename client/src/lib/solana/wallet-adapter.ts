@@ -74,8 +74,9 @@ declare global {
 export function isSeekerDevice(): boolean {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  // "MyLuckySolApp" is injected by our MainActivity.kt into the WebView UA
-  return ua.includes("MyLuckySolApp") || ua.includes("SolanaSeeker") || ua.includes("Saga");
+  const isSeeker = ua.includes("MyLuckySolApp") || ua.includes("SolanaSeeker") || ua.includes("Saga");
+  console.log("[isSeekerDevice] UA:", ua, "→ isSeeker:", isSeeker);
+  return isSeeker;
 }
 
 // Returns the native Solana wallet injected into window.solana (non-Phantom)
