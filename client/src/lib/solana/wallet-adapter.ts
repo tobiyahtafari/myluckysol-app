@@ -74,133 +74,159 @@ declare global {
 export function isSeekerDevice(): boolean {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  const isSeeker = ua.includes("MyLuckySolApp") || ua.includes("SolanaSeeker") || ua.includes("Saga");
+  const isSeeker = ua.includes("MyLuckySolApp") || ua.includes("SolanaSeeker") || ua.includes("Saga") || ua.includes("SolanaMobile");
   console.log("[isSeekerDevice] UA:", ua, "→ isSeeker:", isSeeker);
   return isSeeker;
 }
 
-// Returns the native Solana wallet injected into window.solana (non-Phantom)
-// or null if not available
-function getNativeWindowSolana(): SeekerProvider | null {
-  if (typeof window === "undefined") return null;
-  const provider = window.solana;
-  if (!provider) return null;
-  if (typeof provider.connect !== "function") return null;
-  // Exclude Phantom — it also injects window.solana
-  if (provider.isPhantom) return null;
-  // Exclude Solflare — it also uses window.solana in some builds
-  if ((provider as any).isSolflare) return null;
-  return provider as SeekerProvider;
-}
+// The app identity used when authorizing via Mobile Wallet Adapter
+const MWA_IDENTITY = {
+  name: "MyLuckySol",
+  uri: "https://myluckysol.fun",
+  icon: "favicon.ico",
+};
 
-// Creates a virtual adapter for Seeker devices.
-// On connect: tries window.solana first, then attempts deep link, then guides user to install a compatible wallet.
+// Creates a virtual adapter for mobile/Seeker devices.
+// On connect: tries MWA (Mobile Wallet Adapter) first for Solana Mobile devices,
+// then falls back to window.solana injection, then shows a helpful error.
 function createSeekerAdapter(): SeekerProvider {
-  const events: Record<string, ((...args: any[]) => void)[]> = {};
+  let authToken: string | null = null;
+  let _publicKey: PublicKey | null = null;
+  let _connected = false;
+  let _connecting = false;
 
-  return {
-    publicKey: null,
-    connected: false,
-    connecting: false,
+  const adapter: SeekerProvider = {
+    get publicKey() { return _publicKey; },
+    get connected() { return _connected; },
+    get connecting() { return _connecting; },
 
     connect: async function () {
-      // Try the natively injected wallet first
-      const native = getNativeWindowSolana();
-      if (native) {
-        await native.connect();
-        (this as any).publicKey = native.publicKey;
-        (this as any).connected = !!native.publicKey;
-        return;
-      }
-
-      // Check if any Solana provider exists at all
-      if (window.solana && typeof window.solana.connect === "function") {
-        await window.solana.connect();
-        (this as any).publicKey = window.solana.publicKey;
-        (this as any).connected = !!window.solana.publicKey;
-        return;
-      }
-
-      // On Seeker, try to trigger the native wallet via deep link
-      // The wallet should inject into window.solana after user approves
-      if (typeof window !== "undefined") {
-        try {
-          console.log("[Seeker] Attempting deep link connection...");
-          // Try to open the Seeker wallet via deep link
-          // The wallet's callback will populate window.solana
-          window.location.href = "solanawallet://connect?return_url=" + encodeURIComponent(window.location.href);
-          
-          // Wait for wallet to inject
-          return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              reject(new Error("Wallet connection timeout. Please try again."));
-            }, 10000);
-            
-            const checkInterval = setInterval(() => {
-              const native = getNativeWindowSolana();
-              if (native?.publicKey) {
-                clearTimeout(timeout);
-                clearInterval(checkInterval);
-                (this as any).publicKey = native.publicKey;
-                (this as any).connected = true;
-                resolve(undefined);
-              }
-            }, 500);
-          });
-        } catch (e) {
-          console.log("[Seeker] Deep link failed, falling back to user guidance");
+      _connecting = true;
+      try {
+        // 1. Try standard window.solana injection (some wallets inject even in WebView)
+        if (window.solana && typeof window.solana.connect === "function") {
+          console.log("[MWA] window.solana detected, using standard connect");
+          await window.solana.connect();
+          _publicKey = window.solana.publicKey ?? null;
+          _connected = !!_publicKey;
+          if (_connected) return;
         }
-      }
 
-      // No wallet found — throw a helpful message
-      throw new Error(
-        "No Solana wallet detected. Please install Phantom or Solflare from the Solana dApp Store, then reopen the app."
-      );
+        // 2. Try Mobile Wallet Adapter — the official Solana Mobile protocol
+        // This works on Seeker / Saga devices where wallets communicate via the OS service
+        console.log("[MWA] Attempting Mobile Wallet Adapter transact...");
+        const { transact } = await import("@solana-mobile/mobile-wallet-adapter-protocol-web3js");
+
+        await transact(async (wallet: any) => {
+          let authResult: any;
+
+          // Reuse existing session token if available
+          if (authToken) {
+            try {
+              authResult = await wallet.reauthorize({
+                auth_token: authToken,
+                identity: MWA_IDENTITY,
+              });
+            } catch (_e) {
+              // Token expired — do a fresh authorize
+              authResult = await wallet.authorize({
+                cluster: "mainnet-beta",
+                identity: MWA_IDENTITY,
+              });
+            }
+          } else {
+            authResult = await wallet.authorize({
+              cluster: "mainnet-beta",
+              identity: MWA_IDENTITY,
+            });
+          }
+
+          authToken = authResult.auth_token;
+          _publicKey = new PublicKey(authResult.accounts[0].address);
+          _connected = true;
+        });
+
+        console.log("[MWA] Connected via MWA:", _publicKey?.toString());
+      } catch (err: any) {
+        console.log("[MWA] All connection attempts failed:", err?.message ?? err);
+        _connecting = false;
+        throw new Error(
+          "No Solana wallet detected. Please install Phantom or Solflare from the Solana dApp Store, then reopen the app."
+        );
+      } finally {
+        _connecting = false;
+      }
     },
 
     disconnect: async function () {
-      const native = getNativeWindowSolana();
-      if (native?.disconnect) await native.disconnect();
-      (this as any).publicKey = null;
-      (this as any).connected = false;
+      if (authToken) {
+        try {
+          const { transact } = await import("@solana-mobile/mobile-wallet-adapter-protocol-web3js");
+          await transact(async (wallet: any) => {
+            await wallet.deauthorize({ auth_token: authToken! });
+          });
+        } catch (_e) {}
+        authToken = null;
+      }
+      if (window.solana?.disconnect) {
+        try { await window.solana.disconnect(); } catch (_e) {}
+      }
+      _publicKey = null;
+      _connected = false;
     },
 
     signTransaction: async function <T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
-      const native = getNativeWindowSolana() ?? window.solana;
-      if (!native || typeof (native as any).signTransaction !== "function") {
-        throw new Error("Wallet not available for signing");
+      // If window.solana was used for connection, use it to sign
+      if (window.solana?.publicKey && typeof (window.solana as any).signTransaction === "function") {
+        return (window.solana as any).signTransaction(tx);
       }
-      return (native as any).signTransaction(tx);
+
+      // Otherwise sign via MWA
+      if (!authToken) throw new Error("Not authorized. Please reconnect your wallet.");
+      const { transact } = await import("@solana-mobile/mobile-wallet-adapter-protocol-web3js");
+
+      const [signedTx] = await transact(async (wallet: any) => {
+        const reauth = await wallet.reauthorize({ auth_token: authToken!, identity: MWA_IDENTITY });
+        authToken = reauth.auth_token;
+        return wallet.signTransactions({ transactions: [tx as Transaction] });
+      });
+
+      return signedTx as T;
     },
 
     signAllTransactions: async function <T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> {
-      const native = getNativeWindowSolana() ?? window.solana;
-      if (!native || typeof (native as any).signAllTransactions !== "function") {
-        throw new Error("Wallet not available for signing");
+      if (window.solana?.publicKey && typeof (window.solana as any).signAllTransactions === "function") {
+        return (window.solana as any).signAllTransactions(txs);
       }
-      return (native as any).signAllTransactions(txs);
+
+      if (!authToken) throw new Error("Not authorized. Please reconnect your wallet.");
+      const { transact } = await import("@solana-mobile/mobile-wallet-adapter-protocol-web3js");
+
+      const signedTxs = await transact(async (wallet: any) => {
+        const reauth = await wallet.reauthorize({ auth_token: authToken!, identity: MWA_IDENTITY });
+        authToken = reauth.auth_token;
+        return wallet.signTransactions({ transactions: txs as Transaction[] });
+      });
+
+      return signedTxs as T[];
     },
 
-    on: function (event: string, callback: (...args: any[]) => void) {
-      if (!events[event]) events[event] = [];
-      events[event].push(callback);
-      const native = getNativeWindowSolana() ?? window.solana;
-      if (native?.on) native.on(event, callback);
+    on: function (_event: string, _callback: (...args: any[]) => void) {
+      if (window.solana?.on) window.solana.on(_event, _callback);
     },
 
-    off: function (event: string, callback: (...args: any[]) => void) {
-      events[event] = (events[event] || []).filter(cb => cb !== callback);
-      const native = getNativeWindowSolana() ?? window.solana;
-      if (native?.off) native.off(event, callback);
+    off: function (_event: string, _callback: (...args: any[]) => void) {
+      if (window.solana?.off) window.solana.off(_event, _callback);
     },
   };
+
+  return adapter;
 }
 
 let _seekerAdapterInstance: SeekerProvider | null = null;
 
 export function getSeekerWallet(): SeekerProvider | null {
-  if (!isSeekerDevice()) return null;
-  // Return cached instance so event listeners persist
+  // Return cached instance so auth token and event listeners persist across re-renders
   if (!_seekerAdapterInstance) {
     _seekerAdapterInstance = createSeekerAdapter();
   }
@@ -258,19 +284,14 @@ export function getBackpackWallet(): BackpackProvider | null {
 export function getMetaMaskWallet(): MetaMaskProvider | null {
   if (typeof window === "undefined") return null;
 
-  // Desktop MetaMask extension: injects window.ethereum.solana with isMetaMask flag
   if (window.ethereum?.solana && (window.ethereum as any).isMetaMask === true) {
     return window.ethereum.solana;
   }
 
-  // window.solana explicitly from MetaMask
   if (window.solana && (window.solana as any).isMetaMask === true) {
     return window.solana as MetaMaskProvider;
   }
 
-  // Mobile MetaMask browser (and desktop MetaMask without Solana sub-provider):
-  // MetaMask injects window.ethereum with isMetaMask=true in its mobile in-app browser.
-  // NOTE: MetaMask mobile UA is standard Chrome — do NOT use navigator.userAgent to detect.
   if (window.ethereum && (window.ethereum as any).isMetaMask === true) {
     const lazyGetSolana = () =>
       ((window.solana as any) ?? (window.ethereum as any)?.solana) ?? null;
@@ -370,7 +391,6 @@ export async function detectMetaMaskStandardWallet(): Promise<WalletAdapter | nu
 }
 
 export function getAllWallets(): WalletInfo[] {
-  const seeker = getSeekerWallet();
   const phantom = getPhantomWallet();
   const solflare = getSolflareWallet();
   const okx = getOKXWallet();
@@ -378,20 +398,6 @@ export function getAllWallets(): WalletInfo[] {
   const metamask = getMetaMaskWallet();
 
   const wallets: WalletInfo[] = [];
-  const onSeeker = isSeekerDevice();
-
-  // Seeker native wallet — always first on Seeker devices, always marked installed
-  // (the virtual adapter handles the "no wallet injected" case with a helpful error)
-  if (onSeeker) {
-    wallets.push({
-      name: "seeker",
-      displayName: "Seeker Wallet",
-      icon: WALLET_ICONS.seeker,
-      adapter: seeker,
-      installed: true,
-      url: "https://solanamobile.com/",
-    });
-  }
 
   wallets.push(
     {
@@ -426,19 +432,15 @@ export function getAllWallets(): WalletInfo[] {
       installed: !!backpack,
       url: "https://backpack.app/",
     },
-  );
-
-  // MetaMask cannot sign Solana transactions on mobile — hide it on Seeker
-  if (!onSeeker) {
-    wallets.push({
+    {
       name: "metamask",
       displayName: "MetaMask",
       icon: WALLET_ICONS.metamask,
       adapter: metamask,
       installed: !!metamask,
       url: "https://metamask.io/",
-    });
-  }
+    },
+  );
 
   return wallets;
 }
@@ -451,11 +453,11 @@ export async function connectWallet(adapter: WalletAdapter): Promise<PublicKey> 
   if (!adapter.connected) {
     await adapter.connect();
   }
-  
+
   if (!adapter.publicKey) {
     throw new Error("Failed to connect wallet");
   }
-  
+
   return adapter.publicKey;
 }
 
@@ -474,7 +476,6 @@ export async function signAndSendTransaction(
     throw new Error("Wallet not connected");
   }
 
-  // Sign client-side only, then submit through server RPC to avoid domain restrictions
   const signedTransaction = await adapter.signTransaction(transaction);
   const signedTx = Buffer.from(signedTransaction.serialize()).toString("base64");
 
@@ -515,10 +516,8 @@ export async function requestDevnetAirdrop(
 }
 
 export const DEVNET_RPC = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com";
-// Fallback to public RPC for client-side to avoid CORS/403 issues with private RPCs
 export const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 
-// Add specific Helius support if provided
 export const getActiveRpc = (network: NetworkType = "mainnet-beta"): string => {
   return MAINNET_RPC;
 };
