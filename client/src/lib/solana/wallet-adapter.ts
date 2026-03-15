@@ -74,49 +74,30 @@ declare global {
 export function isSeekerDevice(): boolean {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  const isSeekerUA = ua.includes("SolanaSeeker") || ua.includes("Saga");
-  if (isSeekerUA) {
-    console.log("[Seeker Wallet] Detected Seeker device via UA:", ua);
-  }
-  return isSeekerUA;
+  return ua.includes("SolanaSeeker") || ua.includes("Saga") || ua.includes("MyLuckySolApp");
 }
 
 export function getSeekerWallet(): SeekerProvider | null {
   if (typeof window === "undefined") return null;
-  if (!isSeekerDevice()) {
-    console.log("[Seeker Wallet] Not a Seeker device, skipping wallet detection");
-    return null;
-  }
   
   const provider = window.solana;
-  console.log("[Seeker Wallet] Checking window.solana:", provider ? "found" : "not found");
   
   if (!provider) {
-    // Seeker might use a different global — try common alternatives
-    const alternatives = [(window as any).saga, (window as any).seekerWallet, (window as any).solanaWallet];
-    for (const alt of alternatives) {
-      if (alt && typeof alt.connect === "function") {
-        console.log("[Seeker Wallet] Found alternative wallet provider");
-        return alt as SeekerProvider;
-      }
-    }
-    console.log("[Seeker Wallet] No wallet provider found in any global");
     return null;
   }
   
-  // Must have connect/publicKey — basic wallet interface check
+  // Must have connect — basic wallet interface check
   if (typeof provider.connect !== "function") {
-    console.log("[Seeker Wallet] Provider missing connect function");
     return null;
   }
   
   // Exclude Phantom (it also injects window.solana but we don't want to double-list it)
   if (provider.isPhantom) {
-    console.log("[Seeker Wallet] Detected Phantom, not using as Seeker wallet");
     return null;
   }
   
-  console.log("[Seeker Wallet] Found valid Seeker wallet provider");
+  // If we got here, window.solana exists, has connect, and isn't Phantom
+  // This is the Seeker native wallet (or another Solana-native wallet on the device)
   return provider as SeekerProvider;
 }
 
