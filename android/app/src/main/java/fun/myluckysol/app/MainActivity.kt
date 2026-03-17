@@ -72,6 +72,10 @@ class MainActivity : AppCompatActivity() {
                         view.loadUrl(url)
                         false
                     }
+                    // MWA v1 protocol — must be intercepted so WebView doesn't
+                    // try to load it as a webpage; fired as an Intent so the
+                    // system wallet (Phantom, Seed Vault, Solflare…) handles it
+                    url.startsWith("solana-wallet:") ||
                     url.startsWith("solana:") || url.startsWith("solanawallet:") ||
                     url.startsWith("phantom:") || url.startsWith("solflare:") ||
                     url.startsWith("okx:") || url.startsWith("backpack:") -> {

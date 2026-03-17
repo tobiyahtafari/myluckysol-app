@@ -6,7 +6,14 @@ import {
   SendOptions,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import { transact } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
 import { WALLET_ICONS } from "./wallet-icons";
+
+const MWA_IDENTITY = {
+  name: "MyLuckySol",
+  uri: "https://myluckysol.fun",
+  icon: "/favicon.ico",
+} as const;
 
 export interface WalletAdapter {
   publicKey: PublicKey | null;
@@ -70,9 +77,8 @@ declare global {
     ethereum?: MetaMaskProvider & { solana?: MetaMaskProvider };
     solana?: SeekerProvider & PhantomProvider & SolflareProvider;
     // Injected by MainActivity.kt WalletBridge @JavascriptInterface
+    // Used only for isNativeApp() detection — actual wallet ops use transact()
     SolanaWalletBridge?: SolanaWalletBridgeType;
-    // Internal MWA callback registry
-    __mwaCb?: Record<string, (...args: any[]) => void>;
   }
 }
 
@@ -81,31 +87,12 @@ export function isNativeApp(): boolean {
   return typeof window !== "undefined" && window.SolanaWalletBridge?.isNativeApp() === true;
 }
 
-// ─── Native Bridge Helpers ──────────────────────────────────────────────────
-// Promise wrapper around the Android @JavascriptInterface callback pattern
-function nativeBridgeCall<T>(
-  fn: (callbackId: string) => void,
-  parseResult: (...args: any[]) => T
-): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const callbackId = "mwa_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-    if (!window.__mwaCb) window.__mwaCb = {};
-    window.__mwaCb[callbackId] = (...args: any[]) => {
-      delete window.__mwaCb![callbackId];
-      const error = args[0];
-      if (error) {
-        reject(new Error(error));
-      } else {
-        resolve(parseResult(...args));
-      }
-    };
-    fn(callbackId);
-  });
-}
-
-// ─── Native Bridge Adapter ──────────────────────────────────────────────────
-// Creates a WalletAdapter that delegates to the Android @JavascriptInterface.
-// This is the correct mechanism for Seeker / Solana Mobile WebView apps.
+// ─── MWA Transact Adapter ───────────────────────────────────────────────────
+// Uses the @solana-mobile/mobile-wallet-adapter-protocol-web3js `transact()`
+// function which generates the `solana-wallet:` association URL. The Android
+// WebView (MainActivity.kt) intercepts that URL and fires it as an Intent,
+// launching the on-device wallet (Phantom, Seed Vault, Solflare, etc.).
+// The wallet communicates back via a local WebSocket, resolving the promise.
 function createNativeBridgeAdapter(): SeekerProvider {
   let _publicKey: PublicKey | null = null;
   let _authToken: string | null = null;
@@ -120,40 +107,38 @@ function createNativeBridgeAdapter(): SeekerProvider {
     connect: async function () {
       _connecting = true;
       try {
-        // If we have a stored auth token, try to reauthorize silently first
         const storedToken = sessionStorage.getItem("mwa_auth_token");
-        if (storedToken) {
-          try {
-            const result = await nativeBridgeCall<{ publicKey: string; authToken: string }>(
-              (cbId) => window.SolanaWalletBridge!.reauthorize(storedToken, cbId),
-              (_err, pk, token) => ({ publicKey: pk, authToken: token })
-            );
-            if (result.publicKey) {
-              _publicKey = new PublicKey(result.publicKey);
-              _authToken = result.authToken;
-              sessionStorage.setItem("mwa_auth_token", result.authToken);
-              _connected = true;
-              return;
-            }
-          } catch (_e) {
-            // Token expired — fall through to fresh connect
-            sessionStorage.removeItem("mwa_auth_token");
-          }
-        }
 
-        // Fresh authorization via MWA
-        console.log("[NativeBridge] Starting fresh MWA authorization...");
-        const result = await nativeBridgeCall<{ publicKey: string; authToken: string }>(
-          (cbId) => window.SolanaWalletBridge!.connect(cbId),
-          (_err, pk, token) => ({ publicKey: pk, authToken: token })
-        );
+        const result = await transact(async (wallet) => {
+          // Attempt silent reauthorization with a stored token first
+          if (storedToken) {
+            try {
+              const reauth = await wallet.reauthorize({
+                auth_token: storedToken,
+                identity: MWA_IDENTITY,
+              });
+              return { publicKey: reauth.accounts[0]?.address ?? "", authToken: reauth.auth_token };
+            } catch {
+              // Token expired — fall through to fresh authorize
+              sessionStorage.removeItem("mwa_auth_token");
+            }
+          }
+
+          // Fresh authorization — opens the wallet UI on-device
+          const auth = await wallet.authorize({
+            cluster: "mainnet-beta",
+            identity: MWA_IDENTITY,
+          });
+          return { publicKey: auth.accounts[0]?.address ?? "", authToken: auth.auth_token };
+        });
+
+        if (!result.publicKey) throw new Error("Wallet did not return a public key");
         _publicKey = new PublicKey(result.publicKey);
         _authToken = result.authToken;
         sessionStorage.setItem("mwa_auth_token", result.authToken);
         _connected = true;
-        console.log("[NativeBridge] Connected:", result.publicKey);
+        console.log("[MWA] Connected:", result.publicKey);
       } catch (err: any) {
-        _connecting = false;
         throw new Error(err?.message ?? "Wallet connection failed");
       } finally {
         _connecting = false;
@@ -162,7 +147,11 @@ function createNativeBridgeAdapter(): SeekerProvider {
 
     disconnect: async function () {
       if (_authToken) {
-        window.SolanaWalletBridge?.disconnect(_authToken);
+        try {
+          await transact(async (wallet) => {
+            await wallet.deauthorize({ auth_token: _authToken! });
+          });
+        } catch { /* ignore */ }
         sessionStorage.removeItem("mwa_auth_token");
       }
       _publicKey = null;
@@ -171,23 +160,21 @@ function createNativeBridgeAdapter(): SeekerProvider {
     },
 
     signTransaction: async function <T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
-      if (!_authToken) throw new Error("Wallet not connected. Please reconnect.");
-      const serialized = Buffer.from((tx as Transaction).serialize({ requireAllSignatures: false })).toString("base64");
-      const signedB64 = await nativeBridgeCall<string>(
-        (cbId) => window.SolanaWalletBridge!.signTransaction(serialized, _authToken!, cbId),
-        (_err, signed) => signed
-      );
-      const signedBytes = Buffer.from(signedB64, "base64");
-      return Transaction.from(signedBytes) as unknown as T;
+      if (!_authToken || !_publicKey) throw new Error("Wallet not connected");
+      const [signed] = await transact(async (wallet) => {
+        await wallet.reauthorize({ auth_token: _authToken!, identity: MWA_IDENTITY });
+        return wallet.signTransactions({ transactions: [tx] });
+      });
+      return signed as T;
     },
 
     signAllTransactions: async function <T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> {
-      // Sign one by one via the bridge
-      const results: T[] = [];
-      for (const tx of txs) {
-        results.push(await (adapter as any).signTransaction(tx));
-      }
-      return results;
+      if (!_authToken || !_publicKey) throw new Error("Wallet not connected");
+      const signed = await transact(async (wallet) => {
+        await wallet.reauthorize({ auth_token: _authToken!, identity: MWA_IDENTITY });
+        return wallet.signTransactions({ transactions: txs });
+      });
+      return signed as T[];
     },
 
     on: function () {},
