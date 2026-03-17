@@ -74,8 +74,26 @@ class MainActivity : AppCompatActivity() {
                     }
                     // MWA v1 protocol — must be intercepted so WebView doesn't
                     // try to load it as a webpage; fired as an Intent so the
-                    // system wallet (Phantom, Seed Vault, Solflare…) handles it
-                    url.startsWith("solana-wallet:") ||
+                    // system wallet (Phantom, Seed Vault, Solflare…) handles it.
+                    // After launching the wallet we manually dispatch window.blur
+                    // so the MWA JS SDK's detectionPromise resolves correctly.
+                    url.startsWith("solana-wallet:") -> {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(intent)
+                            // Dispatch blur so MWA's getDetectionPromise() resolves
+                            webView.post {
+                                webView.evaluateJavascript(
+                                    "window.dispatchEvent(new Event('blur'))",
+                                    null
+                                )
+                            }
+                        } catch (e: Exception) {
+                            // No MWA-compatible wallet installed
+                        }
+                        true
+                    }
                     url.startsWith("solana:") || url.startsWith("solanawallet:") ||
                     url.startsWith("phantom:") || url.startsWith("solflare:") ||
                     url.startsWith("okx:") || url.startsWith("backpack:") -> {
@@ -244,11 +262,14 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         webView.onResume()
+        webView.resumeTimers()
     }
 
     override fun onPause() {
         super.onPause()
-        webView.onPause()
+        // Do NOT call webView.onPause() or webView.pauseTimers() here.
+        // The MWA WebSocket session must remain active while the wallet
+        // app is in the foreground handling the signing request.
     }
 
     override fun onDestroy() {

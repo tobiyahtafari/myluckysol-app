@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- Allow cleartext (ws://) to localhost only — required for Mobile Wallet Adapter
+         WebSocket communication between the dApp WebView and the on-device wallet -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+    <!-- All other traffic must use HTTPS/WSS -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">myluckysol.fun</domain>
         <domain includeSubdomains="true">helius-rpc.com</domain>
