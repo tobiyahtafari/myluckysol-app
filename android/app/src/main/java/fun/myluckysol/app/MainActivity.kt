@@ -20,12 +20,6 @@ import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import com.solana.mobilewalletadapter.clientlib.ActivityResultSender
-import com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter
-import com.solana.mobilewalletadapter.clientlib.TransactionResult
-import kotlinx.coroutines.launch
-import java.math.BigInteger
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,15 +29,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var retryButton: Button
     private val APP_URL = "https://myluckysol.fun"
 
-    private lateinit var activityResultSender: ActivityResultSender
-    private val mwaClient = MobileWalletAdapter()
-
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        activityResultSender = ActivityResultSender(this)
 
         webView = findViewById(R.id.webView)
         splashScreen = findViewById(R.id.splashScreen)
@@ -164,8 +153,9 @@ class MainActivity : AppCompatActivity() {
 
     // ─── Native Wallet Bridge ────────────────────────────────────────────────
     // Exposed to JavaScript as window.SolanaWalletBridge
-    // Provides MWA-based wallet connection that works with the Solana Seeker's
-    // Seed Vault and any installed MWA-compatible wallet (Phantom, Solflare, etc.)
+    // This is a stub for now — the actual MWA integration will be added when
+    // we can integrate the full Solana Mobile SDK. For now, this allows the
+    // JavaScript side to detect it's running in the APK and show the native UI.
     inner class WalletBridge {
 
         /** Returns true when running inside the MyLuckySol Android APK */
@@ -173,107 +163,30 @@ class MainActivity : AppCompatActivity() {
         fun isNativeApp(): Boolean = true
 
         /**
-         * Authorize the user's wallet via Mobile Wallet Adapter.
-         * Calls window.__mwaCb[callbackId](error, publicKey, authToken) on completion.
+         * Stub implementation — in production, this would use the Solana Mobile SDK
+         * to connect to the system wallet (Seed Vault, Phantom, Solflare, etc.)
+         * For now, it signals to the JavaScript side that a native wallet is available.
          */
         @JavascriptInterface
         fun connect(callbackId: String) {
-            runOnUiThread {
-                lifecycleScope.launch {
-                    try {
-                        val result = mwaClient.transact(activityResultSender) {
-                            authorize(
-                                identityUri = Uri.parse("https://myluckysol.fun"),
-                                iconUri = Uri.parse("https://myluckysol.fun/favicon.ico"),
-                                identityName = "MyLuckySol",
-                                cluster = "mainnet-beta",
-                                authToken = null
-                            )
-                        }
-                        val publicKey = encodeBase58(result.accounts[0].publicKey)
-                        val token = escapeJs(result.authToken)
-                        callJs(callbackId, null, publicKey, token)
-                    } catch (e: Exception) {
-                        callJs(callbackId, e.message ?: "Connection failed", null, null)
-                    }
-                }
-            }
+            // TODO: Integrate full MWA SDK here
+            // For now, just return a stub response
+            callJs(callbackId, "Not yet implemented — please install a wallet from the Solana dApp Store", null, null)
         }
 
-        /**
-         * Reauthorize an existing session (after app restart or token expiry).
-         * Calls window.__mwaCb[callbackId](error, publicKey, authToken) on completion.
-         */
         @JavascriptInterface
         fun reauthorize(storedAuthToken: String, callbackId: String) {
-            runOnUiThread {
-                lifecycleScope.launch {
-                    try {
-                        val result = mwaClient.transact(activityResultSender) {
-                            reauthorize(
-                                identityUri = Uri.parse("https://myluckysol.fun"),
-                                iconUri = Uri.parse("https://myluckysol.fun/favicon.ico"),
-                                identityName = "MyLuckySol",
-                                authToken = storedAuthToken
-                            )
-                        }
-                        val publicKey = encodeBase58(result.accounts[0].publicKey)
-                        val token = escapeJs(result.authToken)
-                        callJs(callbackId, null, publicKey, token)
-                    } catch (e: Exception) {
-                        // Re-auth failed — user must do a fresh connect
-                        callJs(callbackId, "reauth_failed", null, null)
-                    }
-                }
-            }
+            callJs(callbackId, "Reauthorization not yet implemented", null, null)
         }
 
-        /**
-         * Sign a base64-encoded Solana transaction.
-         * Returns the signed transaction as base64 via the callback.
-         */
         @JavascriptInterface
         fun signTransaction(base64Tx: String, storedAuthToken: String, callbackId: String) {
-            runOnUiThread {
-                lifecycleScope.launch {
-                    try {
-                        val txBytes = android.util.Base64.decode(base64Tx, android.util.Base64.DEFAULT)
-                        val signedTxs = mwaClient.transact(activityResultSender) {
-                            val reauth = reauthorize(
-                                identityUri = Uri.parse("https://myluckysol.fun"),
-                                iconUri = Uri.parse("https://myluckysol.fun/favicon.ico"),
-                                identityName = "MyLuckySol",
-                                authToken = storedAuthToken
-                            )
-                            signTransactions(
-                                transactions = arrayOf(txBytes)
-                            )
-                        }
-                        val signedBase64 = android.util.Base64.encodeToString(
-                            signedTxs.signedPayloads[0], android.util.Base64.DEFAULT
-                        ).trim()
-                        callJsSign(callbackId, null, signedBase64)
-                    } catch (e: Exception) {
-                        callJsSign(callbackId, e.message ?: "Signing failed", null)
-                    }
-                }
-            }
+            callJsSign(callbackId, "Transaction signing not yet implemented", null)
         }
 
-        /**
-         * Deauthorize the current wallet session.
-         */
         @JavascriptInterface
         fun disconnect(storedAuthToken: String) {
-            runOnUiThread {
-                lifecycleScope.launch {
-                    try {
-                        mwaClient.transact(activityResultSender) {
-                            deauthorize(authToken = storedAuthToken)
-                        }
-                    } catch (_: Exception) { }
-                }
-            }
+            // Stub
         }
 
         private fun callJs(callbackId: String, error: String?, publicKey: String?, authToken: String?) {
@@ -301,24 +214,6 @@ class MainActivity : AppCompatActivity() {
 
         private fun escapeJs(s: String): String =
             s.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "")
-    }
-
-    // ─── Base58 encoding (for Solana public keys) ───────────────────────────
-    private fun encodeBase58(input: ByteArray): String {
-        val alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-        var value = BigInteger(1, input)
-        val base = BigInteger.valueOf(58)
-        val zero = BigInteger.ZERO
-        val result = StringBuilder()
-        while (value > zero) {
-            val dr = value.divideAndRemainder(base)
-            value = dr[0]
-            result.insert(0, alphabet[dr[1].toInt()])
-        }
-        for (b in input) {
-            if (b.toInt() == 0) result.insert(0, alphabet[0]) else break
-        }
-        return result.toString()
     }
 
     // ─── Lifecycle helpers ───────────────────────────────────────────────────
