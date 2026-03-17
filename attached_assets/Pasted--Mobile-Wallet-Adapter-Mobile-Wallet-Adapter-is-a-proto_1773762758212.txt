@@ -1,0 +1,46 @@
+## Mobile Wallet Adapter
+
+Mobile Wallet Adapter is a protocol within the Solana Foundation’s Solana Mobile Stack that standardizes communication between mobile apps (dApps) and Solana wallets. It’s designed to make signing and sending Solana transactions from mobile devices secure, consistent, and wallet-agnostic.
+
+### Key facts
+
+* **Domain:** Solana Mobile Stack protocol (software)
+* **Primary purpose:** Connect mobile dApps to Solana wallets
+* **Platforms:** Android-focused (with broader ecosystem support via spec)
+* **Core features:** Session-based connections, request signing, transaction sending
+* **Security goal:** Minimize key exposure and phishing risk on mobile
+
+### Background and goals
+
+On mobile, every wallet app and every dApp historically had to roll its own deep-link or custom integration, leading to inconsistent UX and security pitfalls. Mobile Wallet Adapter aims to be a common, open protocol so that any Solana wallet can connect to any compatible dApp without bespoke integrations. It’s a core part of the Solana Mobile Stack, used heavily with devices like Saga for native dApp experiences.
+
+### How it works conceptually
+
+Mobile Wallet Adapter defines a protocol for:
+
+* Discovering compatible wallets on the device
+* Establishing a secure “session” between a dApp and a wallet
+* Sending requests (e.g., “sign this transaction,” “sign this message,” “send these transactions”)
+* Getting structured responses or user rejections
+
+Implementations typically use Android intents / IPC and, in some cases, a local WebSocket-like channel or similar abstraction to exchange JSON-encoded requests and responses. The wallet holds the keys and surfaces a confirmation UI; the dApp never touches private keys, only signed payloads.
+
+### Developer experience
+
+For developers, the protocol is exposed through SDKs in the Solana Mobile Stack. A dApp can:
+
+* Initiate a connection with Mobile Wallet Adapter
+* Request one or more transaction signatures
+* Handle user approvals, denials, and errors in a standardized way
+
+Wallet developers implement the other side of the adapter, listening for incoming requests and showing secure confirmation flows. This reduces integration complexity and encourages consistent UX across the Solana mobile ecosystem.
+
+### Security and UX considerations
+
+Mobile Wallet Adapter focuses on:
+
+* **Key isolation:** Private keys stay in the wallet app or secure enclave.
+* **Explicit consent:** Each sensitive operation (like signing) requires user approval.
+* **Phishing resistance:** Standardized prompts and flows make suspicious requests easier to spot.
+
+Because it’s a shared protocol rather than a proprietary bridge, wallets and dApps can evolve together, improving security and user experience without constant one-off integrations.
