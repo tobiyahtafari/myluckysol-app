@@ -133,7 +133,8 @@ function createNativeBridgeAdapter(): SeekerProvider {
         });
 
         if (!result.publicKey) throw new Error("Wallet did not return a public key");
-        _publicKey = new PublicKey(result.publicKey);
+        // MWA returns addresses as Base64-encoded bytes, not base58 strings
+        _publicKey = new PublicKey(Buffer.from(result.publicKey, "base64"));
         _authToken = result.authToken;
         sessionStorage.setItem("mwa_auth_token", result.authToken);
         _connected = true;
