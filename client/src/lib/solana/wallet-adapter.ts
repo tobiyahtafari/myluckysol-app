@@ -87,6 +87,25 @@ export function isNativeApp(): boolean {
   return typeof window !== "undefined" && window.SolanaWalletBridge?.isNativeApp() === true;
 }
 
+// ─── MWA Address Decoder ────────────────────────────────────────────────────
+// MWA protocol returns account addresses as Base64-encoded raw bytes.
+// Seed Vault may use URL-safe base64 (with - and _ instead of + and /).
+// This helper normalizes both variants and decodes to a PublicKey.
+function mwaAddressToPublicKey(address: string): PublicKey {
+  // Normalize URL-safe base64 → standard base64 and add missing padding
+  const b64 = address
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .replace(/\./g, "=");
+  const padded = b64.padEnd(b64.length + (4 - (b64.length % 4)) % 4, "=");
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new PublicKey(bytes);
+}
+
 // ─── MWA Transact Adapter ───────────────────────────────────────────────────
 // Uses the @solana-mobile/mobile-wallet-adapter-protocol-web3js `transact()`
 // function which generates the `solana-wallet:` association URL. The Android
@@ -133,8 +152,9 @@ function createNativeBridgeAdapter(): SeekerProvider {
         });
 
         if (!result.publicKey) throw new Error("Wallet did not return a public key");
-        // MWA returns addresses as Base64-encoded bytes, not base58 strings
-        _publicKey = new PublicKey(Buffer.from(result.publicKey, "base64"));
+        // MWA returns addresses as Base64-encoded bytes (possibly URL-safe base64).
+        // Use atob() with normalization — works in all browsers and WebViews.
+        _publicKey = mwaAddressToPublicKey(result.publicKey);
         _authToken = result.authToken;
         sessionStorage.setItem("mwa_auth_token", result.authToken);
         _connected = true;
