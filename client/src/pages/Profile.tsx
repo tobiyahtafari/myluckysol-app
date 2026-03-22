@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LuckBar } from "@/components/LuckBar";
 import { useWallet } from "@/lib/wallet-context";
 import { Link, useLocation } from "wouter";
+import { isNativeApp } from "@/lib/solana/wallet-adapter";
 import type { PlayerProfile, GameHistory } from "@shared/schema";
 import { VESTING_DAILY_PERCENT, REFERRAL_REWARD_AMOUNT } from "@shared/schema";
 import { Wallet, Trophy, Gamepad2, TrendingUp, Coins, Clock, ArrowRight, Flame, Loader2, Link as LinkIcon, Copy, Check, Lock, Unlock, AlertTriangle, Smartphone, Gift, Users } from "lucide-react";
@@ -33,12 +34,13 @@ export default function Profile() {
   const [showReferralPopup, setShowReferralPopup] = useState(false);
   const [isWeb3Browser, setIsWeb3Browser] = useState(true);
 
-  // Check for Web3 browser on mobile
+  // Check for Web3 browser on mobile — allow native APK or web3 wallets
   useEffect(() => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) {
-      const hasSolana = !!(window as any).solana || !!(window as any).phantom || !!(window as any).solflare;
-      setIsWeb3Browser(hasSolana);
+      // Allow if running in native MyLuckySol APK OR if web3 wallet is installed
+      const hasWeb3 = isNativeApp() || !!(window as any).solana || !!(window as any).phantom || !!(window as any).solflare;
+      setIsWeb3Browser(hasWeb3);
     }
 
     // Check for referral in URL
