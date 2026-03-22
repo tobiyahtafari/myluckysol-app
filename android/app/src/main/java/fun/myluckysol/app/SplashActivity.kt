@@ -1,14 +1,16 @@
 package `fun`.myluckysol.app
 
+import android.app.Activity
 import android.content.Intent
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.widget.VideoView
-import androidx.appcompat.app.AppCompatActivity
 
-class SplashActivity : AppCompatActivity() {
+class SplashActivity : Activity() {
 
     private lateinit var videoView: VideoView
+    private var transitioned = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,42 +18,39 @@ class SplashActivity : AppCompatActivity() {
 
         videoView = findViewById(R.id.splash_video)
 
-        // Play splash video from raw resources
         val videoUri = Uri.parse("android.resource://${packageName}/${R.raw.splash_video}")
         videoView.setVideoURI(videoUri)
 
-        // When video completes, transition to MainActivity
+        // On completion, go to main
         videoView.setOnCompletionListener {
             transitionToMain()
         }
 
-        // Fallback: after 4 seconds, go to MainActivity anyway
-        // (in case video doesn't play or completes prematurely)
-        videoView.postDelayed({
-            if (videoView.isPlaying || !hasWindowFocus()) {
-                // Still playing or window lost focus, wait more
-                return@postDelayed
-            }
+        // On error (unsupported codec, missing file, etc), skip to main immediately
+        videoView.setOnErrorListener { _, _, _ ->
             transitionToMain()
-        }, 4000)
+            true
+        }
 
-        // Start playing
+        // Hard fallback after 5 seconds in case video hangs silently
+        videoView.postDelayed({
+            transitionToMain()
+        }, 5000)
+
         videoView.start()
     }
 
     private fun transitionToMain() {
+        if (transitioned) return
+        transitioned = true
         val intent = Intent(this, MainActivity::class.java)
-        // Preserve any deep link intent extras
-        if (intent.extras != null) {
-            intent.putExtras(this.intent.extras!!)
-        }
         startActivity(intent)
         finish()
-        overridePendingTransition(0, 0) // No transition animation
+        overridePendingTransition(0, 0)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        // Prevent back button during splash
-        super.onBackPressed()
+        // Block back during splash
     }
 }
