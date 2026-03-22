@@ -82,9 +82,19 @@ declare global {
   }
 }
 
-/** True when running inside the MyLuckySol Android APK (native WebView) */
+/**
+ * True when running inside the MyLuckySol Android APK (native WebView).
+ *
+ * Primary check: User-Agent string, injected synchronously by MainActivity.kt
+ * via `userAgentString = "... MyLuckySolApp/1.0 SolanaSeeker"`.
+ * This is always available the moment JS starts — no bridge timing issues.
+ *
+ * Fallback: SolanaWalletBridge interface (may not be bound yet on first render).
+ */
 export function isNativeApp(): boolean {
-  return typeof window !== "undefined" && window.SolanaWalletBridge?.isNativeApp() === true;
+  if (typeof window === "undefined") return false;
+  if (navigator.userAgent.includes("MyLuckySolApp")) return true;
+  return window.SolanaWalletBridge?.isNativeApp() === true;
 }
 
 // ─── MWA Address Decoder ────────────────────────────────────────────────────
