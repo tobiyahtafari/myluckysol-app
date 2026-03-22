@@ -8,30 +8,91 @@ The splash screen appears when the app launches before the WebView loads `https:
 
 ### File Location
 - `android/app/src/main/res/layout/splash_screen.xml` (XML layout)
-- `android/app/src/main/java/fun/myluckysol/app/SplashActivity.kt` (optional: Java/Kotlin activity for custom animation)
+- `android/app/src/main/res/raw/splash_video.mp4` (video file, if using video option)
+- `android/app/src/main/java/fun/myluckysol/app/SplashActivity.kt` (Kotlin activity for splash)
 
 ### Specifications
 - **Duration**: 2–3 seconds (auto-dismiss once WebView loads)
 - **Dimensions**: Full device screen (matches device display density)
-- **Safe Area**: Keep text/logo in center 80% of screen (top/bottom bezels may be cut off)
+- **Safe Area**: Keep branding/text in center 80% of screen (top/bottom bezels may be cut off)
 - **Color Scheme**: Follow replit.md preferences (dark theme, gold primary, purple secondary, green accent)
-- **Typography**: Space Grotesk font family (as per design system)
-- **Background**: Solid dark gradient or animated background (no complex animations — keep file size <500KB)
 - **Brand Elements**: MyLuckySol logo, app name, tagline (e.g., "Provably Fair Solana Gaming")
 - **No Loading Text**: Avoid "Loading..." or spinner text; let animation convey loading state
 
-### Recommended Approach
-1. **Simple Option**: Static image (PNG, 1080×1920px for baseline, provide all densities: mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi)
-2. **Advanced Option**: Animated splash using Lottie JSON (lightweight animation library, ~100KB max)
+### Option 1: Static Image (PNG)
+- **Dimensions**: 1080×1920px for baseline
+- **Format**: PNG with transparency (if needed)
+- **Asset Densities**: Provide all 5 Android densities:
+  - **mdpi**: 320×426 (baseline, 160dpi)
+  - **hdpi**: 480×640 (240dpi)
+  - **xhdpi**: 720×960 (320dpi)
+  - **xxhdpi**: 1080×1440 (480dpi)
+  - **xxxhdpi**: 1440×1920 (640dpi)
 
-### Asset Densities (if using PNG)
-- **mdpi**: 320×426 (baseline, 160dpi)
-- **hdpi**: 480×640 (240dpi)
-- **xhdpi**: 720×960 (320dpi)
-- **xxhdpi**: 1080×1440 (480dpi)
-- **xxxhdpi**: 1440×1920 (640dpi)
+### Option 2: Animated Video (Recommended for "Cool" Experience) ⭐
+Use an MP4 video file for smooth, high-quality animation during the 2–3 second splash.
 
-Provide all 5 density buckets for consistent appearance across all Seeker phones.
+**Video Specifications:**
+- **Format**: MP4 (H.264 codec) or WebM (VP8/VP9 codec)
+- **Preferred**: MP4 — best compatibility across all Android versions
+- **Resolution**: 1080×1920px (portrait orientation, Seeker native resolution)
+- **Frame Rate**: 30fps (standard, smooth) or 60fps (if very smooth motion needed)
+- **Bitrate**: 8–12 Mbps (HD quality, balance between file size and visual clarity)
+- **Duration**: 2–3 seconds (exactly; will auto-stop when WebView loads)
+- **Audio**: Optional (can include subtle background music/sound effect)
+- **File Size**: Keep <10MB (ideally 3–5MB) to avoid bloating APK
+- **Codec Settings**:
+  - **Video**: H.264, Main profile, level 4.2
+  - **Audio** (if used): AAC, 128 kbps, 48kHz
+- **Safe Area**: Keep logo and key visuals in center 80% (outer edges may be masked)
+- **Color Profile**: sRGB (standard for mobile displays)
+
+**Example ffmpeg command to create video:**
+```bash
+ffmpeg -i input.mov \
+  -vf scale=1080:1920 \
+  -c:v libx264 -preset slow -crf 18 \
+  -c:a aac -b:a 128k \
+  -r 30 \
+  -t 3 \
+  splash_video.mp4
+```
+
+### Option 3: Lottie Animation (Lightweight Alternative)
+- **Format**: Lottie JSON file (exported from Adobe After Effects, Figma, or Spline)
+- **File Size**: ~50–200KB (very efficient)
+- **Advantage**: Scalable vector animation, works on all screen densities
+- **Requires**: Adding Lottie library to `build.gradle` (minimal overhead)
+- **File Location**: `android/app/src/main/res/raw/splash_animation.json`
+
+### Implementation Approach
+
+**For Video Option (Most Immersive):**
+
+1. Create a custom `SplashActivity.kt` that:
+   - Displays a `VideoView` or `ExoPlayer`
+   - Plays `splash_video.mp4` (2–3 seconds)
+   - Auto-transitions to `MainActivity` when video ends or when WebView finishes loading
+   - Handles device rotation gracefully
+
+2. Place MP4 in: `android/app/src/main/res/raw/splash_video.mp4`
+
+3. Update `AndroidManifest.xml` to launch `SplashActivity` first:
+   ```xml
+   <intent-filter android:autoVerify="true">
+     <action android:name="android.intent.action.MAIN" />
+     <category android:name="android.intent.category.LAUNCHER" />
+   </intent-filter>
+   ```
+
+**For PNG Option (Simple, Proven):**
+
+1. Provide all 5 density PNG files
+2. Set as `android:windowBackground` in `styles.xml`
+3. Activity transitions once WebView loads
+
+**Recommendation for MyLuckySol:**
+Use **Option 2 (Video)** for maximum impact on Solana Seeker. A 2–3 second casino-themed animated video is memorable and sets premium tone. Keep MP4 file <5MB.
 
 ---
 
