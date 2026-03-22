@@ -16,17 +16,29 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:hardwareAccelerated="true">
 
+        <!-- Splash Screen Activity (launches first) -->
+        <activity
+            android:name=".SplashActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <!-- Main WebView Activity -->
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation|uiMode"
             android:exported="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize">
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
 
             <!-- Deep link: myluckysol:// -->
             <intent-filter android:autoVerify="true">
